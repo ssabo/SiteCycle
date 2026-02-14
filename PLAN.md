@@ -339,6 +339,129 @@ Reference: [SPEC.md](./SPEC.md)
 
 ---
 
+## Phase 7: GitHub Actions CI/CD & TestFlight Deployment
+
+**Goal:** Set up a GitHub Actions workflow that builds the app on every push/PR, and a release workflow that archives, signs, and uploads the app to TestFlight via App Store Connect.
+
+### Prerequisites
+- Phase 6 complete (app is feature-complete and polished).
+- An Apple Developer account with App Store Connect access.
+- The app's Bundle Identifier registered in App Store Connect.
+
+### Deliverables
+
+1. **CI workflow -- build & test on every push** (`.github/workflows/ci.yml`)
+   - Trigger: `push` to any branch, `pull_request` to `main`.
+   - Runner: `macos-15` (Xcode 16+).
+   - Steps:
+     - Check out code.
+     - Select Xcode version (`sudo xcode-select -s /Applications/Xcode_16.app`).
+     - Resolve Swift packages (`xcodebuild -resolvePackageDependencies`).
+     - Build for iOS Simulator (`xcodebuild build -scheme SiteCycle -destination 'platform=iOS Simulator,name=iPhone 16'`).
+     - Run unit tests if any exist (`xcodebuild test ...`).
+   - Purpose: catch build failures and regressions early on PRs.
+
+2. **TestFlight release workflow** (`.github/workflows/testflight.yml`)
+   - Trigger: `push` of a tag matching `v*` (e.g., `v1.0.0`), or manual `workflow_dispatch`.
+   - Runner: `macos-15`.
+   - Steps:
+     - **Check out code.**
+     - **Install the Apple certificate and provisioning profile:**
+       - Use a keychain-based approach: decode a base64-encoded `.p12` distribution certificate and provisioning profile from GitHub Secrets, import into a temporary keychain.
+       - Required secrets:
+         - `APPLE_CERTIFICATE_BASE64` -- base64-encoded `.p12` distribution certificate.
+         - `APPLE_CERTIFICATE_PASSWORD` -- password for the `.p12` file.
+         - `APPLE_PROVISIONING_PROFILE_BASE64` -- base64-encoded `.mobileprovision` file.
+         - `APPSTORE_CONNECT_API_KEY_ID` -- App Store Connect API key ID.
+         - `APPSTORE_CONNECT_API_ISSUER_ID` -- App Store Connect API issuer ID.
+         - `APPSTORE_CONNECT_API_KEY_BASE64` -- base64-encoded `.p8` private key.
+       - Script to decode and install:
+         ```
+         # Create temporary keychain
+         security create-keychain -p "" build.keychain
+         security default-keychain -s build.keychain
+         security unlock-keychain -p "" build.keychain
+         # Import certificate
+         echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > cert.p12
+         security import cert.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+         security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+         # Install provisioning profile
+         echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode > profile.mobileprovision
+         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+         cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+         ```
+     - **Archive the app:**
+       ```
+       xcodebuild archive \
+         -scheme SiteCycle \
+         -archivePath $RUNNER_TEMP/SiteCycle.xcarchive \
+         -destination 'generic/platform=iOS' \
+         CODE_SIGN_STYLE=Manual \
+         PROVISIONING_PROFILE_SPECIFIER="..." \
+         CODE_SIGN_IDENTITY="Apple Distribution"
+       ```
+     - **Export the IPA:**
+       - Create an `ExportOptions.plist` specifying `app-store` distribution method, team ID, and provisioning profile mapping.
+       ```
+       xcodebuild -exportArchive \
+         -archivePath $RUNNER_TEMP/SiteCycle.xcarchive \
+         -exportPath $RUNNER_TEMP/export \
+         -exportOptionsPlist ExportOptions.plist
+       ```
+     - **Upload to TestFlight:**
+       - Use `xcrun altool` or (preferred) `xcrun notarytool` / the App Store Connect API:
+       ```
+       xcrun altool --upload-app \
+         -f $RUNNER_TEMP/export/SiteCycle.ipa \
+         --apiKey "$APPSTORE_CONNECT_API_KEY_ID" \
+         --apiIssuer "$APPSTORE_CONNECT_API_ISSUER_ID" \
+         --type ios
+       ```
+       - Alternatively, use the `apple-actions/upload-testflight-build` GitHub Action if available.
+     - **Cleanup:** Delete temporary keychain and provisioning profile.
+
+3. **ExportOptions.plist**
+   - Committed to the repo at the project root.
+   - Contents:
+     - `method`: `app-store`
+     - `teamID`: your Apple Developer Team ID (can be templated/parameterized via secret).
+     - `provisioningProfiles`: dictionary mapping bundle ID to profile name.
+     - `signingCertificate`: `Apple Distribution`
+     - `uploadBitcode`: `false`
+     - `uploadSymbols`: `true`
+
+4. **Documentation**
+   - Add a "CI/CD" section to the project README (or a `CI.md` file) documenting:
+     - How to set up the required GitHub Secrets (step-by-step for each secret).
+     - How to trigger a TestFlight build (push a tag or use workflow_dispatch).
+     - How to generate the App Store Connect API key from App Store Connect > Users and Access > Keys.
+     - How to export the distribution certificate and provisioning profile as base64.
+
+### Files Created/Modified
+- `.github/workflows/ci.yml` (new)
+- `.github/workflows/testflight.yml` (new)
+- `ExportOptions.plist` (new)
+- `CI.md` or README update (new/updated)
+
+### Verification
+- Push to a branch triggers the CI workflow; it checks out, builds, and passes.
+- Creating a tag `v1.0.0-beta.1` triggers the TestFlight workflow.
+- With valid secrets configured, the workflow archives, exports, and uploads the IPA to App Store Connect.
+- The build appears in TestFlight within App Store Connect after processing.
+
+### Required GitHub Secrets Summary
+
+| Secret Name                          | Description                                      |
+|--------------------------------------|--------------------------------------------------|
+| `APPLE_CERTIFICATE_BASE64`          | Base64 `.p12` distribution certificate           |
+| `APPLE_CERTIFICATE_PASSWORD`        | Password for the `.p12` file                     |
+| `APPLE_PROVISIONING_PROFILE_BASE64` | Base64 `.mobileprovision` file                   |
+| `APPSTORE_CONNECT_API_KEY_ID`       | App Store Connect API key ID                     |
+| `APPSTORE_CONNECT_API_ISSUER_ID`    | App Store Connect API issuer ID                  |
+| `APPSTORE_CONNECT_API_KEY_BASE64`   | Base64 `.p8` API private key                     |
+
+---
+
 ## Phase Summary
 
 | Phase | Focus                              | Key Files                                               |
@@ -349,5 +472,6 @@ Reference: [SPEC.md](./SPEC.md)
 | 4     | History view                       | HistoryView, HistoryEditView, HistoryViewModel          |
 | 5     | Statistics & charts                | StatisticsView, StatisticsViewModel                     |
 | 6     | CSV export, settings, polish       | CSVExporter, SettingsView, Dark Mode & accessibility     |
+| 7     | CI/CD & TestFlight deployment      | GitHub Actions workflows, ExportOptions.plist, CI docs  |
 
-Each phase produces a buildable, testable increment. Phase 1 must be completed first. Phases 2-5 each depend on the prior phase. Phase 6 depends on all previous phases.
+Each phase produces a buildable, testable increment. Phase 1 must be completed first. Phases 2-5 each depend on the prior phase. Phase 6 depends on all previous phases. Phase 7 can be done in parallel with Phases 2-6 (only the TestFlight upload requires a working build).
