@@ -70,11 +70,11 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phase 1 is complete** (models, seed data, tab shell with placeholders). **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
+**Phases 1–2 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 2 | Location configuration & onboarding | pending |
+| 2 | Location configuration & onboarding | complete |
 | 3 | Home screen & site change logging | pending |
 | 4 | History view | pending |
 | 5 | Statistics & charts | pending |
