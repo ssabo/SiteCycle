@@ -23,11 +23,17 @@ This is an Xcode project (no SPM Package.swift at the root). Build and test via 
 # Build for iOS Simulator
 xcodebuild build -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
 
-# Run tests (when tests exist)
+# Run tests
 xcodebuild test -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
+
+# CI builds (no code signing)
+xcodebuild build-for-testing \
+  -scheme SiteCycle -project SiteCycle.xcodeproj \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 ```
 
-No linter or formatter is currently configured.
+**Linting:** SwiftLint is used in CI (`swiftlint lint --strict`). Not currently installed as a local dev dependency — CI installs via Homebrew.
 
 ## Architecture
 
@@ -40,7 +46,7 @@ Two `@Model` classes in `Models/`:
 
 ### App Initialization
 
-`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and seeds 14 default locations (7 zones × left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`.
+`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and falls back to local-only storage (`.none`) if CloudKit is unavailable (e.g., CI without code signing entitlements). Seeds 14 default locations (7 zones × left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`.
 
 Onboarding state is tracked via `@AppStorage("hasCompletedOnboarding")`.
 
@@ -64,16 +70,56 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phase 1 is complete** (models, seed data, tab shell with placeholders). Remaining phases:
+**Phase 1 is complete** (models, seed data, tab shell with placeholders). **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
 
-| Phase | Focus |
-|-------|-------|
-| 2 | Location configuration & onboarding |
-| 3 | Home screen & site change logging |
-| 4 | History view |
-| 5 | Statistics & charts |
-| 6 | CSV export, settings completion, polish |
-| 7 | GitHub Actions CI/CD & TestFlight |
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 2 | Location configuration & onboarding | pending |
+| 3 | Home screen & site change logging | pending |
+| 4 | History view | pending |
+| 5 | Statistics & charts | pending |
+| 6 | CSV export, settings completion, polish | pending |
+| 7 | GitHub Actions CI/CD & TestFlight | in progress |
+
+## CI / GitHub Actions
+
+A CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
+
+1. **SwiftLint** — lints all Swift code with `--strict` mode.
+2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 16 and an available iPhone simulator, builds with code signing disabled, and runs all tests.
+
+Key CI considerations:
+- Code signing is disabled (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements are absent. The app's `ModelContainer` init has a fallback from `.automatic` to `.none` to handle this — **do not remove the fallback**.
+- The test target (`SiteCycleTests`) is **hosted by the app** (`TEST_HOST` is set in the Xcode project). The app must launch successfully for tests to run.
+
+## Testing
+
+Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Testing`, `@Test`, `#expect`, `#require`).
+
+### Test files
+
+| File | What it covers |
+|------|---------------|
+| `LocationTests.swift` | `Location` model: display name formatting, default/custom init, unique IDs |
+| `SiteChangeEntryTests.swift` | `SiteChangeEntry` model: `durationHours` computation, default/custom init, unique IDs |
+| `DefaultLocationsTests.swift` | `seedDefaultLocations()`: correct count (14), idempotency, zones, sides, sort orders |
+
+### Writing tests — important patterns
+
+- **Swift Testing `throws` requirement:** Any test function using `try #require(...)` must be marked `throws`. Omitting it causes a compilation error ("errors thrown from here are not handled").
+- **SwiftData in tests:** Tests that need a `ModelContainer` should create an in-memory container with CloudKit disabled. See the helper in `DefaultLocationsTests.swift`:
+  ```swift
+  private func makeContainer() throws -> ModelContainer {
+      let schema = Schema([Location.self, SiteChangeEntry.self])
+      let config = ModelConfiguration(
+          schema: schema,
+          isStoredInMemoryOnly: true,
+          cloudKitDatabase: .none
+      )
+      return try ModelContainer(for: schema, configurations: [config])
+  }
+  ```
+- **Model instantiation without a container:** Simple `Location` and `SiteChangeEntry` objects can be created without a `ModelContainer` for basic property/computed-property tests. A container is only needed when using `ModelContext` operations (insert, fetch, save).
 
 ## Key Design Decisions
 
