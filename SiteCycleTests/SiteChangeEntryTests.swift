@@ -9,7 +9,7 @@ struct SiteChangeEntryTests {
         #expect(entry.durationHours == nil)
     }
 
-    @Test func durationHoursCalculatesCorrectly() {
+    @Test func durationHoursCalculatesCorrectly() throws {
         let start = Date()
         let end = start.addingTimeInterval(3 * 3600) // 3 hours later
         let entry = SiteChangeEntry(startTime: start, endTime: end)
@@ -17,7 +17,7 @@ struct SiteChangeEntryTests {
         #expect(abs(duration - 3.0) < 0.001)
     }
 
-    @Test func durationHoursPartialHour() {
+    @Test func durationHoursPartialHour() throws {
         let start = Date()
         let end = start.addingTimeInterval(5400) // 1.5 hours
         let entry = SiteChangeEntry(startTime: start, endTime: end)
@@ -58,7 +58,7 @@ struct SiteChangeEntryTests {
         #expect(entry1.id != entry2.id)
     }
 
-    @Test func zeroDuration() {
+    @Test func zeroDuration() throws {
         let start = Date()
         let entry = SiteChangeEntry(startTime: start, endTime: start)
         let duration = try #require(entry.durationHours)
