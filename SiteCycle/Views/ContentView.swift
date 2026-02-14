@@ -1,0 +1,112 @@
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        TabView {
+            NavigationStack {
+                HomePlaceholderView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            NavigationLink(destination: SettingsPlaceholderView()) {
+                                Image(systemName: "gear")
+                            }
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Home", systemImage: "house")
+            }
+
+            NavigationStack {
+                HistoryPlaceholderView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            NavigationLink(destination: SettingsPlaceholderView()) {
+                                Image(systemName: "gear")
+                            }
+                        }
+                    }
+            }
+            .tabItem {
+                Label("History", systemImage: "clock")
+            }
+
+            NavigationStack {
+                StatisticsPlaceholderView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            NavigationLink(destination: SettingsPlaceholderView()) {
+                                Image(systemName: "gear")
+                            }
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Statistics", systemImage: "chart.bar")
+            }
+        }
+    }
+}
+
+// MARK: - Placeholder Views
+
+struct HomePlaceholderView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "house")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("Home")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+        }
+        .navigationTitle("SiteCycle")
+    }
+}
+
+struct HistoryPlaceholderView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "clock")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("History")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+        }
+        .navigationTitle("History")
+    }
+}
+
+struct StatisticsPlaceholderView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "chart.bar")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("Statistics")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+        }
+        .navigationTitle("Statistics")
+    }
+}
+
+struct SettingsPlaceholderView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "gear")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("Settings")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+        }
+        .navigationTitle("Settings")
+    }
+}
+
+#Preview {
+    ContentView()
+        .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+}
