@@ -20,6 +20,7 @@
 		8A0000000000000000000110 /* LocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000010 /* LocationTests.swift */; };
 		8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000011 /* SiteChangeEntryTests.swift */; };
 		8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000012 /* DefaultLocationsTests.swift */; };
+		8A0000000000000000000113 /* LocationConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000013 /* LocationConfigTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		8A0000000000000000000010 /* LocationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000011 /* SiteChangeEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeEntryTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000012 /* DefaultLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocationsTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000013 /* LocationConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000015 /* SiteCycleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteCycleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -151,6 +153,7 @@
 				8A0000000000000000000010 /* LocationTests.swift */,
 				8A0000000000000000000011 /* SiteChangeEntryTests.swift */,
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
+				8A0000000000000000000013 /* LocationConfigTests.swift */,
 			);
 			path = SiteCycleTests;
 			sourceTree = "<group>";
@@ -273,6 +276,7 @@
 				8A0000000000000000000110 /* LocationTests.swift in Sources */,
 				8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */,
 				8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */,
+				8A0000000000000000000113 /* LocationConfigTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
