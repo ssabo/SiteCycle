@@ -41,7 +41,7 @@ private struct WelcomePage: View {
 
             Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
                 .font(.system(size: 80))
-                .foregroundStyle(.accent)
+                .foregroundStyle(.tint)
 
             Text("SiteCycle")
                 .font(.largeTitle)
