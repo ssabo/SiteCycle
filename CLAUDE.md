@@ -55,9 +55,25 @@ The site selection sheet sorts enabled locations by most-recent-use:
 - **Recommended list:** 3 least recently used / never-used locations (most recovery time)
 - Never-used locations sort as oldest (always recommended until used)
 
+## Key Documentation
+
+- **SPEC.md** — Complete product specification. Covers all features (site change logging, location configuration, history, statistics, CSV export), data models, UI/UX design, recommendation logic, acceptance criteria, and out-of-scope items. This is the source of truth for what the app should do.
+- **PLAN.md** — Phased implementation roadmap (7 phases). Each phase lists deliverables, files to create/modify, and verification steps. Phases are designed to be completed sequentially in individual sessions.
+
+Always consult SPEC.md for feature requirements and PLAN.md for implementation order and scope when building new phases.
+
 ## Implementation Status
 
-The project follows a 7-phase plan defined in PLAN.md. **Phase 1 is complete** (models, seed data, tab shell with placeholders). Phases 2–7 cover: location config & onboarding, home screen & logging, history view, statistics & charts, CSV export & polish, and CI/CD.
+**Phase 1 is complete** (models, seed data, tab shell with placeholders). Remaining phases:
+
+| Phase | Focus |
+|-------|-------|
+| 2 | Location configuration & onboarding |
+| 3 | Home screen & site change logging |
+| 4 | History view |
+| 5 | Statistics & charts |
+| 6 | CSV export, settings completion, polish |
+| 7 | GitHub Actions CI/CD & TestFlight |
 
 ## Key Design Decisions
 
