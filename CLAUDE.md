@@ -33,7 +33,10 @@ xcodebuild build-for-testing \
   CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 ```
 
-**Linting:** SwiftLint is used in CI (`swiftlint lint --strict`). Not currently installed as a local dev dependency — CI installs via Homebrew.
+**Linting:** SwiftLint is used in CI (`swiftlint lint --strict`). Not currently installed as a local dev dependency — CI installs via Homebrew. Key rules to watch for:
+- `large_tuple`: Tuples may have at most 2 members. Use a struct instead of 3+ member tuples.
+- `empty_count` (opt-in, enabled): Use `.isEmpty` instead of `.count == 0`.
+- All warnings are errors in `--strict` mode.
 
 ## Architecture
 
@@ -70,11 +73,11 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phase 1 is complete** (models, seed data, tab shell with placeholders). **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
+**Phases 1–2 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 2 | Location configuration & onboarding | pending |
+| 2 | Location configuration & onboarding | complete |
 | 3 | Home screen & site change logging | pending |
 | 4 | History view | pending |
 | 5 | Statistics & charts | pending |
@@ -103,6 +106,7 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 | `LocationTests.swift` | `Location` model: display name formatting, default/custom init, unique IDs |
 | `SiteChangeEntryTests.swift` | `SiteChangeEntry` model: `durationHours` computation, default/custom init, unique IDs |
 | `DefaultLocationsTests.swift` | `seedDefaultLocations()`: correct count (14), idempotency, zones, sides, sort orders |
+| `LocationConfigTests.swift` | Zone CRUD: custom zone creation (with/without laterality), soft/hard delete, toggle, reorder, display names |
 
 ### Writing tests — important patterns
 
@@ -120,6 +124,19 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
   }
   ```
 - **Model instantiation without a container:** Simple `Location` and `SiteChangeEntry` objects can be created without a `ModelContainer` for basic property/computed-property tests. A container is only needed when using `ModelContext` operations (insert, fetch, save).
+
+## SwiftUI Pitfalls
+
+- `.foregroundStyle(.accent)` does not compile — `ShapeStyle` has no `.accent` member. Use `.tint` for accent color styling (available iOS 15+).
+
+## Adding Files to the Xcode Project
+
+When creating a new Swift file, it must be registered in `SiteCycle.xcodeproj/project.pbxproj` in three places:
+1. **PBXFileReference** — declares the file
+2. **PBXGroup** — adds it to the correct folder group (e.g., `SiteCycleTests`)
+3. **PBXSourcesBuildPhase** — adds it to the correct target's compile sources (via a PBXBuildFile entry)
+
+Use sequential hex IDs following the existing pattern (e.g., `8A0000000000000000000013` for the file ref, `8A0000000000000000000113` for the build file).
 
 ## Key Design Decisions
 

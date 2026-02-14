@@ -7,7 +7,7 @@ struct ContentView: View {
                 HomePlaceholderView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            NavigationLink(destination: SettingsPlaceholderView()) {
+                            NavigationLink(destination: SettingsView()) {
                                 Image(systemName: "gear")
                             }
                         }
@@ -21,7 +21,7 @@ struct ContentView: View {
                 HistoryPlaceholderView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            NavigationLink(destination: SettingsPlaceholderView()) {
+                            NavigationLink(destination: SettingsView()) {
                                 Image(systemName: "gear")
                             }
                         }
@@ -35,7 +35,7 @@ struct ContentView: View {
                 StatisticsPlaceholderView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            NavigationLink(destination: SettingsPlaceholderView()) {
+                            NavigationLink(destination: SettingsView()) {
                                 Image(systemName: "gear")
                             }
                         }
@@ -89,20 +89,6 @@ struct StatisticsPlaceholderView: View {
                 .foregroundStyle(.secondary)
         }
         .navigationTitle("Statistics")
-    }
-}
-
-struct SettingsPlaceholderView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "gear")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("Settings")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-        }
-        .navigationTitle("Settings")
     }
 }
 

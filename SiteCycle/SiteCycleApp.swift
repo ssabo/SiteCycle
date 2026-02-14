@@ -45,6 +45,12 @@ struct SiteCycleApp: App {
                 .onAppear {
                     seedDefaultLocations(context: sharedModelContainer.mainContext)
                 }
+                .fullScreenCover(isPresented: Binding(
+                    get: { !hasCompletedOnboarding },
+                    set: { newValue in hasCompletedOnboarding = !newValue }
+                )) {
+                    OnboardingView()
+                }
         }
         .modelContainer(sharedModelContainer)
     }
