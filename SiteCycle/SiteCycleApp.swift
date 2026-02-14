@@ -10,7 +10,7 @@ struct SiteCycleApp: App {
             Location.self,
             SiteChangeEntry.self,
         ])
-        let modelConfiguration = ModelConfiguration(
+        let cloudConfig = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
             cloudKitDatabase: .automatic
@@ -19,10 +19,23 @@ struct SiteCycleApp: App {
         do {
             return try ModelContainer(
                 for: schema,
-                configurations: [modelConfiguration]
+                configurations: [cloudConfig]
             )
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // CloudKit unavailable (e.g. CI, no entitlements) — fall back to local storage
+            let localConfig = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                cloudKitDatabase: .none
+            )
+            do {
+                return try ModelContainer(
+                    for: schema,
+                    configurations: [localConfig]
+                )
+            } catch {
+                fatalError("Could not create ModelContainer: \(error)")
+            }
         }
     }()
 
