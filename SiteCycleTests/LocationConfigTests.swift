@@ -96,7 +96,7 @@ struct LocationConfigTests {
 
         let descriptor = FetchDescriptor<Location>()
         let locations = try context.fetch(descriptor)
-        #expect(locations.count == 0)
+        #expect(locations.isEmpty)
     }
 
     @Test func deleteCustomZoneWithHistorySoftDeletes() throws {

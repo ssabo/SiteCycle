@@ -1,26 +1,33 @@
 import SwiftUI
 import SwiftData
 
+private struct ZoneGroup: Identifiable {
+    let zone: String
+    let isCustom: Bool
+    let locations: [Location]
+    var id: String { zone }
+}
+
 struct LocationConfigView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Location.sortOrder) private var allLocations: [Location]
     @State private var showingAddSheet = false
 
-    private var zoneGroups: [(zone: String, isCustom: Bool, locations: [Location])] {
-        var groups: [(zone: String, isCustom: Bool, locations: [Location])] = []
+    private var zoneGroups: [ZoneGroup] {
+        var groups: [ZoneGroup] = []
         var seen = Set<String>()
         for location in allLocations {
             guard !seen.contains(location.zone) else { continue }
             seen.insert(location.zone)
             let locs = allLocations.filter { $0.zone == location.zone }
-            groups.append((zone: location.zone, isCustom: location.isCustom, locations: locs))
+            groups.append(ZoneGroup(zone: location.zone, isCustom: location.isCustom, locations: locs))
         }
         return groups
     }
 
     var body: some View {
         List {
-            ForEach(zoneGroups, id: \.zone) { group in
+            ForEach(zoneGroups) { group in
                 ZoneRow(
                     zone: group.zone,
                     isCustom: group.isCustom,
