@@ -172,44 +172,90 @@ Reference: [SPEC.md](./SPEC.md)
 ### Prerequisites
 - Phase 3 complete (site changes are being logged).
 
-### Deliverables
+### Step 1: Write Tests (before implementation)
 
-1. **History ViewModel** (Spec section 3.3.2)
-   - `ViewModels/HistoryViewModel.swift`:
-     - Query all `SiteChangeEntry` records sorted by `startTime` descending.
-     - Filter by location: optional `Location?` filter. When set, only show entries for that location.
-     - Filter by date range: optional `startDate` / `endDate`. When set, only show entries within range.
-     - Delete entry: remove the `SiteChangeEntry`. If it was the most recent entry and the one before it had its `endTime` set to this entry's `startTime`, reopen the previous entry (set `endTime = nil`) -- or simply delete without adjusting (simpler; note this in the UI).
-     - Edit entry: update location, startTime, endTime, and note fields on an existing entry.
+Create `SiteCycleTests/HistoryViewModelTests.swift` with the following tests. All tests use an in-memory `ModelContainer` (same `makeContainer()` helper pattern as existing tests). The ViewModel under test is `HistoryViewModel(modelContext:)`.
 
-2. **History list UI** (Spec section 3.3.2)
+#### Fetching & Ordering
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `fetchEntriesReturnsReverseChronologicalOrder` | Create 5 entries at different times. `filteredEntries` returns them newest-first. |
+| `fetchEntriesIncludesActiveEntry` | An entry with `endTime == nil` appears in results with no crash. |
+| `fetchEntriesEmptyHistoryReturnsEmptyArray` | No entries exist → `filteredEntries` returns `[]`. |
+
+#### Filtering by Location
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `filterByLocationReturnsOnlyMatchingEntries` | Create entries for 3 locations. Set `locationFilter` to one location. Only that location's entries appear. |
+| `filterByLocationNilReturnsAllEntries` | `locationFilter` is nil → all entries returned. |
+| `filterByDisabledLocationStillShowsHistory` | Entries tied to a disabled location still appear when that location is selected as filter. |
+
+#### Filtering by Date Range
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `filterByDateRangeReturnsOnlyEntriesInRange` | Create entries spanning 60 days. Set a 7-day range. Only entries within that window appear. |
+| `filterByDateRangeIncludesEdgeDates` | An entry whose `startTime` is exactly on the start or end boundary is included. |
+| `filterByDateRangeNilReturnsAllEntries` | No date filter → all entries returned. |
+
+#### Combined Filters
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `combinedLocationAndDateFiltersApplyTogether` | Set both a location filter and a date range. Only entries matching *both* criteria appear. |
+
+#### Editing
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `editEntryUpdatesLocation` | Change an entry's location to a different one. Fetch confirms the new location persists. |
+| `editEntryUpdatesStartTime` | Change `startTime`. Fetch confirms the new time. |
+| `editEntryUpdatesEndTime` | Set `endTime` on an active entry. Fetch confirms duration is now computable. |
+| `editEntryClearsEndTime` | Set `endTime` to nil on a completed entry. Entry becomes active again. |
+| `editEntryUpdatesNote` | Change the note text. Fetch confirms the update. |
+
+#### Deleting
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `deleteEntryRemovesFromPersistence` | Delete an entry. Fetch confirms count decremented and entry is gone. |
+| `deleteActiveEntrySucceeds` | Deleting the currently active entry (no `endTime`) works without crash. |
+| `deleteOnlyEntryLeavesEmptyHistory` | Delete the sole entry. `filteredEntries` returns `[]`. |
+
+### Step 2: Implement HistoryViewModel
+
+- `ViewModels/HistoryViewModel.swift`:
+  - `@Observable` class with `modelContext`, `locationFilter: Location?`, `startDate: Date?`, `endDate: Date?`.
+  - Computed or refreshed `filteredEntries: [SiteChangeEntry]` that applies both filters and sorts by `startTime` descending.
+  - `deleteEntry(_:)` — removes the entry from the context and saves.
+  - `updateEntry(_:location:startTime:endTime:note:)` — mutates fields and saves.
+- Run tests — all 17 tests must pass before proceeding to UI.
+
+### Step 3: Implement Views
+
+1. **History list UI** (Spec section 3.3.2)
    - `Views/HistoryView.swift`:
-     - `List` displaying entries in reverse chronological order.
-     - Each row shows:
-       - Location `displayName`.
-       - Start date/time (formatted: e.g., "Feb 7, 2026 at 3:15 PM").
-       - Duration (e.g., "68.5 hours") or "Active" if `endTime` is nil.
-       - Note preview (truncated if long), with note icon if present.
-     - Filter controls at the top:
-       - Location picker (dropdown/menu of all locations + "All").
-       - Date range picker (predefined: "Last 7 days", "Last 30 days", "Last 90 days", "All Time", or custom date range).
+     - `List` displaying `filteredEntries`.
+     - Each row shows: location `displayName`, start date/time, duration or "Active", note preview.
+     - Filter controls: location picker ("All" + all locations), date range picker ("Last 7 days", "Last 30 days", "Last 90 days", "All Time").
      - Swipe-to-delete with confirmation.
      - Tap on entry navigates to edit view.
 
-3. **History entry edit view**
-   - `Views/HistoryEditView.swift` (or inline sheet):
-     - `Picker` for location (all configured locations).
-     - `DatePicker` for start time.
-     - `DatePicker` for end time (optional, clearable).
-     - `TextField` for note.
+2. **History entry edit view**
+   - `Views/HistoryEditView.swift`:
+     - `Picker` for location, `DatePicker` for start/end time, `TextField` for note.
      - Save and Cancel buttons.
 
 ### Files Created/Modified
+- `SiteCycleTests/HistoryViewModelTests.swift` (new — write first)
 - `SiteCycle/ViewModels/HistoryViewModel.swift` (new)
 - `SiteCycle/Views/HistoryView.swift` (new, replaces placeholder)
 - `SiteCycle/Views/HistoryEditView.swift` (new)
 
 ### Verification
+- All 17 `HistoryViewModelTests` pass.
 - History tab shows all logged site changes in reverse chronological order.
 - Filtering by location works -- only entries for selected location appear.
 - Filtering by date range works -- "Last 7 days", "Last 30 days", etc.
@@ -226,46 +272,113 @@ Reference: [SPEC.md](./SPEC.md)
 ### Prerequisites
 - Phase 4 complete (history entries exist and are browsable).
 
-### Deliverables
+### Step 1: Write Tests (before implementation)
 
-1. **Statistics ViewModel** (Spec sections 3.4.1 - 3.4.4)
-   - `ViewModels/StatisticsViewModel.swift`:
-     - Compute per-location stats for all enabled locations:
-       - `totalUses: Int` -- count of `SiteChangeEntry` for this location.
-       - `averageDuration: Double?` -- mean of `durationHours` for completed entries.
-       - `medianDuration: Double?` -- median of `durationHours` for completed entries.
-       - `minDuration: Double?` / `maxDuration: Double?` -- range.
-       - `lastUsed: Date?` -- most recent `startTime`.
-       - `daysSinceLastUse: Int?` -- days between `lastUsed` and now.
-     - Compute overall average duration across all completed entries.
-     - **Absorption insight** (Spec section 3.4.2):
-       - For each location, if `averageDuration < overallAverage * (1 - threshold/100)`, flag it.
-       - Threshold from `@AppStorage` (default 20%).
-       - Generate a message: "Average duration at this site is X% below your overall average."
-     - **Usage distribution data**: array of `(locationName: String, count: Int)` for chart.
-     - **Rotation timeline data**: array of `(date: Date, locationName: String, color: Color)` for the past N days.
+Create `SiteCycleTests/StatisticsViewModelTests.swift`. The statistics logic is computationally dense and benefits greatly from TDD — write all calculation tests first so the ViewModel can be built against a precise contract.
 
-2. **Statistics main view** (Spec section 3.4)
+The ViewModel exposes a `LocationStats` struct (or similar) per location and aggregate computation methods. Tests should exercise pure computation logic wherever possible. Use the same `makeContainer()` helper pattern.
+
+#### Per-Location: Total Uses
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `totalUsesCountsAllEntriesForLocation` | Location with 4 entries (3 completed + 1 active) → `totalUses == 4`. |
+| `totalUsesIsZeroForNeverUsedLocation` | Location with no entries → `totalUses == 0`. |
+
+#### Per-Location: Average Duration
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `averageDurationComputesMeanOfCompletedEntries` | 3 completed entries with durations 48, 72, 96 → `averageDuration == 72.0`. |
+| `averageDurationExcludesActiveEntries` | 2 completed entries + 1 active → average computed from the 2 completed only. |
+| `averageDurationIsNilWhenNoCompletedEntries` | 1 active entry, 0 completed → `averageDuration == nil`. |
+
+#### Per-Location: Median Duration
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `medianDurationReturnsMiddleValueForOddCount` | Durations [48, 72, 96] → `medianDuration == 72.0`. |
+| `medianDurationReturnsAverageOfMiddleTwoForEvenCount` | Durations [48, 60, 72, 96] → `medianDuration == 66.0`. |
+| `medianDurationIsNilWhenNoCompletedEntries` | No completed entries → `medianDuration == nil`. |
+| `medianDurationWithSingleEntry` | One completed entry (72h) → `medianDuration == 72.0`. |
+
+#### Per-Location: Min/Max Duration
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `minMaxDurationReturnsCorrectRange` | Durations [48, 72, 96] → `minDuration == 48.0`, `maxDuration == 96.0`. |
+| `minMaxDurationWithSingleEntry` | One entry (72h) → `min == max == 72.0`. |
+| `minMaxDurationIsNilWhenNoCompletedEntries` | No completed entries → both nil. |
+
+#### Per-Location: Last Used & Days Since
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `lastUsedReturnsNewestStartTime` | 3 entries → `lastUsed` matches the entry with the most recent `startTime`. |
+| `lastUsedIsNilForNeverUsedLocation` | No entries → `lastUsed == nil`. |
+| `daysSinceLastUseCalculatesCorrectly` | Entry with `startTime` 10 days ago → `daysSinceLastUse == 10`. |
+| `daysSinceLastUseIsNilForNeverUsedLocation` | No entries → `daysSinceLastUse == nil`. |
+
+#### Overall Average
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `overallAverageDurationAcrossAllLocations` | Entries across 3 locations with various durations → overall average is mean of all completed durations. |
+| `overallAverageIsNilWhenNoCompletedEntries` | Only active entries → overall average is nil. |
+
+#### Absorption Insight (Spec section 3.4.2)
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `absorptionFlagTriggeredWhenBelowThreshold` | Overall avg 72h, location avg 55h, threshold 20% (cutoff 57.6h). 55 < 57.6 → flagged. |
+| `absorptionFlagNotTriggeredWhenAboveThreshold` | Overall avg 72h, location avg 65h, threshold 20%. 65 > 57.6 → not flagged. |
+| `absorptionFlagNotTriggeredAtExactThreshold` | Location avg exactly at the cutoff → not flagged (must be *below*, not equal). |
+| `absorptionFlagCustomThreshold` | Threshold set to 10% instead of 20%. Verify the cutoff adjusts (72 * 0.9 = 64.8). |
+| `absorptionFlagMessageIncludesPercentage` | Flagged location's message contains the correct percentage below average (e.g., "24% below"). |
+| `absorptionFlagSkipsLocationsWithNoCompletedEntries` | Location with only active entries → not flagged (no average to compare). |
+
+#### Usage Distribution Data
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `usageDistributionReturnsCorrectCounts` | 3 locations with 5, 3, 1 entries respectively → distribution data matches those counts. |
+| `usageDistributionExcludesLocationsWithZeroUses` | Never-used enabled location → omitted from distribution (or included with count 0 — pick a convention and test it). |
+
+#### Edge Cases
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `statisticsWithNoDataReturnsEmpty` | No entries at all → all per-location stats arrays are empty, no crash. |
+| `statisticsWithSingleCompletedEntry` | One entry → totalUses 1, avg/median/min/max all equal its duration. |
+
+### Step 2: Implement StatisticsViewModel
+
+- `ViewModels/StatisticsViewModel.swift`:
+  - `@Observable` class with `modelContext`, `absorptionThreshold: Int` (from `@AppStorage`, default 20).
+  - `LocationStats` struct: `location: Location`, `totalUses: Int`, `averageDuration: Double?`, `medianDuration: Double?`, `minDuration: Double?`, `maxDuration: Double?`, `lastUsed: Date?`, `daysSinceLastUse: Int?`, `absorptionFlag: String?`.
+  - `locationStats: [LocationStats]` — computed for all enabled locations.
+  - `overallAverageDuration: Double?` — mean of all completed entries.
+  - `usageDistribution: [(locationName: String, count: Int)]` — for chart data.
+  - `timelineEntries(days:) -> [(entry: SiteChangeEntry, locationName: String)]` — for rotation timeline.
+  - Make statistical computations pure functions (e.g., `static func computeMedian(_ values: [Double]) -> Double?`) for easy testing.
+- Run tests — all 27 tests must pass before proceeding to UI.
+
+### Step 3: Implement Views
+
+1. **Statistics main view** (Spec section 3.4)
    - `Views/StatisticsView.swift`:
-     - **Usage Distribution Chart** at the top (Spec section 3.4.3):
-       - `Chart` (Swift Charts) with `BarMark` for each location. X-axis: location name (rotated labels if needed). Y-axis: usage count.
-       - Color bars using a consistent palette.
-     - **Per-Location Stats** below the chart:
-       - `List` or grid of location cards. Each card shows: location name, total uses, avg/median/min/max duration, last used, days since last use.
-       - Locations with absorption flags show a yellow/orange warning banner with the insight message (Spec section 3.4.2).
-     - **Rotation Timeline** (Spec section 3.4.4):
-       - Segmented control for time range: 30 / 60 / 90 days.
-       - Horizontal scrollable timeline or `Chart` with `RectangleMark` showing date ranges colored by location.
-       - Each block represents a site change session (startTime to endTime) colored by location.
-
-3. **Empty state**
-   - If no completed site changes exist, show a friendly message: "Log a few site changes to see your statistics."
+     - **Usage Distribution Chart** (Swift Charts `BarMark`).
+     - **Per-Location Stats** list/grid with absorption flag warnings.
+     - **Rotation Timeline** with 30/60/90 day segmented control.
+     - **Empty state** when no completed entries exist.
 
 ### Files Created/Modified
+- `SiteCycleTests/StatisticsViewModelTests.swift` (new — write first)
 - `SiteCycle/ViewModels/StatisticsViewModel.swift` (new)
 - `SiteCycle/Views/StatisticsView.swift` (new, replaces placeholder)
 
 ### Verification
+- All 27 `StatisticsViewModelTests` pass.
 - Statistics tab shows usage distribution chart with correct counts per location.
 - Per-location stats display all required metrics (total uses, avg, median, min, max, last used, days since).
 - Absorption flags appear on locations meeting the threshold criteria.
@@ -281,54 +394,90 @@ Reference: [SPEC.md](./SPEC.md)
 ### Prerequisites
 - Phase 5 complete (all main features functional).
 
-### Deliverables
+### Step 1: Write Tests (before implementation)
 
-1. **CSV Export** (Spec section 7)
-   - `Utilities/CSVExporter.swift`:
-     - Generate CSV string from all `SiteChangeEntry` records.
-     - Columns: `date` (ISO 8601 formatted startTime), `location` (displayName), `duration_hours` (rounded to 1 decimal, or empty if active), `note` (or empty).
-     - Header row: `date,location,duration_hours,note`.
-     - Handle commas and quotes in notes by properly escaping CSV fields.
-   - Integration in Settings:
-     - "Export Data" row triggers export.
-     - Use `ShareLink` or present a `UIActivityViewController` via SwiftUI to share the CSV file.
-     - File named `sitecycle-export-YYYY-MM-DD.csv`.
+Create `SiteCycleTests/CSVExporterTests.swift`. CSV generation is pure data transformation — ideal for thorough unit testing. The exporter should be a struct/class with a static or instance method like `CSVExporter.generate(from: [SiteChangeEntry]) -> String` that can be tested without any UI involvement.
 
-2. **Settings completion** (Spec section 7)
-   - Wire up the "Export Data" row to the CSV exporter.
-   - "About" section: display app version (from bundle), brief description.
-   - Ensure "Target Duration" and "Absorption Alert Threshold" values are read correctly by HomeViewModel and StatisticsViewModel respectively.
+#### CSV Format & Headers
 
-3. **Sync status indicator** (Spec section 6.2)
-   - Add a small cloud icon in the navigation bar or home screen that indicates sync status.
-   - Use `NSPersistentCloudKitContainer.eventChangedNotification` (or SwiftData equivalent) to detect sync events.
-   - States: synced (cloud checkmark), syncing (cloud with arrow), offline (cloud with slash).
-   - Keep the implementation simple -- if CloudKit events aren't easily observable in SwiftData, a simpler approach is acceptable (e.g., show cloud icon always, show slash when network is unavailable via `NWPathMonitor`).
+| Test name | What it validates |
+|-----------|-------------------|
+| `csvHeaderRowIsCorrect` | Output starts with `"date,location,duration_hours,note\n"`. |
+| `csvEmptyDataProducesHeaderOnly` | No entries → output is exactly the header row. |
 
-4. **Dark Mode verification**
-   - Review all views and ensure semantic colors are used throughout.
-   - Avoid/Recommended indicators: use `Color.red.opacity(0.15)` / `Color.green.opacity(0.15)` backgrounds that adapt to dark mode.
-   - Test and fix any hardcoded colors.
+#### Field Formatting
 
-5. **Dynamic Type verification** (Spec section 5.4)
-   - Ensure all text uses dynamic type styles (`.body`, `.headline`, `.caption`, etc.).
-   - Verify layout doesn't break at the largest accessibility text sizes.
-   - Fix any truncation or overlap issues.
+| Test name | What it validates |
+|-----------|-------------------|
+| `csvDateIsISO8601Formatted` | Entry's `startTime` appears as ISO 8601 string (e.g., `"2026-02-07T15:30:00Z"`). |
+| `csvLocationUsesDisplayName` | Entry for "Left Front Abdomen" → `location` column contains `"Left Front Abdomen"`. |
+| `csvDurationRoundedToOneDecimal` | Entry with 68.4667 hours → `duration_hours` column contains `"68.5"`. |
+| `csvActiveEntryHasEmptyDuration` | Entry with `endTime == nil` → `duration_hours` column is empty. |
+| `csvNilNoteProducesEmptyField` | Entry with no note → `note` column is empty. |
 
-6. **Edge case handling & polish**
-   - First launch with no data: all screens show appropriate empty states.
-   - Location with zero history: stats show "No data" instead of crashing on nil.
-   - Deleting all locations: prevent user from disabling all locations (require at least 1 enabled).
-   - Rapid double-tap on "Log Site Change": prevent duplicate entries.
-   - Long notes: ensure text wraps/truncates appropriately in history list.
+#### CSV Escaping (RFC 4180 compliance)
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `csvNoteWithCommasIsQuotedCorrectly` | Note `"sore, red area"` → field wrapped in double quotes: `"\"sore, red area\""`. |
+| `csvNoteWithDoubleQuotesIsEscaped` | Note `'said "ouch"'` → quotes doubled and field wrapped: `"\"said \"\"ouch\"\"\""`. |
+| `csvNoteWithNewlinesIsQuoted` | Note with `\n` → field wrapped in double quotes. |
+| `csvLocationNameWithCommaIsQuoted` | Custom location named `"Hip, Left"` → properly quoted. |
+
+#### Ordering & Multiple Entries
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `csvEntriesInChronologicalOrder` | 3 entries → rows appear oldest-first (ascending `startTime`). |
+| `csvMultipleEntriesProduceCorrectRowCount` | 5 entries → 6 lines total (1 header + 5 data rows). |
+
+#### File Naming
+
+| Test name | What it validates |
+|-----------|-------------------|
+| `csvFileNameIncludesTodaysDate` | `CSVExporter.fileName()` returns `"sitecycle-export-YYYY-MM-DD.csv"` with today's date. |
+
+### Step 2: Implement CSVExporter
+
+- `Utilities/CSVExporter.swift`:
+  - `struct CSVExporter` with:
+    - `static func generate(from entries: [SiteChangeEntry]) -> String`
+    - `static func fileName(for date: Date = Date()) -> String`
+  - Proper RFC 4180 escaping for fields containing commas, quotes, or newlines.
+  - ISO 8601 date formatting, 1-decimal duration rounding.
+- Run tests — all 14 `CSVExporterTests` must pass before wiring into the UI.
+
+### Step 3: Implement Settings & Polish
+
+1. **Settings completion** (Spec section 7)
+   - Wire up "Export Data" row: use `ShareLink` with the generated CSV data and filename.
+   - Ensure "Target Duration" and "Absorption Alert Threshold" values are read by HomeViewModel and StatisticsViewModel.
+
+2. **Sync status indicator** (Spec section 6.2)
+   - Small cloud icon in nav bar. Simple approach: `NWPathMonitor` for connectivity status.
+   - States: synced (cloud checkmark), offline (cloud with slash).
+
+3. **Dark Mode verification**
+   - Review all views for semantic colors. Fix hardcoded colors.
+
+4. **Dynamic Type verification** (Spec section 5.4)
+   - Ensure all text uses dynamic type styles. Fix layout at largest sizes.
+
+5. **Edge case handling & polish**
+   - Empty states on all screens.
+   - Prevent disabling all locations (require at least 1 enabled).
+   - Prevent duplicate site changes from rapid double-tap.
+   - Long note truncation in history list.
 
 ### Files Created/Modified
+- `SiteCycleTests/CSVExporterTests.swift` (new — write first)
 - `SiteCycle/Utilities/CSVExporter.swift` (new)
 - `SiteCycle/Views/SettingsView.swift` (updated)
 - `SiteCycle/Views/ContentView.swift` (sync indicator)
 - Various view files (Dark Mode / Dynamic Type fixes as needed)
 
 ### Verification
+- All 14 `CSVExporterTests` pass.
 - Export produces a valid CSV file with correct headers and data.
 - Sharing the CSV file works via the share sheet.
 - Settings values (target duration, threshold) are reflected in Home and Statistics screens.
@@ -343,23 +492,38 @@ Reference: [SPEC.md](./SPEC.md)
 
 **Goal:** Set up a GitHub Actions workflow that builds the app on every push/PR, and a release workflow that archives, signs, and uploads the app to TestFlight via App Store Connect.
 
+**Status:** CI workflow and existing unit tests are already implemented. Remaining: TestFlight deployment workflow.
+
 ### Prerequisites
 - Phase 6 complete (app is feature-complete and polished).
 - An Apple Developer account with App Store Connect access.
 - The app's Bundle Identifier registered in App Store Connect.
 
+### Test Considerations
+
+Phase 7 has no new ViewModel or business logic requiring unit tests. The CI workflow itself *is* the test infrastructure — it validates that all tests from phases 1–6 pass on every push.
+
+However, before finalizing this phase, verify:
+- **All test files are registered** in `project.pbxproj` (PBXFileReference, PBXGroup, PBXSourcesBuildPhase).
+- **CI runs all tests**: the `xcodebuild test` step in `ci.yml` executes the full `SiteCycleTests` target.
+- **Test count audit**: confirm the expected test count matches CI output. Expected totals after all phases:
+  - `LocationTests` — 6
+  - `SiteChangeEntryTests` — 7
+  - `DefaultLocationsTests` — 8
+  - `LocationConfigTests` — 15
+  - `HomeViewModelTests` — 9
+  - `SiteChangeViewModelTests` — 20
+  - `HistoryViewModelTests` — 17 (Phase 4)
+  - `StatisticsViewModelTests` — 27 (Phase 5)
+  - `CSVExporterTests` — 14 (Phase 6)
+  - **Total: 123 tests**
+
 ### Deliverables
 
-1. **CI workflow -- build & test on every push** (`.github/workflows/ci.yml`)
+1. **CI workflow -- build & test on every push** (`.github/workflows/ci.yml`) — **already implemented**
    - Trigger: `push` to any branch, `pull_request` to `main`.
    - Runner: `macos-15` (Xcode 16+).
-   - Steps:
-     - Check out code.
-     - Select Xcode version (`sudo xcode-select -s /Applications/Xcode_16.app`).
-     - Resolve Swift packages (`xcodebuild -resolvePackageDependencies`).
-     - Build for iOS Simulator (`xcodebuild build -scheme SiteCycle -destination 'platform=iOS Simulator,name=iPhone 16'`).
-     - Run unit tests if any exist (`xcodebuild test ...`).
-   - Purpose: catch build failures and regressions early on PRs.
+   - Steps: checkout, select Xcode, build, run tests, SwiftLint.
 
 2. **TestFlight release workflow** (`.github/workflows/testflight.yml`)
    - Trigger: `push` of a tag matching `v*` (e.g., `v1.0.0`), or manual `workflow_dispatch`.
@@ -438,12 +602,13 @@ Reference: [SPEC.md](./SPEC.md)
      - How to export the distribution certificate and provisioning profile as base64.
 
 ### Files Created/Modified
-- `.github/workflows/ci.yml` (new)
+- `.github/workflows/ci.yml` (already exists)
 - `.github/workflows/testflight.yml` (new)
 - `ExportOptions.plist` (new)
 - `CI.md` or README update (new/updated)
 
 ### Verification
+- CI workflow runs all 123 tests on every push and they all pass.
 - Push to a branch triggers the CI workflow; it checks out, builds, and passes.
 - Creating a tag `v1.0.0-beta.1` triggers the TestFlight workflow.
 - With valid secrets configured, the workflow archives, exports, and uploads the IPA to App Store Connect.
@@ -464,14 +629,26 @@ Reference: [SPEC.md](./SPEC.md)
 
 ## Phase Summary
 
-| Phase | Focus                              | Key Files                                               |
-|-------|------------------------------------|---------------------------------------------------------|
-| 1     | Project scaffold & data models     | Models, DefaultLocations, ContentView, App entry point  |
-| 2     | Location config & onboarding       | LocationConfigView, SettingsView, OnboardingView        |
-| 3     | Home screen & site change logging  | HomeView, SiteSelectionSheet, ViewModels                |
-| 4     | History view                       | HistoryView, HistoryEditView, HistoryViewModel          |
-| 5     | Statistics & charts                | StatisticsView, StatisticsViewModel                     |
-| 6     | CSV export, settings, polish       | CSVExporter, SettingsView, Dark Mode & accessibility     |
-| 7     | CI/CD & TestFlight deployment      | GitHub Actions workflows, ExportOptions.plist, CI docs  |
+| Phase | Focus                              | Tests First | Test File(s)                   | Test Count | Key Implementation Files                               |
+|-------|------------------------------------|----|-------------------------------|------------|--------------------------------------------------------|
+| 1     | Project scaffold & data models     | — (retroactive) | LocationTests, SiteChangeEntryTests, DefaultLocationsTests | 21 | Models, DefaultLocations, ContentView, App entry point |
+| 2     | Location config & onboarding       | — (retroactive) | LocationConfigTests           | 15 | LocationConfigView, SettingsView, OnboardingView       |
+| 3     | Home screen & site change logging  | — (retroactive) | HomeViewModelTests, SiteChangeViewModelTests | 29 | HomeView, SiteSelectionSheet, ViewModels               |
+| 4     | History view                       | **Yes** | HistoryViewModelTests         | 17 | HistoryView, HistoryEditView, HistoryViewModel         |
+| 5     | Statistics & charts                | **Yes** | StatisticsViewModelTests      | 27 | StatisticsView, StatisticsViewModel                    |
+| 6     | CSV export, settings, polish       | **Yes** | CSVExporterTests              | 14 | CSVExporter, SettingsView, Dark Mode & accessibility    |
+| 7     | CI/CD & TestFlight deployment      | Audit | (all of the above)            | 123 total | GitHub Actions workflows, ExportOptions.plist           |
+
+### TDD Workflow for Phases 4–6
+
+Each phase follows a strict test-driven cycle:
+
+1. **Write tests first** — Create the test file with all test functions. Tests will not compile initially (the ViewModel/utility doesn't exist yet).
+2. **Create minimal stubs** — Add just enough code (empty struct/class, method signatures returning placeholder values) to make the tests compile.
+3. **Run tests — expect failures** — All tests should compile and run, but most should fail (red).
+4. **Implement** — Build out the real logic method by method, running tests after each change.
+5. **All tests green** — Every test passes before moving to the View layer.
+6. **Build views** — Implement the SwiftUI views that consume the now-tested ViewModel.
+7. **Final CI check** — Push and confirm CI passes with the full test suite.
 
 Each phase produces a buildable, testable increment. Phase 1 must be completed first. Phases 2-5 each depend on the prior phase. Phase 6 depends on all previous phases. Phase 7 can be done in parallel with Phases 2-6 (only the TestFlight upload requires a working build).
