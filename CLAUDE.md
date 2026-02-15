@@ -130,6 +130,14 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 ## SwiftUI Pitfalls
 
 - `.foregroundStyle(.accent)` does not compile — `ShapeStyle` has no `.accent` member. Use `.tint` for accent color styling (available iOS 15+).
+- **`@Observable` needs `import Observation`** — `SwiftData` does NOT re-export the `Observation` framework. ViewModels that use `@Observable` without importing `SwiftUI` must explicitly `import Observation`.
+- **Multiple closures:** When a SwiftUI modifier takes 2+ closure arguments (e.g., `.sheet(isPresented:onDismiss:content:)`), use explicit parameter labels for all closures — do NOT use trailing closure syntax. SwiftLint enforces `multiple_closures_with_trailing_closure`.
+
+## SwiftLint Rules (CI-enforced)
+
+Beyond `large_tuple` and `empty_count` (listed above), watch for these in `--strict` mode:
+- `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)` instead of `value!`.
+- `multiple_closures_with_trailing_closure`: When passing 2+ closures, use explicit labels for all (no trailing closure syntax).
 
 ## Adding Files to the Xcode Project
 
