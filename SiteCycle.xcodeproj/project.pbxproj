@@ -21,6 +21,12 @@
 		8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000011 /* SiteChangeEntryTests.swift */; };
 		8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000012 /* DefaultLocationsTests.swift */; };
 		8A0000000000000000000113 /* LocationConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000013 /* LocationConfigTests.swift */; };
+		8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000014 /* HomeViewModelTests.swift */; };
+		8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000016 /* SiteChangeViewModelTests.swift */; };
+		8A0000000000000000000123 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000023 /* HomeViewModel.swift */; };
+		8A0000000000000000000124 /* SiteChangeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000024 /* SiteChangeViewModel.swift */; };
+		8A0000000000000000000125 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000025 /* HomeView.swift */; };
+		8A0000000000000000000126 /* SiteSelectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000026 /* SiteSelectionSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,7 +46,13 @@
 		8A0000000000000000000011 /* SiteChangeEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeEntryTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000012 /* DefaultLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocationsTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000013 /* LocationConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000014 /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000015 /* SiteCycleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteCycleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A0000000000000000000016 /* SiteChangeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeViewModelTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000023 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		8A0000000000000000000024 /* SiteChangeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeViewModel.swift; sourceTree = "<group>"; };
+		8A0000000000000000000025 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		8A0000000000000000000026 /* SiteSelectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSelectionSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,9 +120,11 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000004 /* ContentView.swift */,
+				8A0000000000000000000025 /* HomeView.swift */,
 				8A0000000000000000000020 /* LocationConfigView.swift */,
 				8A0000000000000000000022 /* OnboardingView.swift */,
 				8A0000000000000000000021 /* SettingsView.swift */,
+				8A0000000000000000000026 /* SiteSelectionSheet.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -118,6 +132,8 @@
 		8A0000000000000000000205 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				8A0000000000000000000023 /* HomeViewModel.swift */,
+				8A0000000000000000000024 /* SiteChangeViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -154,6 +170,8 @@
 				8A0000000000000000000011 /* SiteChangeEntryTests.swift */,
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
 				8A0000000000000000000013 /* LocationConfigTests.swift */,
+				8A0000000000000000000014 /* HomeViewModelTests.swift */,
+				8A0000000000000000000016 /* SiteChangeViewModelTests.swift */,
 			);
 			path = SiteCycleTests;
 			sourceTree = "<group>";
@@ -266,6 +284,10 @@
 				8A0000000000000000000120 /* LocationConfigView.swift in Sources */,
 				8A0000000000000000000121 /* SettingsView.swift in Sources */,
 				8A0000000000000000000122 /* OnboardingView.swift in Sources */,
+				8A0000000000000000000123 /* HomeViewModel.swift in Sources */,
+				8A0000000000000000000124 /* SiteChangeViewModel.swift in Sources */,
+				8A0000000000000000000125 /* HomeView.swift in Sources */,
+				8A0000000000000000000126 /* SiteSelectionSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -277,6 +299,8 @@
 				8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */,
 				8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */,
 				8A0000000000000000000113 /* LocationConfigTests.swift in Sources */,
+				8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */,
+				8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
