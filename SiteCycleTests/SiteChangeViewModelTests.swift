@@ -376,7 +376,8 @@ struct SiteChangeViewModelTests {
         let lastUsed = viewModel.lastUsedDate(for: location)
 
         #expect(lastUsed != nil)
-        let diff = abs(lastUsed!.timeIntervalSince(newerDate))
+        let unwrappedLastUsed = try #require(lastUsed)
+        let diff = abs(unwrappedLastUsed.timeIntervalSince(newerDate))
         #expect(diff < 1)
     }
 

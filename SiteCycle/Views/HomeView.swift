@@ -30,9 +30,9 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {
             viewModel?.refreshActiveSite()
-        }) {
+        }, content: {
             SiteSelectionSheet()
-        }
+        })
     }
 
     private func setupViewModel() {
