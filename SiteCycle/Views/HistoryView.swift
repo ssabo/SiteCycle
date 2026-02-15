@@ -46,41 +46,7 @@ struct HistoryView: View {
     private func listContent(viewModel: HistoryViewModel, entries: [SiteChangeEntry]) -> some View {
         List {
             filterSection(viewModel: viewModel)
-
-            if entries.isEmpty {
-                Section {
-                    VStack(spacing: 8) {
-                        Text("No matching entries")
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                        Text("Try adjusting your filters.")
-                            .font(.subheadline)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
-                }
-            } else {
-                Section {
-                    ForEach(entries) { entry in
-                        NavigationLink {
-                            HistoryEditView(
-                                entry: entry,
-                                viewModel: viewModel,
-                                allLocations: allLocations
-                            )
-                        } label: {
-                            entryRow(entry)
-                        }
-                    }
-                    .onDelete { indexSet in
-                        if let index = indexSet.first {
-                            entryToDelete = entries[index]
-                            showingDeleteConfirmation = true
-                        }
-                    }
-                }
-            }
+            entriesSection(viewModel: viewModel, entries: entries)
         }
         .confirmationDialog(
             "Delete Entry",
@@ -101,6 +67,44 @@ struct HistoryView: View {
                 Text("Are you sure you want to delete this entry? This cannot be undone.")
             }
         )
+    }
+
+    @ViewBuilder
+    private func entriesSection(viewModel: HistoryViewModel, entries: [SiteChangeEntry]) -> some View {
+        if entries.isEmpty {
+            Section {
+                VStack(spacing: 8) {
+                    Text("No matching entries")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text("Try adjusting your filters.")
+                        .font(.subheadline)
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            }
+        } else {
+            Section {
+                ForEach(entries) { entry in
+                    NavigationLink {
+                        HistoryEditView(
+                            entry: entry,
+                            viewModel: viewModel,
+                            allLocations: allLocations
+                        )
+                    } label: {
+                        entryRow(entry)
+                    }
+                }
+                .onDelete { indexSet in
+                    if let index = indexSet.first {
+                        entryToDelete = entries[index]
+                        showingDeleteConfirmation = true
+                    }
+                }
+            }
+        }
     }
 
     private func filterSection(viewModel: HistoryViewModel) -> some View {
