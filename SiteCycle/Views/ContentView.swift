@@ -4,7 +4,7 @@ struct ContentView: View {
     var body: some View {
         TabView {
             NavigationStack {
-                HomePlaceholderView()
+                HomeView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             NavigationLink(destination: SettingsView()) {
@@ -49,20 +49,6 @@ struct ContentView: View {
 }
 
 // MARK: - Placeholder Views
-
-struct HomePlaceholderView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "house")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("Home")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-        }
-        .navigationTitle("SiteCycle")
-    }
-}
 
 struct HistoryPlaceholderView: View {
     var body: some View {
