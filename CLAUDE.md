@@ -73,13 +73,13 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phases 1–3 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
+**Phases 1–4 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
 
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 2 | Location configuration & onboarding | complete |
 | 3 | Home screen & site change logging | complete |
-| 4 | History view | pending |
+| 4 | History view | complete |
 | 5 | Statistics & charts | pending |
 | 6 | CSV export, settings completion, polish | pending |
 | 7 | GitHub Actions CI/CD & TestFlight | in progress |
@@ -109,6 +109,7 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 | `LocationConfigTests.swift` | Zone CRUD: custom zone creation (with/without laterality), soft/hard delete, toggle, reorder, display names |
 | `HomeViewModelTests.swift` | `HomeViewModel`: active site query, elapsed hours, progress fraction, target duration |
 | `SiteChangeViewModelTests.swift` | `SiteChangeViewModel`: recommendation engine (avoid/recommended lists, edge cases), logSiteChange, lastUsedDate |
+| `HistoryViewModelTests.swift` | `HistoryViewModel`: fetch ordering, location/date filtering, combined filters, entry editing, entry deletion |
 
 ### Writing tests — important patterns
 
