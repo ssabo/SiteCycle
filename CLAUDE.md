@@ -139,6 +139,9 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 Beyond `large_tuple` and `empty_count` (listed above), watch for these in `--strict` mode:
 - `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)` instead of `value!`.
 - `multiple_closures_with_trailing_closure`: When passing 2+ closures, use explicit labels for all (no trailing closure syntax).
+- `function_body_length`: Function bodies must be ≤50 lines (excluding comments/whitespace). Extract helper methods to stay under the limit.
+- `file_length`: Files must be ≤500 lines. Split large test files into multiple files if needed.
+- `type_body_length`: Struct/class bodies must be ≤300 lines. For test structs, split tests across multiple structs/files by category (e.g., filtering tests vs. edit/delete tests).
 
 ## Adding Files to the Xcode Project
 
