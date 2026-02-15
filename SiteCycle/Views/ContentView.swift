@@ -18,7 +18,7 @@ struct ContentView: View {
             }
 
             NavigationStack {
-                HistoryPlaceholderView()
+                HistoryView()
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             NavigationLink(destination: SettingsView()) {
@@ -49,20 +49,6 @@ struct ContentView: View {
 }
 
 // MARK: - Placeholder Views
-
-struct HistoryPlaceholderView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "clock")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("History")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-        }
-        .navigationTitle("History")
-    }
-}
 
 struct StatisticsPlaceholderView: View {
     var body: some View {

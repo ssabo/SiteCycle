@@ -27,6 +27,11 @@
 		8A0000000000000000000124 /* SiteChangeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000024 /* SiteChangeViewModel.swift */; };
 		8A0000000000000000000125 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000025 /* HomeView.swift */; };
 		8A0000000000000000000126 /* SiteSelectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000026 /* SiteSelectionSheet.swift */; };
+		8A0000000000000000000127 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000027 /* HistoryViewModel.swift */; };
+		8A0000000000000000000128 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000028 /* HistoryView.swift */; };
+		8A0000000000000000000129 /* HistoryEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000029 /* HistoryEditView.swift */; };
+		8A0000000000000000000117 /* HistoryViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000017 /* HistoryViewModelTests.swift */; };
+		8A0000000000000000000118 /* HistoryViewModelEditDeleteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000018 /* HistoryViewModelEditDeleteTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +58,11 @@
 		8A0000000000000000000024 /* SiteChangeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeViewModel.swift; sourceTree = "<group>"; };
 		8A0000000000000000000025 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000026 /* SiteSelectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSelectionSheet.swift; sourceTree = "<group>"; };
+		8A0000000000000000000027 /* HistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModel.swift; sourceTree = "<group>"; };
+		8A0000000000000000000028 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		8A0000000000000000000029 /* HistoryEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEditView.swift; sourceTree = "<group>"; };
+		8A0000000000000000000017 /* HistoryViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModelTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000018 /* HistoryViewModelEditDeleteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModelEditDeleteTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -120,6 +130,8 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000004 /* ContentView.swift */,
+				8A0000000000000000000029 /* HistoryEditView.swift */,
+				8A0000000000000000000028 /* HistoryView.swift */,
 				8A0000000000000000000025 /* HomeView.swift */,
 				8A0000000000000000000020 /* LocationConfigView.swift */,
 				8A0000000000000000000022 /* OnboardingView.swift */,
@@ -132,6 +144,7 @@
 		8A0000000000000000000205 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				8A0000000000000000000027 /* HistoryViewModel.swift */,
 				8A0000000000000000000023 /* HomeViewModel.swift */,
 				8A0000000000000000000024 /* SiteChangeViewModel.swift */,
 			);
@@ -171,6 +184,8 @@
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
 				8A0000000000000000000013 /* LocationConfigTests.swift */,
 				8A0000000000000000000014 /* HomeViewModelTests.swift */,
+				8A0000000000000000000017 /* HistoryViewModelTests.swift */,
+				8A0000000000000000000018 /* HistoryViewModelEditDeleteTests.swift */,
 				8A0000000000000000000016 /* SiteChangeViewModelTests.swift */,
 			);
 			path = SiteCycleTests;
@@ -288,6 +303,9 @@
 				8A0000000000000000000124 /* SiteChangeViewModel.swift in Sources */,
 				8A0000000000000000000125 /* HomeView.swift in Sources */,
 				8A0000000000000000000126 /* SiteSelectionSheet.swift in Sources */,
+				8A0000000000000000000127 /* HistoryViewModel.swift in Sources */,
+				8A0000000000000000000128 /* HistoryView.swift in Sources */,
+				8A0000000000000000000129 /* HistoryEditView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +319,8 @@
 				8A0000000000000000000113 /* LocationConfigTests.swift in Sources */,
 				8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */,
 				8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */,
+				8A0000000000000000000117 /* HistoryViewModelTests.swift in Sources */,
+				8A0000000000000000000118 /* HistoryViewModelEditDeleteTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
