@@ -1,8 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
     @AppStorage("absorptionAlertThreshold") private var absorptionAlertThreshold: Int = 20
+    @State private var csvFileURL: URL?
+    @State private var showingShareSheet = false
 
     var body: some View {
         Form {
@@ -35,8 +39,11 @@ struct SettingsView: View {
             }
 
             Section("Data") {
-                Label("Export Data", systemImage: "square.and.arrow.up")
-                    .foregroundStyle(.secondary)
+                Button {
+                    exportCSV()
+                } label: {
+                    Label("Export Data as CSV", systemImage: "square.and.arrow.up")
+                }
             }
 
             Section("About") {
@@ -49,6 +56,30 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .sheet(isPresented: $showingShareSheet) {
+            if let csvFileURL {
+                ShareSheetView(activityItems: [csvFileURL])
+            }
+        }
+    }
+
+    private func exportCSV() {
+        let descriptor = FetchDescriptor<SiteChangeEntry>(
+            sortBy: [SortDescriptor(\.startTime)]
+        )
+        let entries = (try? modelContext.fetch(descriptor)) ?? []
+        let csvString = CSVExporter.generate(from: entries)
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent(
+            CSVExporter.fileName()
+        )
+        try? csvString.write(
+            to: fileURL,
+            atomically: true,
+            encoding: .utf8
+        )
+        csvFileURL = fileURL
+        showingShareSheet = true
     }
 
     private var appVersion: String {
@@ -56,6 +87,26 @@ struct SettingsView: View {
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(version) (\(build))"
     }
+}
+
+// MARK: - Share Sheet
+
+private struct ShareSheetView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(
+        context: Context
+    ) -> UIActivityViewController {
+        UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: nil
+        )
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIActivityViewController,
+        context: Context
+    ) {}
 }
 
 #Preview {

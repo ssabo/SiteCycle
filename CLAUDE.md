@@ -73,7 +73,7 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phases 1–5 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
+**Phases 1–6 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
 
 | Phase | Focus | Status |
 |-------|-------|--------|
@@ -81,7 +81,7 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 | 3 | Home screen & site change logging | complete |
 | 4 | History view | complete |
 | 5 | Statistics & charts | complete |
-| 6 | CSV export, settings completion, polish | pending |
+| 6 | CSV export, settings completion, polish | complete |
 | 7 | GitHub Actions CI/CD & TestFlight | in progress |
 
 ## CI / GitHub Actions
@@ -114,6 +114,7 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 | `StatisticsViewModelDurationTests.swift` | `StatisticsViewModel`: min/max duration, last used, days since last use |
 | `StatisticsViewModelAggregateTests.swift` | `StatisticsViewModel`: overall average, absorption insight flags |
 | `StatisticsViewModelDistributionTests.swift` | `StatisticsViewModel`: usage distribution, edge cases (empty data, single entry) |
+| `CSVExporterTests.swift` | `CSVExporter`: CSV format, headers, field formatting, RFC 4180 escaping, ordering, file naming |
 
 ### Writing tests — important patterns
 
