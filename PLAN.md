@@ -667,7 +667,7 @@ Create `SiteCycleTests/CSVExporterTests.swift`. CSV generation is pure data tran
 | 5     | Statistics & charts                | **Yes** | StatisticsViewModelTests (4 files) | 28 | **Complete** | StatisticsView, StatisticsViewModel                    |
 | 6     | CSV export, settings, polish       | **Yes** | CSVExporterTests              | 14 | **Complete** | CSVExporter, SettingsView, Dark Mode & accessibility    |
 | 7     | GitHub Actions CI & test audit     | Audit | (all of the above)            | 123 total | **Complete** | `.github/workflows/ci.yml`                             |
-| 8     | TestFlight deployment              | — | —                             | — | Not started | `testflight.yml`, `ExportOptions.plist`, `CI.md`       |
+| 8     | TestFlight deployment              | — | —                             | — | **Complete** | `testflight.yml`, `ExportOptions.plist`, `CI.md`       |
 
 ### TDD Workflow for Phases 4–6
 
