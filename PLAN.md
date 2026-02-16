@@ -1,6 +1,6 @@
 # SiteCycle Implementation Plan
 
-This plan breaks the SiteCycle spec into 6 phases. Each phase is designed to be implementable in a single Claude Code session. Phases build on each other sequentially -- each assumes the prior phase is complete.
+This plan breaks the SiteCycle spec into 8 phases. Each phase is designed to be implementable in a single Claude Code session. Phases build on each other sequentially -- each assumes the prior phase is complete.
 
 Reference: [SPEC.md](./SPEC.md)
 
@@ -488,44 +488,71 @@ Create `SiteCycleTests/CSVExporterTests.swift`. CSV generation is pure data tran
 
 ---
 
-## Phase 7: GitHub Actions CI/CD & TestFlight Deployment
+## Phase 7: GitHub Actions CI & Test Audit
 
-**Goal:** Set up a GitHub Actions workflow that builds the app on every push/PR, and a release workflow that archives, signs, and uploads the app to TestFlight via App Store Connect.
+**Goal:** Set up a GitHub Actions CI workflow that lints and tests on every push/PR, and audit that all unit tests from phases 1–6 are registered and passing.
 
-**Status:** CI workflow and existing unit tests are already implemented. Remaining: TestFlight deployment workflow.
+**Status: Complete.**
 
 ### Prerequisites
 - Phase 6 complete (app is feature-complete and polished).
-- An Apple Developer account with App Store Connect access.
-- The app's Bundle Identifier registered in App Store Connect.
-
-### Test Considerations
-
-Phase 7 has no new ViewModel or business logic requiring unit tests. The CI workflow itself *is* the test infrastructure — it validates that all tests from phases 1–6 pass on every push.
-
-However, before finalizing this phase, verify:
-- **All test files are registered** in `project.pbxproj` (PBXFileReference, PBXGroup, PBXSourcesBuildPhase).
-- **CI runs all tests**: the `xcodebuild test` step in `ci.yml` executes the full `SiteCycleTests` target.
-- **Test count audit**: confirm the expected test count matches CI output. Expected totals after all phases:
-  - `LocationTests` — 6
-  - `SiteChangeEntryTests` — 7
-  - `DefaultLocationsTests` — 8
-  - `LocationConfigTests` — 15
-  - `HomeViewModelTests` — 9
-  - `SiteChangeViewModelTests` — 20
-  - `HistoryViewModelTests` — 17 (Phase 4)
-  - `StatisticsViewModelTests` — 27 (Phase 5)
-  - `CSVExporterTests` — 14 (Phase 6)
-  - **Total: 123 tests**
 
 ### Deliverables
 
-1. **CI workflow -- build & test on every push** (`.github/workflows/ci.yml`) — **already implemented**
-   - Trigger: `push` to any branch, `pull_request` to `main`.
+1. **CI workflow** (`.github/workflows/ci.yml`) — **complete**
+   - Trigger: `push` to `main`, `pull_request` to `main`.
    - Runner: `macos-15` (Xcode 16+).
-   - Steps: checkout, select Xcode, build, run tests, SwiftLint.
+   - Two jobs:
+     - **SwiftLint** — installs via Homebrew, runs `swiftlint lint --strict --reporter github-actions-logging`.
+     - **Build & Test** — selects latest Xcode 16, auto-detects an available iPhone simulator, builds with code signing disabled, runs all tests via `xcodebuild test-without-building`.
+   - Concurrency control: `cancel-in-progress: true` per workflow/ref.
 
-2. **TestFlight release workflow** (`.github/workflows/testflight.yml`)
+2. **Test audit** — **complete**
+   - All test files registered in `project.pbxproj` (PBXFileReference, PBXGroup, PBXSourcesBuildPhase).
+   - Some test files were split to stay within SwiftLint's `file_length` (≤500 lines) and `type_body_length` (≤300 lines) limits.
+   - Final test distribution across 13 files:
+
+     | File | `@Test` Count | Notes |
+     |------|--------------|-------|
+     | `LocationTests.swift` | 7 | |
+     | `SiteChangeEntryTests.swift` | 7 | |
+     | `DefaultLocationsTests.swift` | 9 | |
+     | `LocationConfigTests.swift` | 13 | |
+     | `HomeViewModelTests.swift` | 10 | |
+     | `SiteChangeViewModelTests.swift` | 17 | |
+     | `HistoryViewModelTests.swift` | 10 | Split from original plan |
+     | `HistoryViewModelEditDeleteTests.swift` | 8 | Edit/delete tests extracted |
+     | `StatisticsViewModelTests.swift` | 9 | Split from original plan |
+     | `StatisticsViewModelDurationTests.swift` | 7 | Min/max/last-used tests |
+     | `StatisticsViewModelAggregateTests.swift` | 8 | Overall avg & absorption flags |
+     | `StatisticsViewModelDistributionTests.swift` | 4 | Usage distribution & edge cases |
+     | `CSVExporterTests.swift` | 14 | |
+     | **Total** | **123** | **Across 13 files** |
+
+### Files
+- `.github/workflows/ci.yml`
+- `SiteCycleTests/` (13 test files — see table above)
+
+### Verification
+- CI workflow triggers on push/PR to `main`.
+- SwiftLint passes in `--strict` mode.
+- All 123 tests pass in CI.
+- Code signing is disabled; the `ModelContainer` fallback from `.automatic` to `.none` allows the app to launch without CloudKit entitlements.
+
+---
+
+## Phase 8: TestFlight Deployment
+
+**Goal:** Add a GitHub Actions release workflow that archives, signs, and uploads the app to TestFlight via App Store Connect, with documentation explaining how to configure the required secrets.
+
+### Prerequisites
+- Phase 7 complete (CI workflow passing).
+- An Apple Developer account with App Store Connect access.
+- The app's Bundle Identifier registered in App Store Connect.
+
+### Deliverables
+
+1. **TestFlight release workflow** (`.github/workflows/testflight.yml`)
    - Trigger: `push` of a tag matching `v*` (e.g., `v1.0.0`), or manual `workflow_dispatch`.
    - Runner: `macos-15`.
    - Steps:
@@ -565,7 +592,6 @@ However, before finalizing this phase, verify:
          CODE_SIGN_IDENTITY="Apple Distribution"
        ```
      - **Export the IPA:**
-       - Create an `ExportOptions.plist` specifying `app-store` distribution method, team ID, and provisioning profile mapping.
        ```
        xcodebuild -exportArchive \
          -archivePath $RUNNER_TEMP/SiteCycle.xcarchive \
@@ -573,7 +599,6 @@ However, before finalizing this phase, verify:
          -exportOptionsPlist ExportOptions.plist
        ```
      - **Upload to TestFlight:**
-       - Use `xcrun altool` or (preferred) `xcrun notarytool` / the App Store Connect API:
        ```
        xcrun altool --upload-app \
          -f $RUNNER_TEMP/export/SiteCycle.ipa \
@@ -581,37 +606,41 @@ However, before finalizing this phase, verify:
          --apiIssuer "$APPSTORE_CONNECT_API_ISSUER_ID" \
          --type ios
        ```
-       - Alternatively, use the `apple-actions/upload-testflight-build` GitHub Action if available.
-     - **Cleanup:** Delete temporary keychain and provisioning profile.
+     - **Cleanup:** Delete temporary keychain and provisioning profile in a post-action (always runs).
 
-3. **ExportOptions.plist**
+2. **ExportOptions.plist**
    - Committed to the repo at the project root.
    - Contents:
      - `method`: `app-store`
-     - `teamID`: your Apple Developer Team ID (can be templated/parameterized via secret).
+     - `teamID`: placeholder — populated by the `APPLE_TEAM_ID` secret at build time, or hard-coded once known.
      - `provisioningProfiles`: dictionary mapping bundle ID to profile name.
      - `signingCertificate`: `Apple Distribution`
      - `uploadBitcode`: `false`
      - `uploadSymbols`: `true`
 
-4. **Documentation**
-   - Add a "CI/CD" section to the project README (or a `CI.md` file) documenting:
-     - How to set up the required GitHub Secrets (step-by-step for each secret).
-     - How to trigger a TestFlight build (push a tag or use workflow_dispatch).
-     - How to generate the App Store Connect API key from App Store Connect > Users and Access > Keys.
-     - How to export the distribution certificate and provisioning profile as base64.
+3. **Setup documentation** (`CI.md`)
+   - A standalone document covering:
+     - **CI overview** — what the existing `ci.yml` workflow does and when it runs.
+     - **TestFlight deployment overview** — what the `testflight.yml` workflow does and when it runs.
+     - **Required GitHub Secrets** — table of all secrets with descriptions.
+     - **Step-by-step: Generating an App Store Connect API key** — navigate to App Store Connect > Users and Access > Integrations > Keys, create a key with "Developer" role, download the `.p8` file.
+     - **Step-by-step: Exporting the distribution certificate** — open Keychain Access, export the "Apple Distribution" certificate as `.p12`, base64-encode it (`base64 -i cert.p12 | pbcopy`).
+     - **Step-by-step: Exporting the provisioning profile** — download from the Apple Developer portal, base64-encode it.
+     - **Step-by-step: Adding secrets to GitHub** — navigate to repo Settings > Secrets and variables > Actions, add each secret.
+     - **Triggering a release** — how to tag a commit (`git tag v1.0.0 && git push origin v1.0.0`) or use the manual workflow_dispatch button.
 
 ### Files Created/Modified
-- `.github/workflows/ci.yml` (already exists)
 - `.github/workflows/testflight.yml` (new)
 - `ExportOptions.plist` (new)
-- `CI.md` or README update (new/updated)
+- `CI.md` (new)
 
-### Verification
-- CI workflow runs all 123 tests on every push and they all pass.
-- Push to a branch triggers the CI workflow; it checks out, builds, and passes.
-- Creating a tag `v1.0.0-beta.1` triggers the TestFlight workflow.
-- With valid secrets configured, the workflow archives, exports, and uploads the IPA to App Store Connect.
+### Acceptance Criteria
+- `testflight.yml` passes YAML validation and has correct trigger configuration.
+- `ExportOptions.plist` is valid and contains the required keys.
+- `CI.md` contains complete, step-by-step instructions for setting up all 6 required GitHub Secrets.
+- `CI.md` explains how to generate the App Store Connect API key, export the distribution certificate, and export the provisioning profile.
+- `CI.md` documents how to trigger a TestFlight release (tag push and workflow_dispatch).
+- With valid secrets configured, tagging a commit triggers the workflow, which archives, exports, and uploads the IPA to App Store Connect.
 - The build appears in TestFlight within App Store Connect after processing.
 
 ### Required GitHub Secrets Summary
@@ -629,15 +658,16 @@ However, before finalizing this phase, verify:
 
 ## Phase Summary
 
-| Phase | Focus                              | Tests First | Test File(s)                   | Test Count | Key Implementation Files                               |
-|-------|------------------------------------|----|-------------------------------|------------|--------------------------------------------------------|
-| 1     | Project scaffold & data models     | — (retroactive) | LocationTests, SiteChangeEntryTests, DefaultLocationsTests | 21 | Models, DefaultLocations, ContentView, App entry point |
-| 2     | Location config & onboarding       | — (retroactive) | LocationConfigTests           | 15 | LocationConfigView, SettingsView, OnboardingView       |
-| 3     | Home screen & site change logging  | — (retroactive) | HomeViewModelTests, SiteChangeViewModelTests | 29 | HomeView, SiteSelectionSheet, ViewModels               |
-| 4     | History view                       | **Yes** | HistoryViewModelTests         | 17 | HistoryView, HistoryEditView, HistoryViewModel         |
-| 5     | Statistics & charts                | **Yes** | StatisticsViewModelTests      | 27 | StatisticsView, StatisticsViewModel                    |
-| 6     | CSV export, settings, polish       | **Yes** | CSVExporterTests              | 14 | CSVExporter, SettingsView, Dark Mode & accessibility    |
-| 7     | CI/CD & TestFlight deployment      | Audit | (all of the above)            | 123 total | GitHub Actions workflows, ExportOptions.plist           |
+| Phase | Focus                              | Tests First | Test File(s)                   | Test Count | Status | Key Implementation Files                               |
+|-------|------------------------------------|----|-------------------------------|------------|--------|--------------------------------------------------------|
+| 1     | Project scaffold & data models     | — (retroactive) | LocationTests, SiteChangeEntryTests, DefaultLocationsTests | 23 | **Complete** | Models, DefaultLocations, ContentView, App entry point |
+| 2     | Location config & onboarding       | — (retroactive) | LocationConfigTests           | 13 | **Complete** | LocationConfigView, SettingsView, OnboardingView       |
+| 3     | Home screen & site change logging  | — (retroactive) | HomeViewModelTests, SiteChangeViewModelTests | 27 | **Complete** | HomeView, SiteSelectionSheet, ViewModels               |
+| 4     | History view                       | **Yes** | HistoryViewModelTests (2 files) | 18 | **Complete** | HistoryView, HistoryEditView, HistoryViewModel         |
+| 5     | Statistics & charts                | **Yes** | StatisticsViewModelTests (4 files) | 28 | **Complete** | StatisticsView, StatisticsViewModel                    |
+| 6     | CSV export, settings, polish       | **Yes** | CSVExporterTests              | 14 | **Complete** | CSVExporter, SettingsView, Dark Mode & accessibility    |
+| 7     | GitHub Actions CI & test audit     | Audit | (all of the above)            | 123 total | **Complete** | `.github/workflows/ci.yml`                             |
+| 8     | TestFlight deployment              | — | —                             | — | Not started | `testflight.yml`, `ExportOptions.plist`, `CI.md`       |
 
 ### TDD Workflow for Phases 4–6
 
@@ -651,4 +681,4 @@ Each phase follows a strict test-driven cycle:
 6. **Build views** — Implement the SwiftUI views that consume the now-tested ViewModel.
 7. **Final CI check** — Push and confirm CI passes with the full test suite.
 
-Each phase produces a buildable, testable increment. Phase 1 must be completed first. Phases 2-5 each depend on the prior phase. Phase 6 depends on all previous phases. Phase 7 can be done in parallel with Phases 2-6 (only the TestFlight upload requires a working build).
+Each phase produces a buildable, testable increment. Phase 1 must be completed first. Phases 2–5 each depend on the prior phase. Phase 6 depends on all previous phases. Phase 7 depends on phase 6. Phase 8 depends on phase 7 and requires Apple Developer credentials.
