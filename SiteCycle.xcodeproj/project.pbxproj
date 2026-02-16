@@ -32,6 +32,12 @@
 		8A0000000000000000000129 /* HistoryEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000029 /* HistoryEditView.swift */; };
 		8A0000000000000000000117 /* HistoryViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000017 /* HistoryViewModelTests.swift */; };
 		8A0000000000000000000118 /* HistoryViewModelEditDeleteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000018 /* HistoryViewModelEditDeleteTests.swift */; };
+		8A0000000000000000000119 /* StatisticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000019 /* StatisticsViewModelTests.swift */; };
+		8A000000000000000000011A /* StatisticsViewModelAggregateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001A /* StatisticsViewModelAggregateTests.swift */; };
+		8A000000000000000000011B /* StatisticsViewModelDurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */; };
+		8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */; };
+		8A000000000000000000012A /* StatisticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002A /* StatisticsViewModel.swift */; };
+		8A000000000000000000012B /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002B /* StatisticsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +69,12 @@
 		8A0000000000000000000029 /* HistoryEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEditView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000017 /* HistoryViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModelTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000018 /* HistoryViewModelEditDeleteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModelEditDeleteTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000019 /* StatisticsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000001A /* StatisticsViewModelAggregateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelAggregateTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDurationTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDistributionTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000002A /* StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModel.swift; sourceTree = "<group>"; };
+		8A000000000000000000002B /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -137,6 +149,7 @@
 				8A0000000000000000000022 /* OnboardingView.swift */,
 				8A0000000000000000000021 /* SettingsView.swift */,
 				8A0000000000000000000026 /* SiteSelectionSheet.swift */,
+				8A000000000000000000002B /* StatisticsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -147,6 +160,7 @@
 				8A0000000000000000000027 /* HistoryViewModel.swift */,
 				8A0000000000000000000023 /* HomeViewModel.swift */,
 				8A0000000000000000000024 /* SiteChangeViewModel.swift */,
+				8A000000000000000000002A /* StatisticsViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -187,6 +201,10 @@
 				8A0000000000000000000017 /* HistoryViewModelTests.swift */,
 				8A0000000000000000000018 /* HistoryViewModelEditDeleteTests.swift */,
 				8A0000000000000000000016 /* SiteChangeViewModelTests.swift */,
+				8A0000000000000000000019 /* StatisticsViewModelTests.swift */,
+				8A000000000000000000001A /* StatisticsViewModelAggregateTests.swift */,
+				8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */,
+				8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */,
 			);
 			path = SiteCycleTests;
 			sourceTree = "<group>";
@@ -306,6 +324,8 @@
 				8A0000000000000000000127 /* HistoryViewModel.swift in Sources */,
 				8A0000000000000000000128 /* HistoryView.swift in Sources */,
 				8A0000000000000000000129 /* HistoryEditView.swift in Sources */,
+				8A000000000000000000012A /* StatisticsViewModel.swift in Sources */,
+				8A000000000000000000012B /* StatisticsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +341,10 @@
 				8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */,
 				8A0000000000000000000117 /* HistoryViewModelTests.swift in Sources */,
 				8A0000000000000000000118 /* HistoryViewModelEditDeleteTests.swift in Sources */,
+				8A0000000000000000000119 /* StatisticsViewModelTests.swift in Sources */,
+				8A000000000000000000011A /* StatisticsViewModelAggregateTests.swift in Sources */,
+				8A000000000000000000011B /* StatisticsViewModelDurationTests.swift in Sources */,
+				8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
