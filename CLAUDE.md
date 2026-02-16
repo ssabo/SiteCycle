@@ -73,7 +73,7 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phases 1–6 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
+**Phases 1–7 are complete.** **Phase 8 (TestFlight deployment) is not yet started** — requires Apple Developer credentials.
 
 | Phase | Focus | Status |
 |-------|-------|--------|
@@ -82,7 +82,8 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 | 4 | History view | complete |
 | 5 | Statistics & charts | complete |
 | 6 | CSV export, settings completion, polish | complete |
-| 7 | GitHub Actions CI/CD & TestFlight | in progress |
+| 7 | GitHub Actions CI & test audit | complete |
+| 8 | TestFlight deployment | not started |
 
 ## CI / GitHub Actions
 
