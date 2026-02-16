@@ -73,14 +73,14 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 
 ## Implementation Status
 
-**Phases 1–4 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
+**Phases 1–5 are complete.** **Phase 7 (CI/CD) is in progress** — GitHub Actions workflow and unit tests are implemented. Remaining phases:
 
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 2 | Location configuration & onboarding | complete |
 | 3 | Home screen & site change logging | complete |
 | 4 | History view | complete |
-| 5 | Statistics & charts | pending |
+| 5 | Statistics & charts | complete |
 | 6 | CSV export, settings completion, polish | pending |
 | 7 | GitHub Actions CI/CD & TestFlight | in progress |
 
@@ -110,6 +110,10 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 | `HomeViewModelTests.swift` | `HomeViewModel`: active site query, elapsed hours, progress fraction, target duration |
 | `SiteChangeViewModelTests.swift` | `SiteChangeViewModel`: recommendation engine (avoid/recommended lists, edge cases), logSiteChange, lastUsedDate |
 | `HistoryViewModelTests.swift` | `HistoryViewModel`: fetch ordering, location/date filtering, combined filters, entry editing, entry deletion |
+| `StatisticsViewModelTests.swift` | `StatisticsViewModel`: total uses, average/median duration per location |
+| `StatisticsViewModelDurationTests.swift` | `StatisticsViewModel`: min/max duration, last used, days since last use |
+| `StatisticsViewModelAggregateTests.swift` | `StatisticsViewModel`: overall average, absorption insight flags |
+| `StatisticsViewModelDistributionTests.swift` | `StatisticsViewModel`: usage distribution, edge cases (empty data, single entry) |
 
 ### Writing tests — important patterns
 
