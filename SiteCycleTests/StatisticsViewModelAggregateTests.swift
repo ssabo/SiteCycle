@@ -75,20 +75,20 @@ struct StatisticsViewModelAggregateTests {
 
         let now = Date()
         for hours in [50.0, 55.0, 60.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc1
             )
-            context.insert(e)
+            context.insert(entry)
         }
         for hours in [84.0, 89.0, 94.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc2
             )
-            context.insert(e)
+            context.insert(entry)
         }
         try context.save()
 
@@ -111,20 +111,20 @@ struct StatisticsViewModelAggregateTests {
 
         let now = Date()
         for hours in [60.0, 65.0, 70.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc1
             )
-            context.insert(e)
+            context.insert(entry)
         }
         for hours in [74.0, 79.0, 84.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc2
             )
-            context.insert(e)
+            context.insert(entry)
         }
         try context.save()
 
@@ -144,18 +144,18 @@ struct StatisticsViewModelAggregateTests {
         context.insert(loc2)
 
         let now = Date()
-        let e1 = SiteChangeEntry(
+        let entry1 = SiteChangeEntry(
             startTime: now,
             endTime: now.addingTimeInterval(80.0 * 3600),
             location: loc1
         )
-        context.insert(e1)
-        let e2 = SiteChangeEntry(
+        context.insert(entry1)
+        let entry2 = SiteChangeEntry(
             startTime: now,
             endTime: now.addingTimeInterval(120.0 * 3600),
             location: loc2
         )
-        context.insert(e2)
+        context.insert(entry2)
         try context.save()
 
         let vm = StatisticsViewModel(modelContext: context, absorptionThreshold: 20)
@@ -175,20 +175,20 @@ struct StatisticsViewModelAggregateTests {
 
         let now = Date()
         for hours in [60.0, 63.0, 66.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc1
             )
-            context.insert(e)
+            context.insert(entry)
         }
         for hours in [78.0, 81.0, 84.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc2
             )
-            context.insert(e)
+            context.insert(entry)
         }
         try context.save()
 
@@ -209,20 +209,20 @@ struct StatisticsViewModelAggregateTests {
 
         let now = Date()
         for hours in [50.0, 55.0, 60.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc1
             )
-            context.insert(e)
+            context.insert(entry)
         }
         for hours in [84.0, 89.0, 94.0] {
-            let e = SiteChangeEntry(
+            let entry = SiteChangeEntry(
                 startTime: now,
                 endTime: now.addingTimeInterval(hours * 3600),
                 location: loc2
             )
-            context.insert(e)
+            context.insert(entry)
         }
         try context.save()
 
