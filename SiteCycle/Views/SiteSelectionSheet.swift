@@ -8,6 +8,7 @@ struct SiteSelectionSheet: View {
     @State private var selectedLocation: Location?
     @State private var note = ""
     @State private var showingConfirmation = false
+    @State private var isLogging = false
 
     var body: some View {
         NavigationStack {
@@ -33,10 +34,10 @@ struct SiteSelectionSheet: View {
             .alert("Confirm Site Change", isPresented: $showingConfirmation) {
                 TextField("Add a note (optional)", text: $note)
                 Button("Confirm") {
-                    if let location = selectedLocation {
-                        viewModel?.logSiteChange(location: location, note: note)
-                        dismiss()
-                    }
+                    guard !isLogging, let location = selectedLocation else { return }
+                    isLogging = true
+                    viewModel?.logSiteChange(location: location, note: note)
+                    dismiss()
                 }
                 Button("Cancel", role: .cancel) {
                     selectedLocation = nil

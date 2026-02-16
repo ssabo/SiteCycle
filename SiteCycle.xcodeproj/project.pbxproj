@@ -38,6 +38,8 @@
 		8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */; };
 		8A000000000000000000012A /* StatisticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002A /* StatisticsViewModel.swift */; };
 		8A000000000000000000012B /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002B /* StatisticsView.swift */; };
+		8A000000000000000000012C /* CSVExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002C /* CSVExporter.swift */; };
+		8A000000000000000000011D /* CSVExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001D /* CSVExporterTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +77,8 @@
 		8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDistributionTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000002A /* StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModel.swift; sourceTree = "<group>"; };
 		8A000000000000000000002B /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
+		8A000000000000000000002C /* CSVExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporter.swift; sourceTree = "<group>"; };
+		8A000000000000000000001D /* CSVExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporterTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +172,7 @@
 		8A0000000000000000000206 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				8A000000000000000000002C /* CSVExporter.swift */,
 				8A0000000000000000000005 /* DefaultLocations.swift */,
 			);
 			path = Utilities;
@@ -193,6 +198,7 @@
 		8A0000000000000000000210 /* SiteCycleTests */ = {
 			isa = PBXGroup;
 			children = (
+				8A000000000000000000001D /* CSVExporterTests.swift */,
 				8A0000000000000000000010 /* LocationTests.swift */,
 				8A0000000000000000000011 /* SiteChangeEntryTests.swift */,
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
@@ -326,6 +332,7 @@
 				8A0000000000000000000129 /* HistoryEditView.swift in Sources */,
 				8A000000000000000000012A /* StatisticsViewModel.swift in Sources */,
 				8A000000000000000000012B /* StatisticsView.swift in Sources */,
+				8A000000000000000000012C /* CSVExporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,6 +352,7 @@
 				8A000000000000000000011A /* StatisticsViewModelAggregateTests.swift in Sources */,
 				8A000000000000000000011B /* StatisticsViewModelDurationTests.swift in Sources */,
 				8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */,
+				8A000000000000000000011D /* CSVExporterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

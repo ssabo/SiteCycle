@@ -25,13 +25,18 @@ struct LocationConfigView: View {
         return groups
     }
 
+    private var enabledLocationCount: Int {
+        allLocations.filter(\.isEnabled).count
+    }
+
     var body: some View {
         List {
             ForEach(zoneGroups) { group in
                 ZoneRow(
                     zone: group.zone,
                     isCustom: group.isCustom,
-                    locations: group.locations
+                    locations: group.locations,
+                    enabledLocationCount: enabledLocationCount
                 )
             }
             .onDelete(perform: deleteZones)
@@ -126,15 +131,22 @@ private struct ZoneRow: View {
     let zone: String
     let isCustom: Bool
     let locations: [Location]
+    let enabledLocationCount: Int
 
     private var isEnabled: Bool {
         locations.contains { $0.isEnabled }
+    }
+
+    private var isLastEnabled: Bool {
+        let groupEnabledCount = locations.filter(\.isEnabled).count
+        return isEnabled && enabledLocationCount <= groupEnabledCount
     }
 
     var body: some View {
         Toggle(isOn: Binding(
             get: { isEnabled },
             set: { newValue in
+                if !newValue && isLastEnabled { return }
                 for location in locations {
                     location.isEnabled = newValue
                 }
