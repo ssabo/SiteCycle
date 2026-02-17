@@ -12,14 +12,17 @@ jobs:
     name: Archive & Upload to TestFlight
     runs-on: macos-15
     env:
-      ARCHIVE_PATH: ${{ runner.temp }}/SiteCycle.xcarchive
-      EXPORT_PATH: ${{ runner.temp }}/export
       KEYCHAIN_NAME: build.keychain
       KEYCHAIN_PASSWORD: ""
-      API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set environment paths
+        run: |
+          echo "ARCHIVE_PATH=$RUNNER_TEMP/SiteCycle.xcarchive" >> "$GITHUB_ENV"
+          echo "EXPORT_PATH=$RUNNER_TEMP/export" >> "$GITHUB_ENV"
+          echo "API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
 
       - name: Select Xcode
         run: |
