@@ -6,8 +6,11 @@ struct OnboardingView: View {
 
     var body: some View {
         TabView(selection: $currentPage) {
-            WelcomePage(onNext: { currentPage = 1 })
-                .tag(0)
+            WelcomePage(
+                onNext: { currentPage = 1 },
+                onImportComplete: completeOnboarding
+            )
+            .tag(0)
 
             ConfigureLocationsPage(onNext: { currentPage = 2 })
                 .tag(1)
@@ -34,6 +37,10 @@ struct OnboardingView: View {
 
 private struct WelcomePage: View {
     let onNext: () -> Void
+    let onImportComplete: () -> Void
+    @Environment(\.modelContext) private var modelContext
+    @State private var showingImportPicker = false
+    @State private var importResult: String?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -65,7 +72,41 @@ private struct WelcomePage: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.horizontal, 32)
+
+            Button {
+                showingImportPicker = true
+            } label: {
+                Text("Restore from CSV backup")
+                    .font(.subheadline)
+            }
             .padding(.bottom, 48)
+        }
+        .background(
+            Group {
+                if showingImportPicker {
+                    DocumentPickerView(
+                        onPickURL: { url in handleImport(from: url) },
+                        isPresented: $showingImportPicker
+                    )
+                }
+            }
+        )
+        .alert("Import Failed", isPresented: .init(
+            get: { importResult != nil },
+            set: { if !$0 { importResult = nil } }
+        )) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            if let msg = importResult { Text(msg) }
+        }
+    }
+
+    private func handleImport(from url: URL) {
+        do {
+            _ = try CSVImporter.importCSV(from: url, context: modelContext)
+            onImportComplete()
+        } catch {
+            importResult = error.localizedDescription
         }
     }
 }
