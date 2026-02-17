@@ -40,6 +40,9 @@
 		8A000000000000000000012A /* StatisticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002A /* StatisticsViewModel.swift */; };
 		8A000000000000000000012B /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002B /* StatisticsView.swift */; };
 		8A000000000000000000012C /* CSVExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002C /* CSVExporter.swift */; };
+		8A000000000000000000012D /* CSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002D /* CSVImporter.swift */; };
+		8A000000000000000000012E /* DocumentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002E /* DocumentPickerView.swift */; };
+		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -89,6 +92,9 @@
 		8A000000000000000000002A /* StatisticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModel.swift; sourceTree = "<group>"; };
 		8A000000000000000000002B /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
 		8A000000000000000000002C /* CSVExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporter.swift; sourceTree = "<group>"; };
+		8A000000000000000000002D /* CSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporter.swift; sourceTree = "<group>"; };
+		8A000000000000000000002E /* DocumentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickerView.swift; sourceTree = "<group>"; };
+		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +152,7 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000004 /* ContentView.swift */,
+				8A000000000000000000002E /* DocumentPickerView.swift */,
 				8A0000000000000000000029 /* HistoryEditView.swift */,
 				8A0000000000000000000028 /* HistoryView.swift */,
 				8A0000000000000000000025 /* HomeView.swift */,
@@ -173,6 +180,7 @@
 			isa = PBXGroup;
 			children = (
 				8A000000000000000000002C /* CSVExporter.swift */,
+				8A000000000000000000002D /* CSVImporter.swift */,
 				8A0000000000000000000005 /* DefaultLocations.swift */,
 			);
 			path = Utilities;
@@ -199,6 +207,7 @@
 			isa = PBXGroup;
 			children = (
 				8A000000000000000000001D /* CSVExporterTests.swift */,
+				8A000000000000000000001E /* CSVImporterTests.swift */,
 				8A0000000000000000000010 /* LocationTests.swift */,
 				8A0000000000000000000011 /* SiteChangeEntryTests.swift */,
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
@@ -333,6 +342,8 @@
 				8A000000000000000000012A /* StatisticsViewModel.swift in Sources */,
 				8A000000000000000000012B /* StatisticsView.swift in Sources */,
 				8A000000000000000000012C /* CSVExporter.swift in Sources */,
+				8A000000000000000000012D /* CSVImporter.swift in Sources */,
+				8A000000000000000000012E /* DocumentPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,6 +364,7 @@
 				8A000000000000000000011B /* StatisticsViewModelDurationTests.swift in Sources */,
 				8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */,
 				8A000000000000000000011D /* CSVExporterTests.swift in Sources */,
+				8A000000000000000000011E /* CSVImporterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
