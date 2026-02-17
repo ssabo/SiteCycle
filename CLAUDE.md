@@ -67,13 +67,14 @@ The site selection sheet sorts enabled locations by most-recent-use:
 ## Key Documentation
 
 - **SPEC.md** — Complete product specification. Covers all features (site change logging, location configuration, history, statistics, CSV export), data models, UI/UX design, recommendation logic, acceptance criteria, and out-of-scope items. This is the source of truth for what the app should do.
-- **PLAN.md** — Phased implementation roadmap (7 phases). Each phase lists deliverables, files to create/modify, and verification steps. Phases are designed to be completed sequentially in individual sessions.
+- **PLAN.md** — Phased implementation roadmap (8 phases). Each phase lists deliverables, files to create/modify, and verification steps. Phases are designed to be completed sequentially in individual sessions.
+- **CI.md** — CI and TestFlight deployment documentation. Covers GitHub Actions workflows, required secrets, and step-by-step setup instructions for Apple Developer credentials.
 
 Always consult SPEC.md for feature requirements and PLAN.md for implementation order and scope when building new phases.
 
 ## Implementation Status
 
-**Phases 1–7 are complete.** **Phase 8 (TestFlight deployment) is not yet started** — requires Apple Developer credentials.
+**All 8 phases are complete.** Phase 8 (TestFlight deployment) requires Apple Developer credentials configured as GitHub Secrets — see `CI.md` for setup instructions.
 
 | Phase | Focus | Status |
 |-------|-------|--------|
@@ -83,7 +84,7 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 | 5 | Statistics & charts | complete |
 | 6 | CSV export, settings completion, polish | complete |
 | 7 | GitHub Actions CI & test audit | complete |
-| 8 | TestFlight deployment | not started |
+| 8 | TestFlight deployment | complete |
 
 ## CI / GitHub Actions
 
