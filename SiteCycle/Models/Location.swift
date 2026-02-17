@@ -13,12 +13,23 @@ final class Location {
     @Relationship(deleteRule: .nullify, inverse: \SiteChangeEntry.location)
     var entries: [SiteChangeEntry] = []
 
-    var displayName: String {
-        if let side = side {
-            let sidePrefix = side == "left" ? "Left" : "Right"
-            return "\(sidePrefix) \(zone)"
-        }
-        return zone
+    var sideLabel: String? {
+        guard let side else { return nil }
+        return side == "left" ? "L" : "R"
+    }
+
+    private var invertedZone: String {
+        let words = zone.split(separator: " ").map(String.init)
+        guard words.count >= 2, let lastWord = words.last else { return zone }
+        let qualifier = words.dropLast().joined(separator: " ")
+        return "\(lastWord) - \(qualifier)"
+    }
+
+    var displayName: String { invertedZone }
+
+    var fullDisplayName: String {
+        if let sideLabel { return "\(sideLabel) \(displayName)" }
+        return displayName
     }
 
     init(

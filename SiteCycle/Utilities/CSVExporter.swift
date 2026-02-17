@@ -9,7 +9,7 @@ struct CSVExporter {
         let rows = sorted.map { entry -> String in
             let date = formatISO8601(entry.startTime)
             let location = escapeField(
-                entry.location?.displayName ?? ""
+                entry.location?.fullDisplayName ?? ""
             )
             let duration = formatDuration(entry.durationHours)
             let note = escapeField(entry.note ?? "")

@@ -61,8 +61,8 @@ final class SiteChangeViewModel {
         let candidates = sorted.filter { !avoidIds.contains($0.id) }
         let recommended = Array(candidates.suffix(3))
 
-        // All locations sorted alphabetically
-        let allSorted = locations.sorted { $0.displayName < $1.displayName }
+        // All locations sorted by sortOrder
+        let allSorted = locations.sorted { $0.sortOrder < $1.sortOrder }
 
         return SiteRecommendations(avoid: avoid, recommended: recommended, allSorted: allSorted)
     }

@@ -112,7 +112,7 @@ struct HistoryView: View {
             Picker("Location", selection: $selectedLocation) {
                 Text("All Locations").tag(Location?.none)
                 ForEach(allLocations) { location in
-                    Text(location.displayName).tag(Location?.some(location))
+                    Text(location.fullDisplayName).tag(Location?.some(location))
                 }
             }
             .onChange(of: selectedLocation) { _, newValue in
@@ -151,8 +151,11 @@ struct HistoryView: View {
     private func entryRow(_ entry: SiteChangeEntry) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(entry.location?.displayName ?? "Unknown Location")
-                    .font(.headline)
+                if let loc = entry.location {
+                    LocationLabelView(location: loc, font: .headline)
+                } else {
+                    Text("Unknown Location").font(.headline)
+                }
                 Spacer()
                 if entry.endTime == nil {
                     Text("Active")

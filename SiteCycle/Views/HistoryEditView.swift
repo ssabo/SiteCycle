@@ -31,7 +31,7 @@ struct HistoryEditView: View {
                 Picker("Location", selection: $selectedLocation) {
                     Text("None").tag(Location?.none)
                     ForEach(allLocations) { location in
-                        Text(location.displayName).tag(Location?.some(location))
+                        Text(location.fullDisplayName).tag(Location?.some(location))
                     }
                 }
             }

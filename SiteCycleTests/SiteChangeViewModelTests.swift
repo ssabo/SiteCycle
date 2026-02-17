@@ -170,7 +170,7 @@ struct SiteChangeViewModelTests {
         #expect(recs.recommended.first?.zone == "Zone B")
     }
 
-    @Test func allLocationsSortedAlphabetically() throws {
+    @Test func allLocationsSortedBySortOrder() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
@@ -184,9 +184,9 @@ struct SiteChangeViewModelTests {
 
         let recs = SiteChangeViewModel.computeRecommendations(locations: [locC, locA, locB])
 
-        #expect(recs.allSorted[0].zone == "Alpha")
-        #expect(recs.allSorted[1].zone == "Bravo")
-        #expect(recs.allSorted[2].zone == "Charlie")
+        #expect(recs.allSorted[0].zone == "Charlie")
+        #expect(recs.allSorted[1].zone == "Alpha")
+        #expect(recs.allSorted[2].zone == "Bravo")
     }
 
     @Test func emptyLocationsProducesEmptyRecommendations() {

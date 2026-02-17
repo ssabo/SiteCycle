@@ -54,7 +54,7 @@ final class StatisticsViewModel {
 
         usageDistribution = locations
             .filter { !$0.entries.isEmpty }
-            .map { UsageDistributionItem(locationName: $0.displayName, count: $0.entries.count) }
+            .map { UsageDistributionItem(locationName: $0.fullDisplayName, count: $0.entries.count) }
     }
 
     private func buildStats(
@@ -123,7 +123,7 @@ final class StatisticsViewModel {
         let entries = (try? modelContext.fetch(descriptor)) ?? []
         return entries
             .filter { $0.startTime >= cutoff }
-            .map { ($0, $0.location?.displayName ?? "Unknown") }
+            .map { ($0, $0.location?.fullDisplayName ?? "Unknown") }
     }
 
     static func computeMean(_ values: [Double]) -> Double? {

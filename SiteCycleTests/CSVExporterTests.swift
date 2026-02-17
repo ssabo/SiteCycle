@@ -72,7 +72,7 @@ struct CSVExporterTests {
         let lines = result.components(separatedBy: "\n")
         let dataLine = lines[1]
         let fields = parseCSVLine(dataLine)
-        #expect(fields[1] == "Left Front Abdomen")
+        #expect(fields[1] == "L Abdomen - Front")
     }
 
     @Test func csvDurationRoundedToOneDecimal() throws {
