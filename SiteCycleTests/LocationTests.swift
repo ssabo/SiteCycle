@@ -6,17 +6,17 @@ struct LocationTests {
 
     @Test func displayNameWithLeftSide() {
         let location = Location(zone: "Front Abdomen", side: "left")
-        #expect(location.displayName == "Left Front Abdomen")
+        #expect(location.displayName == "Abdomen - Front")
     }
 
     @Test func displayNameWithRightSide() {
         let location = Location(zone: "Front Abdomen", side: "right")
-        #expect(location.displayName == "Right Front Abdomen")
+        #expect(location.displayName == "Abdomen - Front")
     }
 
     @Test func displayNameWithoutSide() {
         let location = Location(zone: "Lower Back")
-        #expect(location.displayName == "Lower Back")
+        #expect(location.displayName == "Back - Lower")
     }
 
     @Test func defaultInitValues() {
@@ -50,8 +50,38 @@ struct LocationTests {
     @Test func displayNameSideCapitalization() {
         let left = Location(zone: "Back Arm", side: "left")
         let right = Location(zone: "Back Arm", side: "right")
-        #expect(left.displayName.hasPrefix("Left"))
-        #expect(right.displayName.hasPrefix("Right"))
+        #expect(left.sideLabel == "L")
+        #expect(right.sideLabel == "R")
+    }
+
+    @Test func sideLabelLeft() {
+        let location = Location(zone: "Front Abdomen", side: "left")
+        #expect(location.sideLabel == "L")
+    }
+
+    @Test func sideLabelRight() {
+        let location = Location(zone: "Front Abdomen", side: "right")
+        #expect(location.sideLabel == "R")
+    }
+
+    @Test func sideLabelNil() {
+        let location = Location(zone: "Buttock")
+        #expect(location.sideLabel == nil)
+    }
+
+    @Test func fullDisplayNameWithSide() {
+        let location = Location(zone: "Front Abdomen", side: "left")
+        #expect(location.fullDisplayName == "L Abdomen - Front")
+    }
+
+    @Test func fullDisplayNameWithoutSide() {
+        let location = Location(zone: "Buttock")
+        #expect(location.fullDisplayName == "Buttock")
+    }
+
+    @Test func displayNameSingleWord() {
+        let location = Location(zone: "Buttock")
+        #expect(location.displayName == "Buttock")
     }
 
     @Test func uniqueIDGeneration() {

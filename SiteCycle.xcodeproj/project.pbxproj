@@ -43,6 +43,7 @@
 		8A000000000000000000012D /* CSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002D /* CSVImporter.swift */; };
 		8A000000000000000000012E /* DocumentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002E /* DocumentPickerView.swift */; };
 		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
+		8A000000000000000000012F /* LocationLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002F /* LocationLabelView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +96,7 @@
 		8A000000000000000000002D /* CSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporter.swift; sourceTree = "<group>"; };
 		8A000000000000000000002E /* DocumentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickerView.swift; sourceTree = "<group>"; };
 		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000002F /* LocationLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationLabelView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +159,7 @@
 				8A0000000000000000000028 /* HistoryView.swift */,
 				8A0000000000000000000025 /* HomeView.swift */,
 				8A0000000000000000000020 /* LocationConfigView.swift */,
+				8A000000000000000000002F /* LocationLabelView.swift */,
 				8A0000000000000000000022 /* OnboardingView.swift */,
 				8A0000000000000000000021 /* SettingsView.swift */,
 				8A0000000000000000000026 /* SiteSelectionSheet.swift */,
@@ -342,8 +345,9 @@
 				8A000000000000000000012A /* StatisticsViewModel.swift in Sources */,
 				8A000000000000000000012B /* StatisticsView.swift in Sources */,
 				8A000000000000000000012C /* CSVExporter.swift in Sources */,
-				8A000000000000000000012D /* CSVImporter.swift in Sources */,
+			8A000000000000000000012D /* CSVImporter.swift in Sources */,
 				8A000000000000000000012E /* DocumentPickerView.swift in Sources */,
+				8A000000000000000000012F /* LocationLabelView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

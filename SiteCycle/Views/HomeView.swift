@@ -93,9 +93,14 @@ struct HomeView: View {
 
     private func locationInfo(viewModel: HomeViewModel) -> some View {
         VStack(spacing: 8) {
-            Text(viewModel.currentLocation?.displayName ?? "Unknown Location")
-                .font(.title2)
-                .fontWeight(.semibold)
+            if let loc = viewModel.currentLocation {
+                LocationLabelView(location: loc, font: .title2)
+                    .fontWeight(.semibold)
+            } else {
+                Text("Unknown Location")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+            }
 
             if let startTime = viewModel.startTime {
                 Text("Since \(startTime, format: .dateTime.month().day().hour().minute())")

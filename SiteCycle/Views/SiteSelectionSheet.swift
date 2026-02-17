@@ -44,7 +44,7 @@ struct SiteSelectionSheet: View {
                     note = ""
                 }
             } message: {
-                Text("Log site change to \(selectedLocation?.displayName ?? "")?")
+                Text("Log site change to \(selectedLocation?.fullDisplayName ?? "")?")
             }
         }
     }
@@ -99,8 +99,7 @@ struct SiteSelectionSheet: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(location.displayName)
-                        .font(.body)
+                    LocationLabelView(location: location)
                         .foregroundStyle(.primary)
 
                     if let lastUsed = viewModel.lastUsedDate(for: location) {

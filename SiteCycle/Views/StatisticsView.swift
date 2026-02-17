@@ -114,8 +114,7 @@ private extension StatisticsView {
     func locationStatsRow(_ stat: LocationStats) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(stat.location.displayName)
-                    .font(.headline)
+                LocationLabelView(location: stat.location, font: .headline)
                 Spacer()
                 Text("\(stat.totalUses) uses")
                     .font(.subheadline)
