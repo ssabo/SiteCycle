@@ -56,9 +56,9 @@ struct StatisticsViewModelDistributionTests {
         let vm = StatisticsViewModel(modelContext: context)
         vm.refresh()
         let dist = vm.usageDistribution
-        let c1 = try #require(dist.first { $0.locationName == loc1.displayName })
-        let c2 = try #require(dist.first { $0.locationName == loc2.displayName })
-        let c3 = try #require(dist.first { $0.locationName == loc3.displayName })
+        let c1 = try #require(dist.first { $0.locationName == loc1.fullDisplayName })
+        let c2 = try #require(dist.first { $0.locationName == loc2.fullDisplayName })
+        let c3 = try #require(dist.first { $0.locationName == loc3.fullDisplayName })
         #expect(c1.count == 5)
         #expect(c2.count == 3)
         #expect(c3.count == 1)
@@ -85,8 +85,8 @@ struct StatisticsViewModelDistributionTests {
         let vm = StatisticsViewModel(modelContext: context)
         vm.refresh()
         let dist = vm.usageDistribution
-        #expect(dist.contains { $0.locationName == loc1.displayName })
-        #expect(!dist.contains { $0.locationName == loc2.displayName })
+        #expect(dist.contains { $0.locationName == loc1.fullDisplayName })
+        #expect(!dist.contains { $0.locationName == loc2.fullDisplayName })
     }
 
     // MARK: - Edge Cases

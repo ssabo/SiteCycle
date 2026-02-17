@@ -38,8 +38,8 @@ struct CSVImporterTests {
             FetchDescriptor<SiteChangeEntry>(sortBy: [SortDescriptor(\.startTime)])
         )
         #expect(entries.count == 2)
-        #expect(entries[0].location?.displayName == "Left Front Abdomen")
-        #expect(entries[1].location?.displayName == "Right Front Abdomen")
+        #expect(entries[0].location?.fullDisplayName == "L Abdomen - Front")
+        #expect(entries[1].location?.fullDisplayName == "R Abdomen - Front")
     }
 
     @Test func testActiveEntryHasNilEndTime() throws {
@@ -131,7 +131,7 @@ struct CSVImporterTests {
 
         let locations = try context.fetch(FetchDescriptor<Location>())
         #expect(locations.count == 1)
-        #expect(locations[0].displayName == "Left Front Abdomen")
+        #expect(locations[0].fullDisplayName == "L Abdomen - Front")
 
         let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
         #expect(entries.count == 1)

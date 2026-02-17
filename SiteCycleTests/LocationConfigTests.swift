@@ -52,7 +52,7 @@ struct LocationConfigTests {
         #expect(locations.count == 1)
         #expect(locations.first?.zone == "Lower Back")
         #expect(locations.first?.side == nil)
-        #expect(locations.first?.displayName == "Lower Back")
+        #expect(locations.first?.displayName == "Back - Lower")
     }
 
     @Test func customZonesHaveIsCustomTrue() {
@@ -275,13 +275,13 @@ struct LocationConfigTests {
 
     @Test func customZoneDisplayNameWithoutLaterality() {
         let location = Location(zone: "Lower Back", side: nil, isCustom: true)
-        #expect(location.displayName == "Lower Back")
+        #expect(location.displayName == "Back - Lower")
     }
 
     @Test func customZoneDisplayNameWithLaterality() {
         let left = Location(zone: "Hip", side: "left", isCustom: true)
         let right = Location(zone: "Hip", side: "right", isCustom: true)
-        #expect(left.displayName == "Left Hip")
-        #expect(right.displayName == "Right Hip")
+        #expect(left.fullDisplayName == "L Hip")
+        #expect(right.fullDisplayName == "R Hip")
     }
 }

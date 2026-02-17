@@ -175,7 +175,7 @@ struct CSVExporterTests {
         )
 
         let result = CSVExporter.generate(from: [entry])
-        #expect(result.contains("\"Hip, Left\""))
+        #expect(result.contains("\"Left - Hip,\""))
     }
 
     // MARK: - Ordering & Multiple Entries
