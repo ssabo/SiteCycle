@@ -11,7 +11,7 @@ final class HistoryViewModel {
     var endDate: Date?
 
     var filteredEntries: [SiteChangeEntry] {
-        var descriptor = FetchDescriptor<SiteChangeEntry>(
+        let descriptor = FetchDescriptor<SiteChangeEntry>(
             sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
         )
 
