@@ -33,7 +33,7 @@ struct CSVExporterTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         var components = DateComponents()
@@ -61,7 +61,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvLocationUsesDisplayName() throws {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             endTime: Date().addingTimeInterval(3600),
@@ -72,12 +72,12 @@ struct CSVExporterTests {
         let lines = result.components(separatedBy: "\n")
         let dataLine = lines[1]
         let fields = parseCSVLine(dataLine)
-        #expect(fields[1] == "L Abdomen - Front")
+        #expect(fields[1] == "L Abdomen (Front)")
     }
 
     @Test func csvDurationRoundedToOneDecimal() throws {
         let now = Date()
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: now,
             endTime: now.addingTimeInterval(68.4667 * 3600),
@@ -92,7 +92,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvActiveEntryHasEmptyDuration() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             location: location
@@ -106,7 +106,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvNilNoteProducesEmptyField() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             endTime: Date().addingTimeInterval(3600),
@@ -124,7 +124,7 @@ struct CSVExporterTests {
     // MARK: - CSV Escaping (RFC 4180)
 
     @Test func csvNoteWithCommasIsQuotedCorrectly() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             endTime: Date().addingTimeInterval(3600),
@@ -139,7 +139,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvNoteWithDoubleQuotesIsEscaped() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             endTime: Date().addingTimeInterval(3600),
@@ -154,7 +154,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvNoteWithNewlinesIsQuoted() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             endTime: Date().addingTimeInterval(3600),
@@ -167,7 +167,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvLocationNameWithCommaIsQuoted() {
-        let location = Location(zone: "Hip, Left")
+        let location = Location(bodyPart: "Hip, Left")
         let entry = SiteChangeEntry(
             startTime: Date(),
             endTime: Date().addingTimeInterval(3600),
@@ -175,13 +175,13 @@ struct CSVExporterTests {
         )
 
         let result = CSVExporter.generate(from: [entry])
-        #expect(result.contains("\"Left - Hip,\""))
+        #expect(result.contains("\"Hip, Left\""))
     }
 
     // MARK: - Ordering & Multiple Entries
 
     @Test func csvEntriesInChronologicalOrder() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let now = Date()
         let entries = [
             SiteChangeEntry(
@@ -213,7 +213,7 @@ struct CSVExporterTests {
     }
 
     @Test func csvMultipleEntriesProduceCorrectRowCount() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let now = Date()
         var entries: [SiteChangeEntry] = []
         for i in 0..<5 {

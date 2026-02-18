@@ -4,23 +4,25 @@ import Foundation
 
 struct LocationTests {
 
-    @Test func displayNameWithLeftSide() {
-        let location = Location(zone: "Front Abdomen", side: "left")
-        #expect(location.displayName == "Abdomen - Front")
+    @Test func displayNameWithSubArea() {
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        #expect(location.displayName == "Abdomen (Front)")
     }
 
     @Test func displayNameWithRightSide() {
-        let location = Location(zone: "Front Abdomen", side: "right")
-        #expect(location.displayName == "Abdomen - Front")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "right")
+        #expect(location.displayName == "Abdomen (Front)")
     }
 
     @Test func displayNameWithoutSide() {
-        let location = Location(zone: "Lower Back")
-        #expect(location.displayName == "Back - Lower")
+        let location = Location(bodyPart: "Back", subArea: "Lower")
+        #expect(location.displayName == "Back (Lower)")
     }
 
     @Test func defaultInitValues() {
-        let location = Location(zone: "Test Zone")
+        let location = Location(bodyPart: "Test Zone")
+        #expect(location.bodyPart == "Test Zone")
+        #expect(location.subArea == nil)
         #expect(location.zone == "Test Zone")
         #expect(location.side == nil)
         #expect(location.isEnabled == true)
@@ -33,14 +35,17 @@ struct LocationTests {
         let id = UUID()
         let location = Location(
             id: id,
-            zone: "Custom Zone",
+            bodyPart: "Custom",
+            subArea: "Zone",
             side: "left",
             isEnabled: false,
             isCustom: true,
             sortOrder: 5
         )
         #expect(location.id == id)
-        #expect(location.zone == "Custom Zone")
+        #expect(location.bodyPart == "Custom")
+        #expect(location.subArea == "Zone")
+        #expect(location.zone == "Zone Custom")
         #expect(location.side == "left")
         #expect(location.isEnabled == false)
         #expect(location.isCustom == true)
@@ -48,45 +53,56 @@ struct LocationTests {
     }
 
     @Test func displayNameSideCapitalization() {
-        let left = Location(zone: "Back Arm", side: "left")
-        let right = Location(zone: "Back Arm", side: "right")
+        let left = Location(bodyPart: "Arm", subArea: "Back", side: "left")
+        let right = Location(bodyPart: "Arm", subArea: "Back", side: "right")
         #expect(left.sideLabel == "L")
         #expect(right.sideLabel == "R")
     }
 
     @Test func sideLabelLeft() {
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         #expect(location.sideLabel == "L")
     }
 
     @Test func sideLabelRight() {
-        let location = Location(zone: "Front Abdomen", side: "right")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "right")
         #expect(location.sideLabel == "R")
     }
 
     @Test func sideLabelNil() {
-        let location = Location(zone: "Buttock")
+        let location = Location(bodyPart: "Buttock")
         #expect(location.sideLabel == nil)
     }
 
     @Test func fullDisplayNameWithSide() {
-        let location = Location(zone: "Front Abdomen", side: "left")
-        #expect(location.fullDisplayName == "L Abdomen - Front")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        #expect(location.fullDisplayName == "L Abdomen (Front)")
     }
 
     @Test func fullDisplayNameWithoutSide() {
-        let location = Location(zone: "Buttock")
+        let location = Location(bodyPart: "Buttock")
         #expect(location.fullDisplayName == "Buttock")
     }
 
     @Test func displayNameSingleWord() {
-        let location = Location(zone: "Buttock")
+        let location = Location(bodyPart: "Buttock")
         #expect(location.displayName == "Buttock")
     }
 
     @Test func uniqueIDGeneration() {
-        let location1 = Location(zone: "Front Abdomen", side: "left")
-        let location2 = Location(zone: "Front Abdomen", side: "left")
+        let location1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let location2 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         #expect(location1.id != location2.id)
+    }
+
+    @Test func zoneComputedFromBodyPartAndSubArea() {
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front")
+        #expect(loc1.zone == "Front Abdomen")
+
+        let loc2 = Location(bodyPart: "Buttock")
+        #expect(loc2.zone == "Buttock")
+
+        let loc3 = Location(bodyPart: "Arm", subArea: "Back")
+        #expect(loc3.zone == "Back Arm")
     }
 }

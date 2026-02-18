@@ -38,8 +38,8 @@ struct CSVImporterTests {
             FetchDescriptor<SiteChangeEntry>(sortBy: [SortDescriptor(\.startTime)])
         )
         #expect(entries.count == 2)
-        #expect(entries[0].location?.fullDisplayName == "L Abdomen - Front")
-        #expect(entries[1].location?.fullDisplayName == "R Abdomen - Front")
+        #expect(entries[0].location?.fullDisplayName == "L Abdomen (Front)")
+        #expect(entries[1].location?.fullDisplayName == "R Abdomen (Front)")
     }
 
     @Test func testActiveEntryHasNilEndTime() throws {
@@ -128,7 +128,7 @@ struct CSVImporterTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let existing = Location(zone: "Old Zone", side: nil, isEnabled: true, isCustom: true, sortOrder: 0)
+        let existing = Location(bodyPart: "Old Zone", isEnabled: true, isCustom: true, sortOrder: 0)
         context.insert(existing)
         let oldEntry = SiteChangeEntry(
             startTime: Date().addingTimeInterval(-86400),
@@ -146,7 +146,7 @@ struct CSVImporterTests {
 
         let locations = try context.fetch(FetchDescriptor<Location>())
         #expect(locations.count == 1)
-        #expect(locations[0].fullDisplayName == "L Abdomen - Front")
+        #expect(locations[0].fullDisplayName == "L Abdomen (Front)")
 
         let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
         #expect(entries.count == 1)
@@ -165,7 +165,8 @@ struct CSVImporterTests {
         let locations = try context.fetch(FetchDescriptor<Location>())
         let location = try #require(locations.first)
         #expect(location.side == "left")
-        #expect(location.zone == "Front Abdomen")
+        #expect(location.bodyPart == "Abdomen")
+        #expect(location.subArea == "Front")
         #expect(location.isCustom == false)
     }
 
@@ -180,7 +181,8 @@ struct CSVImporterTests {
         let locations = try context.fetch(FetchDescriptor<Location>())
         let location = try #require(locations.first)
         #expect(location.side == nil)
-        #expect(location.zone == "Buttock")
+        #expect(location.bodyPart == "Buttock")
+        #expect(location.subArea == nil)
         #expect(location.isCustom == false)
     }
 
@@ -195,7 +197,26 @@ struct CSVImporterTests {
         let locations = try context.fetch(FetchDescriptor<Location>())
         let location = try #require(locations.first)
         #expect(location.isCustom == true)
-        #expect(location.zone == "Shoulder")
+        #expect(location.bodyPart == "Shoulder")
+    }
+
+    // MARK: - New Format Import
+
+    @Test func testNewFormatImport() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let csv = """
+        date,location,duration_hours,note
+        2024-01-15T10:30:00Z,L Abdomen (Front),72.0,
+        """
+        _ = try CSVImporter.importCSV(from: writeTemp(csv), context: context)
+        let locations = try context.fetch(FetchDescriptor<Location>())
+        let location = try #require(locations.first)
+        #expect(location.side == "left")
+        #expect(location.bodyPart == "Abdomen")
+        #expect(location.subArea == "Front")
+        #expect(location.fullDisplayName == "L Abdomen (Front)")
+        #expect(location.isCustom == false)
     }
 
     // MARK: - RFC 4180 Parsing

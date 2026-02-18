@@ -43,7 +43,9 @@ struct SiteCycleApp: App {
         WindowGroup {
             ContentView()
                 .onAppear {
-                    seedDefaultLocations(context: sharedModelContainer.mainContext)
+                    let context = sharedModelContainer.mainContext
+                    seedDefaultLocations(context: context)
+                    migrateLocationBodyParts(context: context)
                 }
                 .fullScreenCover(isPresented: Binding(
                     get: { !hasCompletedOnboarding },

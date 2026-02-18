@@ -32,7 +32,7 @@ struct HomeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: Date(), location: location)
@@ -50,7 +50,7 @@ struct HomeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(
@@ -70,8 +70,8 @@ struct HomeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "right")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "right")
         context.insert(loc1)
         context.insert(loc2)
 
@@ -100,7 +100,7 @@ struct HomeViewModelTests {
         let context = ModelContext(container)
 
         let start = Date().addingTimeInterval(-7200) // 2 hours ago
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: start, location: location)
@@ -128,7 +128,7 @@ struct HomeViewModelTests {
         let context = ModelContext(container)
 
         let start = Date().addingTimeInterval(-36 * 3600) // 36 hours ago
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: start, location: location)
@@ -146,7 +146,7 @@ struct HomeViewModelTests {
         let context = ModelContext(container)
 
         let start = Date().addingTimeInterval(-24 * 3600)
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: start, location: location)
@@ -172,7 +172,7 @@ struct HomeViewModelTests {
         let context = ModelContext(container)
 
         let start = Date().addingTimeInterval(-96 * 3600) // 96 hours ago
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: start, location: location)

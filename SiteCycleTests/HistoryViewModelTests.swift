@@ -21,7 +21,7 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -48,7 +48,7 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let activeEntry = SiteChangeEntry(startTime: Date(), location: location)
@@ -76,9 +76,9 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "right")
-        let loc3 = Location(zone: "Back Abdomen", side: "left")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "right")
+        let loc3 = Location(bodyPart: "Abdomen", subArea: "Back", side: "left")
         context.insert(loc1)
         context.insert(loc2)
         context.insert(loc3)
@@ -108,8 +108,8 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "right")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "right")
         context.insert(loc1)
         context.insert(loc2)
 
@@ -133,7 +133,7 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left", isEnabled: false)
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", isEnabled: false)
         context.insert(location)
 
         let entry = SiteChangeEntry(
@@ -155,7 +155,7 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -182,7 +182,7 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let start = Date()
@@ -213,7 +213,7 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         for i in 0..<5 {
@@ -238,8 +238,8 @@ struct HistoryViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "right")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "right")
         context.insert(loc1)
         context.insert(loc2)
 

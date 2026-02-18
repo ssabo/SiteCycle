@@ -21,9 +21,9 @@ struct StatisticsViewModelDistributionTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "left")
-        let loc3 = Location(zone: "Back Abdomen", side: "left")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "left")
+        let loc3 = Location(bodyPart: "Abdomen", subArea: "Back", side: "left")
         context.insert(loc1)
         context.insert(loc2)
         context.insert(loc3)
@@ -68,8 +68,8 @@ struct StatisticsViewModelDistributionTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "left")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "left")
         context.insert(loc1)
         context.insert(loc2)
 
@@ -106,7 +106,7 @@ struct StatisticsViewModelDistributionTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()

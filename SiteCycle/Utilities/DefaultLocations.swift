@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+private struct DefaultZone {
+    let bodyPart: String
+    let subArea: String?
+    let hasLaterality: Bool
+}
+
 /// Seeds the default body locations into the SwiftData context on first launch.
 /// Each of the 7 default zones has left/right laterality, producing 14 locations total.
 func seedDefaultLocations(context: ModelContext) {
@@ -9,14 +15,14 @@ func seedDefaultLocations(context: ModelContext) {
 
     guard existingCount == 0 else { return }
 
-    let defaultZones: [(zone: String, hasLaterality: Bool)] = [
-        ("Front Abdomen", true),
-        ("Side Abdomen", true),
-        ("Back Abdomen", true),
-        ("Front Thigh", true),
-        ("Side Thigh", true),
-        ("Back Arm", true),
-        ("Buttock", true),
+    let defaultZones: [DefaultZone] = [
+        DefaultZone(bodyPart: "Abdomen", subArea: "Front", hasLaterality: true),
+        DefaultZone(bodyPart: "Abdomen", subArea: "Side", hasLaterality: true),
+        DefaultZone(bodyPart: "Abdomen", subArea: "Back", hasLaterality: true),
+        DefaultZone(bodyPart: "Thigh", subArea: "Front", hasLaterality: true),
+        DefaultZone(bodyPart: "Thigh", subArea: "Side", hasLaterality: true),
+        DefaultZone(bodyPart: "Arm", subArea: "Back", hasLaterality: true),
+        DefaultZone(bodyPart: "Buttock", subArea: nil, hasLaterality: true),
     ]
 
     var sortOrder = 0
@@ -24,7 +30,8 @@ func seedDefaultLocations(context: ModelContext) {
     for zoneInfo in defaultZones {
         if zoneInfo.hasLaterality {
             let leftLocation = Location(
-                zone: zoneInfo.zone,
+                bodyPart: zoneInfo.bodyPart,
+                subArea: zoneInfo.subArea,
                 side: "left",
                 isEnabled: true,
                 isCustom: false,
@@ -34,7 +41,8 @@ func seedDefaultLocations(context: ModelContext) {
             sortOrder += 1
 
             let rightLocation = Location(
-                zone: zoneInfo.zone,
+                bodyPart: zoneInfo.bodyPart,
+                subArea: zoneInfo.subArea,
                 side: "right",
                 isEnabled: true,
                 isCustom: false,
@@ -44,7 +52,8 @@ func seedDefaultLocations(context: ModelContext) {
             sortOrder += 1
         } else {
             let location = Location(
-                zone: zoneInfo.zone,
+                bodyPart: zoneInfo.bodyPart,
+                subArea: zoneInfo.subArea,
                 side: nil,
                 isEnabled: true,
                 isCustom: false,
@@ -56,4 +65,27 @@ func seedDefaultLocations(context: ModelContext) {
     }
 
     try? context.save()
+}
+
+/// Migrates existing locations that have a `zone` but empty `bodyPart`.
+/// Parses zone string: last word → bodyPart, remaining words → subArea.
+func migrateLocationBodyParts(context: ModelContext) {
+    let descriptor = FetchDescriptor<Location>()
+    guard let locations = try? context.fetch(descriptor) else { return }
+
+    var migrated = false
+    for location in locations where location.bodyPart.isEmpty {
+        let words = location.zone.split(separator: " ").map(String.init)
+        if let lastWord = words.last {
+            location.bodyPart = lastWord
+            if words.count >= 2 {
+                location.subArea = words.dropLast().joined(separator: " ")
+            }
+            migrated = true
+        }
+    }
+
+    if migrated {
+        try? context.save()
+    }
 }

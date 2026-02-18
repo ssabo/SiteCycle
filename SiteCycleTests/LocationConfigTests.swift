@@ -21,8 +21,8 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let left = Location(zone: "Hip", side: "left", isEnabled: true, isCustom: true, sortOrder: 0)
-        let right = Location(zone: "Hip", side: "right", isEnabled: true, isCustom: true, sortOrder: 1)
+        let left = Location(bodyPart: "Hip", side: "left", isEnabled: true, isCustom: true, sortOrder: 0)
+        let right = Location(bodyPart: "Hip", side: "right", isEnabled: true, isCustom: true, sortOrder: 1)
         context.insert(left)
         context.insert(right)
         try context.save()
@@ -35,28 +35,29 @@ struct LocationConfigTests {
         let rightLoc = locations.first { $0.side == "right" }
         #expect(leftLoc != nil)
         #expect(rightLoc != nil)
-        #expect(leftLoc?.zone == "Hip")
-        #expect(rightLoc?.zone == "Hip")
+        #expect(leftLoc?.bodyPart == "Hip")
+        #expect(rightLoc?.bodyPart == "Hip")
     }
 
     @Test func addCustomZoneWithoutLateralityCreatesOneLocation() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Lower Back", side: nil, isEnabled: true, isCustom: true, sortOrder: 0)
+        let location = Location(bodyPart: "Back", subArea: "Lower", isEnabled: true, isCustom: true, sortOrder: 0)
         context.insert(location)
         try context.save()
 
         let descriptor = FetchDescriptor<Location>()
         let locations = try context.fetch(descriptor)
         #expect(locations.count == 1)
-        #expect(locations.first?.zone == "Lower Back")
+        #expect(locations.first?.bodyPart == "Back")
+        #expect(locations.first?.subArea == "Lower")
         #expect(locations.first?.side == nil)
-        #expect(locations.first?.displayName == "Back - Lower")
+        #expect(locations.first?.displayName == "Back (Lower)")
     }
 
     @Test func customZonesHaveIsCustomTrue() {
-        let location = Location(zone: "Custom Zone", side: nil, isCustom: true)
+        let location = Location(bodyPart: "Custom Zone", isCustom: true)
         #expect(location.isCustom == true)
     }
 
@@ -68,14 +69,14 @@ struct LocationConfigTests {
         seedDefaultLocations(context: context)
 
         // Add a custom zone after
-        let custom = Location(zone: "Hip", side: nil, isEnabled: true, isCustom: true, sortOrder: 14)
+        let custom = Location(bodyPart: "Hip", isEnabled: true, isCustom: true, sortOrder: 14)
         context.insert(custom)
         try context.save()
 
         let descriptor = FetchDescriptor<Location>(sortBy: [SortDescriptor(\.sortOrder)])
         let locations = try context.fetch(descriptor)
         #expect(locations.count == 15)
-        #expect(locations.last?.zone == "Hip")
+        #expect(locations.last?.bodyPart == "Hip")
         #expect(locations.last?.sortOrder == 14)
     }
 
@@ -85,7 +86,7 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Custom", side: nil, isEnabled: true, isCustom: true, sortOrder: 0)
+        let location = Location(bodyPart: "Custom", isEnabled: true, isCustom: true, sortOrder: 0)
         context.insert(location)
         try context.save()
 
@@ -103,7 +104,7 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Custom", side: nil, isEnabled: true, isCustom: true, sortOrder: 0)
+        let location = Location(bodyPart: "Custom", isEnabled: true, isCustom: true, sortOrder: 0)
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: Date(), location: location)
@@ -127,7 +128,7 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Custom", side: nil, isEnabled: true, isCustom: true, sortOrder: 0)
+        let location = Location(bodyPart: "Custom", isEnabled: true, isCustom: true, sortOrder: 0)
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: Date(), note: "test note", location: location)
@@ -142,7 +143,7 @@ struct LocationConfigTests {
         let entryDescriptor = FetchDescriptor<SiteChangeEntry>()
         let entries = try context.fetch(entryDescriptor)
         #expect(entries.count == 1)
-        #expect(entries.first?.location?.zone == "Custom")
+        #expect(entries.first?.location?.bodyPart == "Custom")
         #expect(entries.first?.note == "test note")
     }
 
@@ -152,8 +153,8 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let left = Location(zone: "Hip", side: "left", isEnabled: true, isCustom: true, sortOrder: 0)
-        let right = Location(zone: "Hip", side: "right", isEnabled: true, isCustom: true, sortOrder: 1)
+        let left = Location(bodyPart: "Hip", side: "left", isEnabled: true, isCustom: true, sortOrder: 0)
+        let right = Location(bodyPart: "Hip", side: "right", isEnabled: true, isCustom: true, sortOrder: 1)
         context.insert(left)
         context.insert(right)
         try context.save()
@@ -177,8 +178,8 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let left = Location(zone: "Hip", side: "left", isEnabled: false, isCustom: true, sortOrder: 0)
-        let right = Location(zone: "Hip", side: "right", isEnabled: false, isCustom: true, sortOrder: 1)
+        let left = Location(bodyPart: "Hip", side: "left", isEnabled: false, isCustom: true, sortOrder: 0)
+        let right = Location(bodyPart: "Hip", side: "right", isEnabled: false, isCustom: true, sortOrder: 1)
         context.insert(left)
         context.insert(right)
         try context.save()
@@ -204,9 +205,9 @@ struct LocationConfigTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Zone A", side: nil, isCustom: false, sortOrder: 0)
-        let loc2 = Location(zone: "Zone B", side: nil, isCustom: false, sortOrder: 1)
-        let loc3 = Location(zone: "Zone C", side: nil, isCustom: false, sortOrder: 2)
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        let loc3 = Location(bodyPart: "Zone C", sortOrder: 2)
         context.insert(loc1)
         context.insert(loc2)
         context.insert(loc3)
@@ -221,11 +222,11 @@ struct LocationConfigTests {
 
         let descriptor = FetchDescriptor<Location>(sortBy: [SortDescriptor(\.sortOrder)])
         let sorted = try context.fetch(descriptor)
-        #expect(sorted[0].zone == "Zone C")
+        #expect(sorted[0].bodyPart == "Zone C")
         #expect(sorted[0].sortOrder == 0)
-        #expect(sorted[1].zone == "Zone A")
+        #expect(sorted[1].bodyPart == "Zone A")
         #expect(sorted[1].sortOrder == 1)
-        #expect(sorted[2].zone == "Zone B")
+        #expect(sorted[2].bodyPart == "Zone B")
         #expect(sorted[2].sortOrder == 2)
     }
 
@@ -234,10 +235,10 @@ struct LocationConfigTests {
         let context = ModelContext(container)
 
         // Zone A: left=0, right=1; Zone B: left=2, right=3
-        let aLeft = Location(zone: "Zone A", side: "left", sortOrder: 0)
-        let aRight = Location(zone: "Zone A", side: "right", sortOrder: 1)
-        let bLeft = Location(zone: "Zone B", side: "left", sortOrder: 2)
-        let bRight = Location(zone: "Zone B", side: "right", sortOrder: 3)
+        let aLeft = Location(bodyPart: "Zone A", side: "left", sortOrder: 0)
+        let aRight = Location(bodyPart: "Zone A", side: "right", sortOrder: 1)
+        let bLeft = Location(bodyPart: "Zone B", side: "left", sortOrder: 2)
+        let bRight = Location(bodyPart: "Zone B", side: "right", sortOrder: 3)
         context.insert(aLeft)
         context.insert(aRight)
         context.insert(bLeft)
@@ -257,16 +258,16 @@ struct LocationConfigTests {
 
         let descriptor = FetchDescriptor<Location>(sortBy: [SortDescriptor(\.sortOrder)])
         let sorted = try context.fetch(descriptor)
-        #expect(sorted[0].zone == "Zone B")
+        #expect(sorted[0].bodyPart == "Zone B")
         #expect(sorted[0].side == "left")
         #expect(sorted[0].sortOrder == 0)
-        #expect(sorted[1].zone == "Zone B")
+        #expect(sorted[1].bodyPart == "Zone B")
         #expect(sorted[1].side == "right")
         #expect(sorted[1].sortOrder == 1)
-        #expect(sorted[2].zone == "Zone A")
+        #expect(sorted[2].bodyPart == "Zone A")
         #expect(sorted[2].side == "left")
         #expect(sorted[2].sortOrder == 2)
-        #expect(sorted[3].zone == "Zone A")
+        #expect(sorted[3].bodyPart == "Zone A")
         #expect(sorted[3].side == "right")
         #expect(sorted[3].sortOrder == 3)
     }
@@ -274,13 +275,13 @@ struct LocationConfigTests {
     // MARK: - Display Name for Custom Zones
 
     @Test func customZoneDisplayNameWithoutLaterality() {
-        let location = Location(zone: "Lower Back", side: nil, isCustom: true)
-        #expect(location.displayName == "Back - Lower")
+        let location = Location(bodyPart: "Back", subArea: "Lower", isCustom: true)
+        #expect(location.displayName == "Back (Lower)")
     }
 
     @Test func customZoneDisplayNameWithLaterality() {
-        let left = Location(zone: "Hip", side: "left", isCustom: true)
-        let right = Location(zone: "Hip", side: "right", isCustom: true)
+        let left = Location(bodyPart: "Hip", side: "left", isCustom: true)
+        let right = Location(bodyPart: "Hip", side: "right", isCustom: true)
         #expect(left.fullDisplayName == "L Hip")
         #expect(right.fullDisplayName == "R Hip")
     }

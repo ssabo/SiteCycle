@@ -5,6 +5,8 @@ import SwiftData
 final class Location {
     var id: UUID
     var zone: String
+    var bodyPart: String = ""
+    var subArea: String?
     var side: String?
     var isEnabled: Bool
     var isCustom: Bool
@@ -18,14 +20,10 @@ final class Location {
         return side == "left" ? "L" : "R"
     }
 
-    private var invertedZone: String {
-        let words = zone.split(separator: " ").map(String.init)
-        guard words.count >= 2, let lastWord = words.last else { return zone }
-        let qualifier = words.dropLast().joined(separator: " ")
-        return "\(lastWord) - \(qualifier)"
+    var displayName: String {
+        if let subArea { return "\(bodyPart) (\(subArea))" }
+        return bodyPart
     }
-
-    var displayName: String { invertedZone }
 
     var fullDisplayName: String {
         if let sideLabel { return "\(sideLabel) \(displayName)" }
@@ -34,14 +32,17 @@ final class Location {
 
     init(
         id: UUID = UUID(),
-        zone: String,
+        bodyPart: String,
+        subArea: String? = nil,
         side: String? = nil,
         isEnabled: Bool = true,
         isCustom: Bool = false,
         sortOrder: Int = 0
     ) {
         self.id = id
-        self.zone = zone
+        self.bodyPart = bodyPart
+        self.subArea = subArea
+        self.zone = [subArea, bodyPart].compactMap { $0 }.joined(separator: " ")
         self.side = side
         self.isEnabled = isEnabled
         self.isCustom = isCustom

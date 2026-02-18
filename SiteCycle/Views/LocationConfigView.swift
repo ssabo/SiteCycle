@@ -53,25 +53,27 @@ struct LocationConfigView: View {
             EditButton()
         }
         .sheet(isPresented: $showingAddSheet) {
-            AddCustomZoneSheet { zoneName, hasLaterality in
-                addCustomZone(name: zoneName, hasLaterality: hasLaterality)
+            AddCustomZoneSheet { input in
+                addCustomZone(bodyPart: input.bodyPart, subArea: input.subArea, hasLaterality: input.hasLaterality)
             }
         }
     }
 
-    private func addCustomZone(name: String, hasLaterality: Bool) {
+    private func addCustomZone(bodyPart: String, subArea: String?, hasLaterality: Bool) {
         let maxSortOrder = allLocations.map(\.sortOrder).max() ?? -1
 
         if hasLaterality {
             let left = Location(
-                zone: name,
+                bodyPart: bodyPart,
+                subArea: subArea,
                 side: "left",
                 isEnabled: true,
                 isCustom: true,
                 sortOrder: maxSortOrder + 1
             )
             let right = Location(
-                zone: name,
+                bodyPart: bodyPart,
+                subArea: subArea,
                 side: "right",
                 isEnabled: true,
                 isCustom: true,
@@ -81,7 +83,8 @@ struct LocationConfigView: View {
             modelContext.insert(right)
         } else {
             let location = Location(
-                zone: name,
+                bodyPart: bodyPart,
+                subArea: subArea,
                 side: nil,
                 isEnabled: true,
                 isCustom: true,
@@ -153,7 +156,7 @@ private struct ZoneRow: View {
             }
         )) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(zone)
+                Text(locations.first?.displayName ?? zone)
                     .font(.body)
                 if locations.count > 1 {
                     Text("Left & Right")
@@ -172,17 +175,25 @@ private struct ZoneRow: View {
 
 // MARK: - Add Custom Zone Sheet
 
+private struct CustomZoneInput {
+    let bodyPart: String
+    let subArea: String?
+    let hasLaterality: Bool
+}
+
 private struct AddCustomZoneSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var zoneName = ""
+    @State private var bodyPart = ""
+    @State private var qualifier = ""
     @State private var hasLaterality = true
-    let onSave: (String, Bool) -> Void
+    let onSave: (CustomZoneInput) -> Void
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Zone Name", text: $zoneName)
+                    TextField("Body Part", text: $bodyPart)
+                    TextField("Qualifier (optional)", text: $qualifier)
                     Toggle("Has Left & Right Sides", isOn: $hasLaterality)
                 } footer: {
                     if hasLaterality {
@@ -200,10 +211,16 @@ private struct AddCustomZoneSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        onSave(zoneName.trimmingCharacters(in: .whitespaces), hasLaterality)
+                        let trimmedQualifier = qualifier.trimmingCharacters(in: .whitespaces)
+                        let input = CustomZoneInput(
+                            bodyPart: bodyPart.trimmingCharacters(in: .whitespaces),
+                            subArea: trimmedQualifier.isEmpty ? nil : trimmedQualifier,
+                            hasLaterality: hasLaterality
+                        )
+                        onSave(input)
                         dismiss()
                     }
-                    .disabled(zoneName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(bodyPart.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
         }
