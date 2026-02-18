@@ -56,11 +56,13 @@ jobs:
             -S apple-tool:,apple: \
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
 
-          # Install provisioning profile
+          # Install provisioning profile (must be named by its UUID)
           PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
           echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< \
+            "$(security cms -D -i "$PROFILE_PATH")")
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision"
 
       - name: Install App Store Connect API key
         env:
@@ -78,7 +80,8 @@ jobs:
             -archivePath "$ARCHIVE_PATH" \
             -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="SiteCycle App Store Profile"
 
       - name: Export IPA
         run: |
@@ -105,8 +108,8 @@ jobs:
           security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
           security default-keychain -s login.keychain 2>/dev/null || true
 
-          # Remove provisioning profile
-          rm -f ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          # Remove provisioning profiles
+          rm -f ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision
 
           # Remove API key
           rm -rf "$HOME/.private_keys"
