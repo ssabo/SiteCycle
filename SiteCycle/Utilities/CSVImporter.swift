@@ -1,7 +1,13 @@
 import Foundation
+import OSLog
 import SwiftData
 
 struct CSVImporter {
+
+    struct ImportResult {
+        let importedCount: Int
+        let skippedRows: [(rowNumber: Int, reason: String)]
+    }
 
     enum ImportError: LocalizedError {
         case unreadableFile
@@ -20,7 +26,9 @@ struct CSVImporter {
         }
     }
 
-    static func importCSV(from url: URL, context: ModelContext) throws -> Int {
+    private static let logger = Logger(subsystem: "com.sitecycle.app", category: "CSVImporter")
+
+    static func importCSV(from url: URL, context: ModelContext) throws -> ImportResult {
         let accessed = url.startAccessingSecurityScopedResource()
         defer {
             if accessed { url.stopAccessingSecurityScopedResource() }
@@ -30,7 +38,8 @@ struct CSVImporter {
             throw ImportError.unreadableFile
         }
 
-        return try parseAndImport(csv: csv, context: context)
+        let stripped = csv.hasPrefix("\u{FEFF}") ? String(csv.dropFirst()) : csv
+        return try parseAndImport(csv: stripped, context: context)
     }
 
     // MARK: - Internal for tests
@@ -110,14 +119,18 @@ struct CSVImporter {
 
     // MARK: - Private
 
-    private static func parseAndImport(csv: String, context: ModelContext) throws -> Int {
+    private static func parseAndImport(csv: String, context: ModelContext) throws -> ImportResult {
         let rows = parseCSV(csv)
         guard let header = rows.first else {
             throw ImportError.invalidHeader
         }
 
         let expectedHeader = ["date", "location", "duration_hours", "note"]
-        guard header == expectedHeader else {
+        let normalizedHeader = header.map { $0.trimmingCharacters(in: .whitespaces) }
+        guard normalizedHeader == expectedHeader else {
+            let got = normalizedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
+            let want = expectedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
+            logger.error("Invalid header — got: [\(got)], want: [\(want)]")
             throw ImportError.invalidHeader
         }
 
@@ -135,11 +148,23 @@ struct CSVImporter {
         var locationCache: [String: Location] = [:]
         var sortOrder = 0
         var count = 0
+        var skipped: [(rowNumber: Int, reason: String)] = []
 
-        for row in dataRows {
-            guard row.count >= 4 else { continue }
+        for (index, row) in dataRows.enumerated() {
+            let rowNumber = index + 2
+            guard row.count >= 4 else {
+                let reason = "too few columns (\(row.count) found, 4 required)"
+                logger.warning("Row \(rowNumber): \(reason)")
+                skipped.append((rowNumber: rowNumber, reason: reason))
+                continue
+            }
             let dateStr = row[0], locationName = row[1], durationStr = row[2], note = row[3]
-            guard let startTime = dateFormatter.date(from: dateStr) else { continue }
+            guard let startTime = dateFormatter.date(from: dateStr) else {
+                let reason = "unrecognized date '\(dateStr)'"
+                logger.warning("Row \(rowNumber): \(reason)")
+                skipped.append((rowNumber: rowNumber, reason: reason))
+                continue
+            }
 
             let location = resolveOrCreateLocation(
                 locationName, cache: &locationCache, sortOrder: &sortOrder, context: context
@@ -165,7 +190,7 @@ struct CSVImporter {
         }
 
         try context.save()
-        return count
+        return ImportResult(importedCount: count, skippedRows: skipped)
     }
 
     private static func resolveOrCreateLocation(
