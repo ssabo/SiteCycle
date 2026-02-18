@@ -53,8 +53,8 @@ struct LocationConfigView: View {
             EditButton()
         }
         .sheet(isPresented: $showingAddSheet) {
-            AddCustomZoneSheet { bodyPart, qualifier, hasLaterality in
-                addCustomZone(bodyPart: bodyPart, subArea: qualifier, hasLaterality: hasLaterality)
+            AddCustomZoneSheet { input in
+                addCustomZone(bodyPart: input.bodyPart, subArea: input.subArea, hasLaterality: input.hasLaterality)
             }
         }
     }
@@ -175,12 +175,18 @@ private struct ZoneRow: View {
 
 // MARK: - Add Custom Zone Sheet
 
+private struct CustomZoneInput {
+    let bodyPart: String
+    let subArea: String?
+    let hasLaterality: Bool
+}
+
 private struct AddCustomZoneSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var bodyPart = ""
     @State private var qualifier = ""
     @State private var hasLaterality = true
-    let onSave: (String, String?, Bool) -> Void
+    let onSave: (CustomZoneInput) -> Void
 
     var body: some View {
         NavigationStack {
@@ -206,11 +212,12 @@ private struct AddCustomZoneSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let trimmedQualifier = qualifier.trimmingCharacters(in: .whitespaces)
-                        onSave(
-                            bodyPart.trimmingCharacters(in: .whitespaces),
-                            trimmedQualifier.isEmpty ? nil : trimmedQualifier,
-                            hasLaterality
+                        let input = CustomZoneInput(
+                            bodyPart: bodyPart.trimmingCharacters(in: .whitespaces),
+                            subArea: trimmedQualifier.isEmpty ? nil : trimmedQualifier,
+                            hasLaterality: hasLaterality
                         )
+                        onSave(input)
                         dismiss()
                     }
                     .disabled(bodyPart.trimmingCharacters(in: .whitespaces).isEmpty)

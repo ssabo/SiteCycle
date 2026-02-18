@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+private struct DefaultZone {
+    let bodyPart: String
+    let subArea: String?
+    let hasLaterality: Bool
+}
+
 /// Seeds the default body locations into the SwiftData context on first launch.
 /// Each of the 7 default zones has left/right laterality, producing 14 locations total.
 func seedDefaultLocations(context: ModelContext) {
@@ -9,14 +15,14 @@ func seedDefaultLocations(context: ModelContext) {
 
     guard existingCount == 0 else { return }
 
-    let defaultZones: [(bodyPart: String, subArea: String?, hasLaterality: Bool)] = [
-        ("Abdomen", "Front", true),
-        ("Abdomen", "Side", true),
-        ("Abdomen", "Back", true),
-        ("Thigh", "Front", true),
-        ("Thigh", "Side", true),
-        ("Arm", "Back", true),
-        ("Buttock", nil, true),
+    let defaultZones: [DefaultZone] = [
+        DefaultZone(bodyPart: "Abdomen", subArea: "Front", hasLaterality: true),
+        DefaultZone(bodyPart: "Abdomen", subArea: "Side", hasLaterality: true),
+        DefaultZone(bodyPart: "Abdomen", subArea: "Back", hasLaterality: true),
+        DefaultZone(bodyPart: "Thigh", subArea: "Front", hasLaterality: true),
+        DefaultZone(bodyPart: "Thigh", subArea: "Side", hasLaterality: true),
+        DefaultZone(bodyPart: "Arm", subArea: "Back", hasLaterality: true),
+        DefaultZone(bodyPart: "Buttock", subArea: nil, hasLaterality: true),
     ]
 
     var sortOrder = 0
