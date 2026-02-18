@@ -47,7 +47,7 @@ def main():
     CY = S // 2
 
     # ── Canvas ──────────────────────────────────────────────────────────
-    img  = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    img  = Image.new('RGBA', (S, S), (20, 108, 128, 255))
     draw = ImageDraw.Draw(img)
 
     # ── Background ──────────────────────────────────────────────────────
@@ -129,6 +129,11 @@ def main():
 
     # ── Downsample (2x → 1x) for smooth anti-aliased edges ─────────────
     img = img.resize((OUTPUT_SIZE, OUTPUT_SIZE), Image.LANCZOS)
+
+    # ── Flatten to RGB (App Store rejects icons with alpha channel) ────
+    rgb_img = Image.new('RGB', img.size, BG)
+    rgb_img.paste(img, mask=img.split()[3])
+    img = rgb_img
 
     # ── Save ────────────────────────────────────────────────────────────
     out = ('SiteCycle/Assets.xcassets'
