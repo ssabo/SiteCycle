@@ -140,7 +140,10 @@ struct CSVImporter {
         }
 
         try deleteAllData(context: context)
+        return try importEntries(from: dataRows, context: context)
+    }
 
+    private static func importEntries(from dataRows: [[String]], context: ModelContext) throws -> ImportResult {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withInternetDateTime]
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
@@ -165,18 +168,12 @@ struct CSVImporter {
                 skipped.append((rowNumber: rowNumber, reason: reason))
                 continue
             }
-
             let location = resolveOrCreateLocation(
                 locationName, cache: &locationCache, sortOrder: &sortOrder, context: context
             )
-
-            let endTime: Date?
-            if let hours = Double(durationStr), !durationStr.isEmpty {
-                endTime = startTime.addingTimeInterval(hours * 3600)
-            } else {
-                endTime = nil
+            let endTime: Date? = durationStr.isEmpty ? nil : Double(durationStr).map {
+                startTime.addingTimeInterval($0 * 3600)
             }
-
             let entry = SiteChangeEntry(
                 startTime: startTime, endTime: endTime,
                 note: note.isEmpty ? nil : note, location: location
@@ -185,10 +182,7 @@ struct CSVImporter {
             count += 1
         }
 
-        guard count > 0 else {
-            throw ImportError.noValidEntries
-        }
-
+        guard count > 0 else { throw ImportError.noValidEntries }
         try context.save()
         return ImportResult(importedCount: count, skippedRows: skipped)
     }
