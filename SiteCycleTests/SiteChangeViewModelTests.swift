@@ -21,9 +21,9 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Zone A", side: nil, sortOrder: 0)
-        let loc2 = Location(zone: "Zone B", side: nil, sortOrder: 1)
-        let loc3 = Location(zone: "Zone C", side: nil, sortOrder: 2)
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        let loc3 = Location(bodyPart: "Zone C", sortOrder: 2)
         context.insert(loc1)
         context.insert(loc2)
         context.insert(loc3)
@@ -41,7 +41,7 @@ struct SiteChangeViewModelTests {
 
         var locations: [Location] = []
         for i in 0..<6 {
-            let loc = Location(zone: "Zone \(i)", side: nil, sortOrder: i)
+            let loc = Location(bodyPart: "Zone \(i)", sortOrder: i)
             context.insert(loc)
             locations.append(loc)
         }
@@ -73,7 +73,7 @@ struct SiteChangeViewModelTests {
 
         var locations: [Location] = []
         for i in 0..<6 {
-            let loc = Location(zone: "Zone \(i)", side: nil, sortOrder: i)
+            let loc = Location(bodyPart: "Zone \(i)", sortOrder: i)
             context.insert(loc)
             locations.append(loc)
         }
@@ -104,7 +104,7 @@ struct SiteChangeViewModelTests {
 
         var locations: [Location] = []
         for i in 0..<6 {
-            let loc = Location(zone: "Zone \(i)", side: nil, sortOrder: i)
+            let loc = Location(bodyPart: "Zone \(i)", sortOrder: i)
             context.insert(loc)
             locations.append(loc)
         }
@@ -131,9 +131,9 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let used = Location(zone: "Used Zone", side: nil, sortOrder: 0)
-        let unused1 = Location(zone: "Unused A", side: nil, sortOrder: 1)
-        let unused2 = Location(zone: "Unused B", side: nil, sortOrder: 2)
+        let used = Location(bodyPart: "Used Zone", sortOrder: 0)
+        let unused1 = Location(bodyPart: "Unused A", sortOrder: 1)
+        let unused2 = Location(bodyPart: "Unused B", sortOrder: 2)
         context.insert(used)
         context.insert(unused1)
         context.insert(unused2)
@@ -153,8 +153,8 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Zone A", side: nil, sortOrder: 0)
-        let loc2 = Location(zone: "Zone B", side: nil, sortOrder: 1)
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
         context.insert(loc1)
         context.insert(loc2)
 
@@ -174,9 +174,9 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let locC = Location(zone: "Charlie", side: nil, sortOrder: 0)
-        let locA = Location(zone: "Alpha", side: nil, sortOrder: 1)
-        let locB = Location(zone: "Bravo", side: nil, sortOrder: 2)
+        let locC = Location(bodyPart: "Charlie", sortOrder: 0)
+        let locA = Location(bodyPart: "Alpha", sortOrder: 1)
+        let locB = Location(bodyPart: "Bravo", sortOrder: 2)
         context.insert(locC)
         context.insert(locA)
         context.insert(locB)
@@ -203,7 +203,7 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc = Location(zone: "Zone A", side: nil, sortOrder: 0)
+        let loc = Location(bodyPart: "Zone A", sortOrder: 0)
         context.insert(loc)
 
         let entry = SiteChangeEntry(startTime: Date(), endTime: Date(), location: loc)
@@ -219,8 +219,8 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let used = Location(zone: "Used", side: nil, sortOrder: 0)
-        let unused = Location(zone: "Unused", side: nil, sortOrder: 1)
+        let used = Location(bodyPart: "Used", sortOrder: 0)
+        let unused = Location(bodyPart: "Unused", sortOrder: 1)
         context.insert(used)
         context.insert(unused)
 
@@ -240,7 +240,7 @@ struct SiteChangeViewModelTests {
         // Create 7+ locations so some fall into neutral
         var locations: [Location] = []
         for i in 0..<8 {
-            let loc = Location(zone: "Zone \(i)", side: nil, sortOrder: i)
+            let loc = Location(bodyPart: "Zone \(i)", sortOrder: i)
             context.insert(loc)
             locations.append(loc)
         }
@@ -269,7 +269,7 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left", sortOrder: 0)
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
         context.insert(location)
         try context.save()
 
@@ -287,8 +287,8 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Zone A", side: nil, sortOrder: 0)
-        let loc2 = Location(zone: "Zone B", side: nil, sortOrder: 1)
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
         context.insert(loc1)
         context.insert(loc2)
 
@@ -318,7 +318,7 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left", sortOrder: 0)
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
         context.insert(location)
         try context.save()
 
@@ -334,7 +334,7 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left", sortOrder: 0)
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
         context.insert(location)
         try context.save()
 
@@ -352,7 +352,7 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Zone A", side: nil, sortOrder: 0)
+        let location = Location(bodyPart: "Zone A", sortOrder: 0)
         context.insert(location)
 
         let olderDate = Date().addingTimeInterval(-7200)
@@ -385,7 +385,7 @@ struct SiteChangeViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Zone A", side: nil, sortOrder: 0)
+        let location = Location(bodyPart: "Zone A", sortOrder: 0)
         context.insert(location)
         try context.save()
 

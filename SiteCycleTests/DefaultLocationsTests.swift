@@ -78,6 +78,21 @@ struct DefaultLocationsTests {
         #expect(rightLocations.count == 7)
     }
 
+    @Test func seededLocationsContainExpectedBodyParts() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        seedDefaultLocations(context: context)
+
+        let descriptor = FetchDescriptor<Location>()
+        let locations = try context.fetch(descriptor)
+        let bodyParts = Set(locations.map(\.bodyPart))
+        let expectedBodyParts: Set<String> = [
+            "Abdomen", "Thigh", "Arm", "Buttock"
+        ]
+        #expect(bodyParts == expectedBodyParts)
+    }
+
     @Test func seededLocationsContainExpectedZones() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -124,7 +139,7 @@ struct DefaultLocationsTests {
         let context = ModelContext(container)
 
         // Insert one location manually
-        let existing = Location(zone: "Custom Zone", side: nil, sortOrder: 99)
+        let existing = Location(bodyPart: "Custom Zone", sortOrder: 99)
         context.insert(existing)
         try context.save()
 
@@ -134,6 +149,6 @@ struct DefaultLocationsTests {
         let locations = try context.fetch(descriptor)
         // Should still be just 1 -- the manually inserted one
         #expect(locations.count == 1)
-        #expect(locations.first?.zone == "Custom Zone")
+        #expect(locations.first?.bodyPart == "Custom Zone")
     }
 }

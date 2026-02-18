@@ -21,8 +21,8 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let loc1 = Location(zone: "Front Abdomen", side: "left")
-        let loc2 = Location(zone: "Side Abdomen", side: "right")
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "right")
         context.insert(loc1)
         context.insert(loc2)
 
@@ -45,7 +45,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let originalStart = Date()
@@ -69,7 +69,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(startTime: Date(), location: location)
@@ -92,7 +92,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(
@@ -116,7 +116,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(
@@ -141,7 +141,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -168,7 +168,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let activeEntry = SiteChangeEntry(startTime: Date(), location: location)
@@ -187,7 +187,7 @@ struct HistoryViewModelEditDeleteTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let entry = SiteChangeEntry(

@@ -37,7 +37,7 @@ struct SiteChangeEntryTests {
         let id = UUID()
         let start = Date()
         let end = start.addingTimeInterval(7200)
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         let entry = SiteChangeEntry(
             id: id,
             startTime: start,

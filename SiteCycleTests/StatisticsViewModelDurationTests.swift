@@ -21,7 +21,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -48,7 +48,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -73,7 +73,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let active = SiteChangeEntry(startTime: Date(), location: location)
@@ -93,7 +93,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -123,7 +123,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
         try context.save()
 
@@ -137,7 +137,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let tenDaysAgo = Date().addingTimeInterval(-10 * 86400)
@@ -160,7 +160,7 @@ struct StatisticsViewModelDurationTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
         try context.save()
 

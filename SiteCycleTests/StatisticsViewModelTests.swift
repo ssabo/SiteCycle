@@ -21,7 +21,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -50,7 +50,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
         try context.save()
 
@@ -66,7 +66,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -92,7 +92,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -119,7 +119,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let active = SiteChangeEntry(startTime: Date(), location: location)
@@ -138,7 +138,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -163,7 +163,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()
@@ -188,7 +188,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let active = SiteChangeEntry(startTime: Date(), location: location)
@@ -205,7 +205,7 @@ struct StatisticsViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let location = Location(zone: "Front Abdomen", side: "left")
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
         context.insert(location)
 
         let now = Date()

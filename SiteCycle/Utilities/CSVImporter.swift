@@ -219,30 +219,60 @@ struct CSVImporter {
         try context.save()
     }
 
-    private static func makeLocation(from displayName: String, sortOrder: Int) -> Location {
-        let defaultZones = [
-            "Front Abdomen", "Side Abdomen", "Back Abdomen",
-            "Front Thigh", "Side Thigh", "Back Arm", "Buttock"
+    static func makeLocation(from displayName: String, sortOrder: Int) -> Location {
+        let defaultBodyParts: Set<String> = [
+            "Abdomen", "Thigh", "Arm", "Buttock"
         ]
 
-        let side: String?
-        let zone: String
+        var remaining = displayName
+        var side: String?
 
-        if displayName.hasPrefix("Left ") {
+        // New format: "L ..." or "R ..."
+        if remaining.hasPrefix("L ") {
             side = "left"
-            zone = String(displayName.dropFirst(5))
-        } else if displayName.hasPrefix("Right ") {
+            remaining = String(remaining.dropFirst(2))
+        } else if remaining.hasPrefix("R ") {
             side = "right"
-            zone = String(displayName.dropFirst(6))
-        } else {
-            side = nil
-            zone = displayName
+            remaining = String(remaining.dropFirst(2))
+        }
+        // Old format: "Left ..." or "Right ..."
+        else if remaining.hasPrefix("Left ") {
+            side = "left"
+            remaining = String(remaining.dropFirst(5))
+        } else if remaining.hasPrefix("Right ") {
+            side = "right"
+            remaining = String(remaining.dropFirst(6))
         }
 
-        let isCustom = !defaultZones.contains(zone)
+        var bodyPart: String
+        var subArea: String?
+
+        // New format: "Abdomen (Front)"
+        if let parenStart = remaining.firstIndex(of: "("),
+           let parenEnd = remaining.firstIndex(of: ")"),
+           parenEnd > parenStart {
+            bodyPart = String(remaining[..<parenStart]).trimmingCharacters(in: .whitespaces)
+            let afterOpen = remaining.index(after: parenStart)
+            subArea = String(remaining[afterOpen..<parenEnd])
+        }
+        // Old format: "Front Abdomen" — last word is bodyPart, rest is subArea
+        else {
+            let words = remaining.split(separator: " ").map(String.init)
+            if let lastWord = words.last {
+                bodyPart = lastWord
+                if words.count >= 2 {
+                    subArea = words.dropLast().joined(separator: " ")
+                }
+            } else {
+                bodyPart = remaining
+            }
+        }
+
+        let isCustom = !defaultBodyParts.contains(bodyPart)
 
         return Location(
-            zone: zone,
+            bodyPart: bodyPart,
+            subArea: subArea,
             side: side,
             isEnabled: true,
             isCustom: isCustom,
