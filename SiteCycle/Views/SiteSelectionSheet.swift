@@ -51,18 +51,6 @@ struct SiteSelectionSheet: View {
 
     private func locationList(viewModel: SiteChangeViewModel) -> some View {
         List {
-            if !viewModel.recommendations.avoid.isEmpty {
-                Section {
-                    ForEach(viewModel.recommendations.avoid) { location in
-                        locationRow(location: location, viewModel: viewModel, category: .avoid)
-                    }
-                } header: {
-                    Label("Avoid", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                        .font(.subheadline.weight(.semibold))
-                }
-            }
-
             if !viewModel.recommendations.recommended.isEmpty {
                 Section {
                     ForEach(viewModel.recommendations.recommended) { location in
@@ -103,9 +91,15 @@ struct SiteSelectionSheet: View {
                         .foregroundStyle(.primary)
 
                     if let lastUsed = viewModel.lastUsedDate(for: location) {
-                        Text("Last used: \(lastUsed, format: .dateTime.month().day().hour().minute())")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack {
+                            Text(daysAgoText(from: lastUsed))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(lastUsed, format: .dateTime.month().day())
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
                     } else {
                         Text("Never used")
                             .font(.caption)
@@ -133,6 +127,15 @@ struct SiteSelectionSheet: View {
                 .font(.caption)
         case .neutral:
             EmptyView()
+        }
+    }
+
+    private func daysAgoText(from date: Date) -> String {
+        let days = Calendar.current.dateComponents([.day], from: date, to: .now).day ?? 0
+        switch days {
+        case 0: return "Today"
+        case 1: return "1 day ago"
+        default: return "\(days) days ago"
         }
     }
 }
