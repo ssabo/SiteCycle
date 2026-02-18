@@ -25,7 +25,6 @@ The TestFlight workflow (`.github/workflows/testflight.yml`) archives the app, s
 
 The workflow runs when:
 
-- A **tag** matching `v*` is pushed (e.g., `v1.0.0`, `v1.0.1-beta`).
 - A **manual dispatch** is triggered from the GitHub Actions UI (`workflow_dispatch`).
 
 ### What It Does
@@ -97,11 +96,31 @@ The distribution certificate is used to sign the app for App Store / TestFlight 
 
 ### If you need to create a new distribution certificate:
 
-1. Open **Xcode** > **Settings** > **Accounts**.
-2. Select your Apple Developer team and click **Manage Certificates**.
-3. Click the **+** button and select **Apple Distribution**.
-4. Xcode creates the certificate and installs it in your keychain.
-5. Follow the export steps above to get the `.p12` file.
+1. Generate a Certificate Signing Request (CSR) from the command line:
+   ```bash
+   openssl req -new -newkey rsa:2048 -nodes \
+     -keyout distribution.key -out distribution.csr \
+     -subj "/emailAddress=YOUR_EMAIL/CN=Your Name"
+   ```
+2. Go to the [Apple Developer Portal > Certificates](https://developer.apple.com/account/resources/certificates/list).
+3. Click **+**, select **Apple Distribution**, and upload `distribution.csr`.
+4. Download the generated `.cer` file.
+5. Convert and package into a `.p12`:
+   ```bash
+   openssl x509 -inform DER -in distribution.cer -out distribution.pem
+
+   openssl pkcs12 -export -out distribution.p12 \
+     -inkey distribution.key -in distribution.pem \
+     -legacy
+   ```
+   **Important:** The `-legacy` flag is required — without it, macOS `security import` will reject the `.p12` with a "MAC verification failed" error due to OpenSSL 3.x using newer encryption algorithms.
+6. Set a password when prompted — this becomes the `APPLE_CERTIFICATE_PASSWORD` secret.
+7. Base64-encode it:
+   ```bash
+   base64 -i distribution.p12 | pbcopy
+   ```
+
+**Note:** Keep the `distribution.key` file safe — you'll need it if you ever need to regenerate the `.p12`. If you revoke the certificate and create a new one, you must also regenerate the provisioning profile (since it's linked to the certificate).
 
 ---
 
@@ -170,9 +189,23 @@ This is useful for testing the workflow without creating a tag.
 
 ## Troubleshooting
 
+### "MAC verification failed during PKCS12 import (wrong password?)"
+
+This usually means the `.p12` was created with OpenSSL 3.x without the `-legacy` flag. Regenerate it:
+```bash
+openssl pkcs12 -export -out distribution.p12 \
+  -inkey distribution.key -in distribution.pem \
+  -legacy
+```
+If `-legacy` is unavailable, use: `-certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1`
+
 ### "No signing certificate" error
 
-Ensure `APPLE_CERTIFICATE_BASE64` and `APPLE_CERTIFICATE_PASSWORD` are correct. Verify the certificate hasn't expired in the Apple Developer Portal.
+Ensure `APPLE_CERTIFICATE_BASE64` and `APPLE_CERTIFICATE_PASSWORD` are correct. Verify the certificate hasn't expired in the Apple Developer Portal. The certificate must be an **Apple Distribution** certificate (not Apple Development).
+
+### "Provisioning profile doesn't include signing certificate"
+
+The provisioning profile was created with a different certificate. Regenerate the provisioning profile in the Apple Developer Portal and select the current Apple Distribution certificate. Update `APPLE_PROVISIONING_PROFILE_BASE64` with the new profile.
 
 ### "No provisioning profile" error
 
@@ -182,6 +215,6 @@ Ensure `APPLE_PROVISIONING_PROFILE_BASE64` is correct and the profile name match
 
 Verify `APPSTORE_CONNECT_API_KEY_ID`, `APPSTORE_CONNECT_API_ISSUER_ID`, and `APPSTORE_CONNECT_API_KEY_BASE64` are correct. Ensure the API key has the **Developer** (or **Admin**) role and hasn't been revoked.
 
-### Build succeeds but upload fails
+### "No suitable application records were found"
 
-Ensure the app's Bundle ID (`com.sitecycle.app`) is registered in App Store Connect and that at least one version record exists. Go to App Store Connect > My Apps and create the app entry if it doesn't exist.
+The app must exist in App Store Connect before uploading. Go to [App Store Connect](https://appstoreconnect.apple.com) > **Apps** > **+** > **New App** and create an app entry with bundle ID `com.sitecycle.app`.
