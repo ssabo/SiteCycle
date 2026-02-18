@@ -29,11 +29,11 @@ struct CSVImporterTests {
         2024-01-15T10:30:00Z,Left Front Abdomen,72.0,
         2024-01-18T10:30:00Z,Right Front Abdomen,48.0,good
         """
-        let count = try CSVImporter.importCSV(
+        let result = try CSVImporter.importCSV(
             from: writeTemp(csv),
             context: context
         )
-        #expect(count == 2)
+        #expect(result.importedCount == 2)
         let entries = try context.fetch(
             FetchDescriptor<SiteChangeEntry>(sortBy: [SortDescriptor(\.startTime)])
         )
@@ -107,6 +107,21 @@ struct CSVImporterTests {
         }
     }
 
+    @Test func testSkippedRowsTracked() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let csv = """
+        date,location,duration_hours,note
+        2024-01-15T10:30:00Z,Left Front Abdomen,72.0,
+        not-a-date,Left Front Abdomen,72.0,
+        """
+        let result = try CSVImporter.importCSV(from: writeTemp(csv), context: context)
+        #expect(result.importedCount == 1)
+        #expect(result.skippedRows.count == 1)
+        #expect(result.skippedRows[0].rowNumber == 3)
+        #expect(result.skippedRows[0].reason.contains("unrecognized date"))
+    }
+
     // MARK: - Data Replacement
 
     @Test func testReplacesExistingData() throws {
@@ -126,8 +141,8 @@ struct CSVImporterTests {
         date,location,duration_hours,note
         2024-01-15T10:30:00Z,Left Front Abdomen,72.0,
         """
-        let count = try CSVImporter.importCSV(from: writeTemp(csv), context: context)
-        #expect(count == 1)
+        let result = try CSVImporter.importCSV(from: writeTemp(csv), context: context)
+        #expect(result.importedCount == 1)
 
         let locations = try context.fetch(FetchDescriptor<Location>())
         #expect(locations.count == 1)

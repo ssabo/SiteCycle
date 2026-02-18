@@ -116,11 +116,17 @@ struct SettingsView: View {
 
     private func importCSV(from url: URL) {
         do {
-            let count = try CSVImporter.importCSV(from: url, context: modelContext)
+            let result = try CSVImporter.importCSV(from: url, context: modelContext)
+            let count = result.importedCount
             let noun = count == 1 ? "entry" : "entries"
+            var message = "Imported \(count) site change \(noun)."
+            if !result.skippedRows.isEmpty {
+                let lines = result.skippedRows.map { "• Row \($0.rowNumber): \($0.reason)" }.joined(separator: "\n")
+                message += "\n\n\(result.skippedRows.count) rows were skipped:\n\(lines)"
+            }
             importResult = ImportResultAlert(
                 title: "Import Successful",
-                message: "Imported \(count) site change \(noun)."
+                message: message
             )
         } catch {
             importResult = ImportResultAlert(
