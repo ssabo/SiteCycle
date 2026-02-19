@@ -59,9 +59,9 @@ Tab-based: Home, History, Statistics. Settings is accessible via a gear icon in 
 
 ### Recommendation Engine (core logic)
 
-The site selection sheet sorts enabled locations by most-recent-use:
-- **Avoid list:** 3 most recently used locations (least recovery time)
-- **Recommended list:** 3 least recently used / never-used locations (most recovery time)
+The site selection sheet shows two sections — **Recommended** and **All Locations**:
+- **Recommended section:** 3 least recently used / never-used locations (most recovery time)
+- **All Locations section:** Every enabled location sorted by most-recent-use, with inline badges — orange warning for the 3 most recently used (avoid), green checkmark for recommended
 - Never-used locations sort as oldest (always recommended until used)
 
 ## Key Documentation
