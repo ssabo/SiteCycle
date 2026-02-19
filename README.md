@@ -13,6 +13,31 @@ An iOS app for insulin pump users to track and manage infusion site rotation. Si
 - **iCloud Sync** - Seamless CloudKit sync across devices with no account required
 - **Onboarding** - Guided setup to configure your preferred infusion sites
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><strong>Home</strong></td>
+    <td align="center"><strong>Log Site Change</strong></td>
+    <td align="center"><strong>History</strong></td>
+  </tr>
+  <tr>
+    <td><img src="images/home-active-site.png" width="200" alt="Home screen showing active site and progress ring"></td>
+    <td><img src="images/log-site-change-recommendations.png" width="200" alt="Site selection sheet with recommended locations"></td>
+    <td><img src="images/history-view.png" width="200" alt="History view with filterable site change log"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Statistics</strong></td>
+    <td align="center"><strong>Settings</strong></td>
+    <td align="center"><strong>Manage Locations</strong></td>
+  </tr>
+  <tr>
+    <td><img src="images/statistics-view.png" width="200" alt="Statistics view with per-location usage data"></td>
+    <td><img src="images/settings-view.png" width="200" alt="Settings screen with preferences and CSV export"></td>
+    <td><img src="images/manage-locations-view.png" width="200" alt="Location management with zone toggles"></td>
+  </tr>
+</table>
+
 ## Requirements
 
 - iOS 26.0+
