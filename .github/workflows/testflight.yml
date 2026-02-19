@@ -84,6 +84,12 @@ jobs:
           echo "=== Provisioning profiles ==="
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
 
+      - name: Set build number
+        run: |
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "Using build number: $BUILD_NUMBER"
+          agvtool new-version -all "$BUILD_NUMBER"
+
       - name: Archive
         run: |
           xcodebuild archive \
