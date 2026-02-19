@@ -12,7 +12,7 @@ concurrency:
 jobs:
   deploy:
     name: Archive & Upload to TestFlight
-    runs-on: macos-15
+    runs-on: macos-26
     env:
       KEYCHAIN_NAME: build.keychain
       KEYCHAIN_PASSWORD: ""
@@ -28,7 +28,7 @@ jobs:
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$XCODE_PATH" ]; then
             XCODE_PATH="/Applications/Xcode.app"
           fi

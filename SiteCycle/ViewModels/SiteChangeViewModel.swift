@@ -14,6 +14,7 @@ enum LocationCategory {
     case neutral
 }
 
+@MainActor
 @Observable
 final class SiteChangeViewModel {
     private let modelContext: ModelContext

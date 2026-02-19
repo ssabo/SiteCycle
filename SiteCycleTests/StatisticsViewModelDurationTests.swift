@@ -3,6 +3,7 @@ import Foundation
 import SwiftData
 @testable import SiteCycle
 
+@MainActor
 struct StatisticsViewModelDurationTests {
 
     private func makeContainer() throws -> ModelContainer {

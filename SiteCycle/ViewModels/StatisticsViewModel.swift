@@ -19,6 +19,7 @@ struct UsageDistributionItem {
     let count: Int
 }
 
+@MainActor
 @Observable
 final class StatisticsViewModel {
     private let modelContext: ModelContext
