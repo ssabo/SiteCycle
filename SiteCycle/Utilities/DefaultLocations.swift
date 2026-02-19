@@ -9,6 +9,7 @@ private struct DefaultZone {
 
 /// Seeds the default body locations into the SwiftData context on first launch.
 /// Each of the 7 default zones has left/right laterality, producing 14 locations total.
+@MainActor
 func seedDefaultLocations(context: ModelContext) {
     let descriptor = FetchDescriptor<Location>()
     let existingCount = (try? context.fetchCount(descriptor)) ?? 0
@@ -69,6 +70,7 @@ func seedDefaultLocations(context: ModelContext) {
 
 /// Migrates existing locations that have a `zone` but empty `bodyPart`.
 /// Parses zone string: last word → bodyPart, remaining words → subArea.
+@MainActor
 func migrateLocationBodyParts(context: ModelContext) {
     let descriptor = FetchDescriptor<Location>()
     guard let locations = try? context.fetch(descriptor) else { return }

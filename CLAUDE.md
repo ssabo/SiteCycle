@@ -8,7 +8,7 @@ SiteCycle is an iOS app for insulin pump users to track infusion site rotation. 
 
 ## Tech Stack
 
-- **Language:** Swift 5.0+, targeting iOS 17.0+
+- **Language:** Swift 6.0, targeting iOS 26.0+
 - **UI:** SwiftUI
 - **Persistence:** SwiftData with CloudKit sync (container: `iCloud.com.sitecycle.app`)
 - **Charts:** Swift Charts framework (for statistics views)
@@ -20,7 +20,7 @@ SiteCycle is an iOS app for insulin pump users to track infusion site rotation. 
 This is an Xcode project (no SPM Package.swift at the root). Build and test via `xcodebuild`:
 
 ```bash
-# Build for iOS Simulator
+# Build for iOS Simulator (requires Xcode 26)
 xcodebuild build -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
 
 # Run tests
@@ -91,7 +91,7 @@ Always consult SPEC.md for feature requirements and PLAN.md for implementation o
 A CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
 
 1. **SwiftLint** — lints all Swift code with `--strict` mode.
-2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 16 and an available iPhone simulator, builds with code signing disabled, and runs all tests.
+2. **Build & Test** — builds on `macos-26`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all tests.
 
 Key CI considerations:
 - Code signing is disabled (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements are absent. The app's `ModelContainer` init has a fallback from `.automatic` to `.none` to handle this — **do not remove the fallback**.
@@ -134,6 +134,7 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
   }
   ```
 - **Model instantiation without a container:** Simple `Location` and `SiteChangeEntry` objects can be created without a `ModelContainer` for basic property/computed-property tests. A container is only needed when using `ModelContext` operations (insert, fetch, save).
+- **`@MainActor` on test structs:** Test structs that create ViewModels or use `ModelContext` must be annotated with `@MainActor` because the ViewModels and utility functions are `@MainActor`-isolated (Swift 6 strict concurrency).
 
 ## SwiftUI Pitfalls
 
@@ -158,6 +159,16 @@ When creating a new Swift file, it must be registered in `SiteCycle.xcodeproj/pr
 3. **PBXSourcesBuildPhase** — adds it to the correct target's compile sources (via a PBXBuildFile entry)
 
 Use sequential hex IDs following the existing pattern (e.g., `8A0000000000000000000013` for the file ref, `8A0000000000000000000113` for the build file).
+
+## Swift 6 Concurrency
+
+The project uses Swift 6 language mode with strict concurrency checking:
+
+- **ViewModels** (`HomeViewModel`, `HistoryViewModel`, `SiteChangeViewModel`, `StatisticsViewModel`) are all `@MainActor`-isolated because they hold a `ModelContext` and drive UI state.
+- **Utility functions** (`seedDefaultLocations()`, `migrateLocationBodyParts()`, `CSVImporter.importCSV()`) that accept `ModelContext` are `@MainActor`.
+- **Views** inherit main actor isolation from SwiftUI.
+- **Models** (`Location`, `SiteChangeEntry`) — isolation is handled by SwiftData's `@Model` macro.
+- When compiled with Xcode 26 / iOS 26 SDK, standard SwiftUI components automatically adopt **Liquid Glass** styling (glass tab bar, navigation bars, sheets).
 
 ## Key Design Decisions
 

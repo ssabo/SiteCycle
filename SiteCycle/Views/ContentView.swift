@@ -66,8 +66,9 @@ struct ContentView: View {
 
     private func startMonitoring() {
         monitor.pathUpdateHandler = { path in
-            DispatchQueue.main.async {
-                isConnected = path.status == .satisfied
+            let connected = path.status == .satisfied
+            Task { @MainActor in
+                isConnected = connected
             }
         }
         monitor.start(queue: DispatchQueue.global(qos: .utility))

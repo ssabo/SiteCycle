@@ -28,6 +28,7 @@ struct CSVImporter {
 
     private static let logger = Logger(subsystem: "com.sitecycle.app", category: "CSVImporter")
 
+    @MainActor
     static func importCSV(from url: URL, context: ModelContext) throws -> ImportResult {
         let accessed = url.startAccessingSecurityScopedResource()
         defer {
@@ -119,6 +120,7 @@ struct CSVImporter {
 
     // MARK: - Private
 
+    @MainActor
     private static func parseAndImport(csv: String, context: ModelContext) throws -> ImportResult {
         let rows = parseCSV(csv)
         guard let header = rows.first else {
@@ -143,6 +145,7 @@ struct CSVImporter {
         return try importEntries(from: dataRows, context: context)
     }
 
+    @MainActor
     private static func importEntries(from dataRows: [[String]], context: ModelContext) throws -> ImportResult {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withInternetDateTime]
@@ -187,6 +190,7 @@ struct CSVImporter {
         return ImportResult(importedCount: count, skippedRows: skipped)
     }
 
+    @MainActor
     private static func resolveOrCreateLocation(
         _ name: String, cache: inout [String: Location],
         sortOrder: inout Int, context: ModelContext
@@ -199,6 +203,7 @@ struct CSVImporter {
         return loc
     }
 
+    @MainActor
     private static func deleteAllData(context: ModelContext) throws {
         let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
         for entry in entries {
