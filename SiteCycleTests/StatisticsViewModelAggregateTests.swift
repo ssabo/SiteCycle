@@ -18,7 +18,7 @@ struct StatisticsViewModelAggregateTests {
 
     // MARK: - Overall Average
 
-    @Test func overallAverageDurationAcrossAllLocations() throws {
+    @Test func overallMedianDurationAcrossAllLocations() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
@@ -43,7 +43,7 @@ struct StatisticsViewModelAggregateTests {
 
         let vm = StatisticsViewModel(modelContext: context)
         vm.refresh()
-        let avg = try #require(vm.overallAverageDuration)
+        let avg = try #require(vm.overallMedianDuration)
         #expect(abs(avg - 72.0) < 0.01)
     }
 
@@ -60,7 +60,7 @@ struct StatisticsViewModelAggregateTests {
 
         let vm = StatisticsViewModel(modelContext: context)
         vm.refresh()
-        #expect(vm.overallAverageDuration == nil)
+        #expect(vm.overallMedianDuration == nil)
     }
 
     // MARK: - Absorption Insight
@@ -281,7 +281,7 @@ struct StatisticsViewModelAggregateTests {
         vm.refresh()
         let stats = try #require(vm.locationStats.first { $0.location.id == location.id })
         #expect(stats.totalUses == 6)
-        #expect(stats.anomalyCount > 0)
+        #expect(stats.anomalyCount == 1)
     }
 
     @Test func absorptionFlagNotTriggeredWhenOnlyLowEntriesAreAnomalies() throws {

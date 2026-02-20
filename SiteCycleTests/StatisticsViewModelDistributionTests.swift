@@ -99,7 +99,7 @@ struct StatisticsViewModelDistributionTests {
         let vm = StatisticsViewModel(modelContext: context)
         vm.refresh()
         #expect(vm.locationStats.isEmpty)
-        #expect(vm.overallAverageDuration == nil)
+        #expect(vm.overallMedianDuration == nil)
         #expect(vm.usageDistribution.isEmpty)
     }
 

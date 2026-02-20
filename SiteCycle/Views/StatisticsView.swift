@@ -74,7 +74,7 @@ private extension StatisticsView {
 private extension StatisticsView {
     func overallSection(_ vm: StatisticsViewModel) -> some View {
         Section("Overall") {
-            if let avg = vm.overallAverageDuration {
+            if let avg = vm.overallMedianDuration {
                 HStack {
                     Text("Median Duration")
                     Spacer()

@@ -27,7 +27,7 @@ final class StatisticsViewModel {
     let absorptionThreshold: Int
 
     private(set) var locationStats: [LocationStats] = []
-    private(set) var overallAverageDuration: Double?
+    private(set) var overallMedianDuration: Double?
     private(set) var usageDistribution: [UsageDistributionItem] = []
 
     init(modelContext: ModelContext, absorptionThreshold: Int = 20) {
@@ -45,12 +45,12 @@ final class StatisticsViewModel {
         let allEntries = locations.flatMap(\.entries)
         let completedDurations = allEntries.compactMap(\.durationHours)
         let overallResult = Self.filterAnomalies(completedDurations)
-        overallAverageDuration = Self.computeMedian(overallResult.filtered)
+        overallMedianDuration = Self.computeMedian(overallResult.filtered)
 
         locationStats = locations.map { location in
             buildStats(
                 for: location,
-                overallAverage: overallAverageDuration
+                overallMedian: overallMedianDuration
             )
         }
 
@@ -84,9 +84,9 @@ final class StatisticsViewModel {
             )
         }
         let sorted = afterFloor.sorted()
-        let n = sorted.count
-        let q1 = sorted[n / 4]
-        let q3 = sorted[(3 * n) / 4]
+        let count = sorted.count
+        let q1 = sorted[count / 4]
+        let q3 = sorted[(3 * count) / 4]
         let iqr = q3 - q1
         let lowerBound = q1 - 1.5 * iqr
         let filtered = afterFloor.filter { $0 >= lowerBound }
@@ -100,7 +100,7 @@ final class StatisticsViewModel {
 
     private func buildStats(
         for location: Location,
-        overallAverage: Double?
+        overallMedian: Double?
     ) -> LocationStats {
         let entries = location.entries
         let completedDurations = entries.compactMap(\.durationHours)
@@ -125,7 +125,7 @@ final class StatisticsViewModel {
 
         let flag = computeAbsorptionFlag(
             locationMedian: median,
-            overallMedian: overallAverage
+            overallMedian: overallMedian
         )
 
         return LocationStats(
@@ -156,7 +156,7 @@ final class StatisticsViewModel {
         guard locMedian < cutoff else { return nil }
 
         let percentBelow = Int(round((overall - locMedian) / overall * 100))
-        return "\(percentBelow)% below your overall average"
+        return "\(percentBelow)% below your overall median"
     }
 
     // MARK: - Statistics Helpers
