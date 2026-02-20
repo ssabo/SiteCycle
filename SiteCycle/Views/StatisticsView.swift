@@ -6,7 +6,6 @@ struct StatisticsView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("absorptionAlertThreshold") private var absorptionThreshold: Int = 20
     @State private var viewModel: StatisticsViewModel?
-    @State private var timelineDays: Int = 30
 
     var body: some View {
         Group {
@@ -48,7 +47,7 @@ struct StatisticsView: View {
             }
             overallSection(vm)
             perLocationSection(vm.locationStats)
-            timelineSection(vm)
+            siteRestSection(vm.locationStats)
         }
     }
 }
@@ -75,9 +74,9 @@ private extension StatisticsView {
 private extension StatisticsView {
     func overallSection(_ vm: StatisticsViewModel) -> some View {
         Section("Overall") {
-            if let avg = vm.overallAverageDuration {
+            if let avg = vm.overallMedianDuration {
                 HStack {
-                    Text("Average Duration")
+                    Text("Median Duration")
                     Spacer()
                     Text(formatHours(avg))
                         .foregroundStyle(.secondary)
@@ -95,6 +94,15 @@ private extension StatisticsView {
                 let total = vm.locationStats.reduce(0) { $0 + $1.totalUses }
                 Text("\(total)")
                     .foregroundStyle(.secondary)
+            }
+            let totalAnomalies = vm.locationStats.reduce(0) { $0 + $1.anomalyCount }
+            if totalAnomalies > 0 {
+                HStack {
+                    Text("Anomalies excluded")
+                    Spacer()
+                    Text("\(totalAnomalies)")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -116,7 +124,10 @@ private extension StatisticsView {
             HStack {
                 LocationLabelView(location: stat.location, font: .headline)
                 Spacer()
-                Text("\(stat.totalUses) uses")
+                let subtitle = stat.anomalyCount > 0
+                    ? "\(stat.totalUses) uses · \(stat.anomalyCount) skipped"
+                    : "\(stat.totalUses) uses"
+                Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -151,49 +162,49 @@ private extension StatisticsView {
                         .foregroundStyle(.secondary)
                     Text(metric.value)
                         .font(.caption)
+                        .foregroundStyle(metric.isMuted ? .secondary : .primary)
                 }
             }
         }
     }
 }
 
-// MARK: - Timeline Section
+// MARK: - Site Rest Time Chart
 
 private extension StatisticsView {
-    func timelineSection(_ vm: StatisticsViewModel) -> some View {
-        Section("Rotation Timeline") {
-            Picker("Period", selection: $timelineDays) {
-                Text("30 Days").tag(30)
-                Text("60 Days").tag(60)
-                Text("90 Days").tag(90)
+    func siteRestSection(_ stats: [LocationStats]) -> some View {
+        let items = stats
+            .compactMap { stat -> SiteRestItem? in
+                guard let days = stat.daysSinceLastUse else { return nil }
+                return SiteRestItem(
+                    locationName: stat.location.fullDisplayName,
+                    days: days
+                )
             }
-            .pickerStyle(.segmented)
+            .sorted { $0.days > $1.days }
 
-            let entries = vm.timelineEntries(days: timelineDays)
-            if entries.isEmpty {
-                Text("No site changes in this period.")
+        return Section("Site Rest Time") {
+            if items.isEmpty {
+                Text("No location data available.")
                     .foregroundStyle(.secondary)
                     .font(.subheadline)
             } else {
-                timelineChart(entries)
+                Chart(items, id: \.locationName) { item in
+                    BarMark(
+                        x: .value("Days", item.days),
+                        y: .value("Location", item.locationName)
+                    )
+                    .foregroundStyle(restColor(days: item.days))
+                }
+                .frame(height: max(CGFloat(items.count) * 32, 120))
             }
         }
     }
 
-    func timelineChart(
-        _ entries: [(entry: SiteChangeEntry, locationName: String)]
-    ) -> some View {
-        Chart(entries, id: \.entry.id) { item in
-            let end = item.entry.endTime ?? Date()
-            RectangleMark(
-                xStart: .value("Start", item.entry.startTime),
-                xEnd: .value("End", end),
-                y: .value("Location", item.locationName)
-            )
-            .foregroundStyle(by: .value("Location", item.locationName))
-        }
-        .chartLegend(.hidden)
-        .frame(height: 200)
+    func restColor(days: Int) -> Color {
+        if days >= 14 { return .green }
+        if days >= 7 { return .orange }
+        return .red
     }
 }
 
@@ -203,21 +214,18 @@ private extension StatisticsView {
     struct MetricItem: Hashable {
         let label: String
         let value: String
+        var isMuted: Bool = false
+    }
+
+    struct SiteRestItem {
+        let locationName: String
+        let days: Int
     }
 
     func buildMetrics(_ stat: LocationStats) -> [MetricItem] {
         var items: [MetricItem] = []
-        if let avg = stat.averageDuration {
-            items.append(MetricItem(label: "Avg:", value: formatHours(avg)))
-        }
         if let median = stat.medianDuration {
             items.append(MetricItem(label: "Median:", value: formatHours(median)))
-        }
-        if let min = stat.minDuration {
-            items.append(MetricItem(label: "Min:", value: formatHours(min)))
-        }
-        if let max = stat.maxDuration {
-            items.append(MetricItem(label: "Max:", value: formatHours(max)))
         }
         if let lastUsed = stat.lastUsed {
             items.append(MetricItem(
@@ -227,6 +235,13 @@ private extension StatisticsView {
         }
         if let days = stat.daysSinceLastUse {
             items.append(MetricItem(label: "Days since:", value: "\(days)"))
+        }
+        if stat.anomalyCount > 0 {
+            items.append(MetricItem(
+                label: "Skipped:",
+                value: "\(stat.anomalyCount)",
+                isMuted: true
+            ))
         }
         return items
     }
