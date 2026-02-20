@@ -234,6 +234,93 @@ struct StatisticsViewModelAggregateTests {
         #expect(flag.contains("% below"))
     }
 
+    // MARK: - Anomaly Filtering (static)
+
+    @Test func filterAnomaliesExcludesHardFloorOutlier() {
+        let durations = [8.0, 40.0, 44.0, 46.0, 48.0, 50.0]
+        let result = StatisticsViewModel.filterAnomalies(durations)
+        #expect(!result.filtered.contains(8.0))
+        #expect(result.anomalyCount == 1)
+    }
+
+    @Test func filterAnomaliesExcludesIQROutlier() {
+        // 20h passes the hard floor but is IQR-excluded (Q1=40, Q3=48, IQR=8, lower=28)
+        let durations = [20.0, 40.0, 44.0, 46.0, 48.0, 50.0]
+        let result = StatisticsViewModel.filterAnomalies(durations)
+        #expect(!result.filtered.contains(20.0))
+        #expect(result.anomalyCount == 1)
+    }
+
+    @Test func filterAnomaliesWithFewEntriesOnlyAppliesHardFloor() {
+        // < 4 entries: IQR is skipped; only hard floor (12h) applies
+        let durations = [8.0, 40.0, 50.0]
+        let result = StatisticsViewModel.filterAnomalies(durations)
+        #expect(result.filtered == [40.0, 50.0])
+        #expect(result.anomalyCount == 1)
+    }
+
+    @Test func buildStatsAnomalyCountReflectsExcludedEntries() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        context.insert(location)
+
+        let now = Date()
+        for hours in [8.0, 40.0, 44.0, 46.0, 48.0, 50.0] {
+            let entry = SiteChangeEntry(
+                startTime: now,
+                endTime: now.addingTimeInterval(hours * 3600),
+                location: location
+            )
+            context.insert(entry)
+        }
+        try context.save()
+
+        let vm = StatisticsViewModel(modelContext: context)
+        vm.refresh()
+        let stats = try #require(vm.locationStats.first { $0.location.id == location.id })
+        #expect(stats.totalUses == 6)
+        #expect(stats.anomalyCount > 0)
+    }
+
+    @Test func absorptionFlagNotTriggeredWhenOnlyLowEntriesAreAnomalies() throws {
+        // loc1 has two below-hard-floor entries (4h, 6h) that are excluded,
+        // leaving a healthy filtered median. The flag should not fire.
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left")
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Side", side: "left")
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let now = Date()
+        for hours in [4.0, 6.0, 44.0, 46.0] {
+            let entry = SiteChangeEntry(
+                startTime: now,
+                endTime: now.addingTimeInterval(hours * 3600),
+                location: loc1
+            )
+            context.insert(entry)
+        }
+        for hours in [50.0, 52.0, 54.0, 56.0] {
+            let entry = SiteChangeEntry(
+                startTime: now,
+                endTime: now.addingTimeInterval(hours * 3600),
+                location: loc2
+            )
+            context.insert(entry)
+        }
+        try context.save()
+
+        let vm = StatisticsViewModel(modelContext: context, absorptionThreshold: 20)
+        vm.refresh()
+        let s1 = try #require(vm.locationStats.first { $0.location.id == loc1.id })
+        #expect(s1.anomalyCount == 2)
+        #expect(s1.absorptionFlag == nil)
+    }
+
     @Test func absorptionFlagSkipsLocationsWithNoCompletedEntries() throws {
         let container = try makeContainer()
         let context = ModelContext(container)

@@ -12,6 +12,7 @@ struct LocationStats {
     let lastUsed: Date?
     let daysSinceLastUse: Int?
     let absorptionFlag: String?
+    let anomalyCount: Int
 }
 
 struct UsageDistributionItem {
@@ -43,8 +44,8 @@ final class StatisticsViewModel {
 
         let allEntries = locations.flatMap(\.entries)
         let completedDurations = allEntries.compactMap(\.durationHours)
-
-        overallAverageDuration = Self.computeMean(completedDurations)
+        let overallResult = Self.filterAnomalies(completedDurations)
+        overallAverageDuration = Self.computeMedian(overallResult.filtered)
 
         locationStats = locations.map { location in
             buildStats(
@@ -58,6 +59,45 @@ final class StatisticsViewModel {
             .map { UsageDistributionItem(locationName: $0.fullDisplayName, count: $0.entries.count) }
     }
 
+    // MARK: - Anomaly Filtering
+
+    struct AnomalyFilterResult {
+        let filtered: [Double]
+        let anomalyCount: Int
+    }
+
+    static let anomalyHardFloor: Double = 12.0
+
+    static func filterAnomalies(_ durations: [Double]) -> AnomalyFilterResult {
+        guard durations.count >= 4 else {
+            let filtered = durations.filter { $0 >= anomalyHardFloor }
+            return AnomalyFilterResult(
+                filtered: filtered,
+                anomalyCount: durations.count - filtered.count
+            )
+        }
+        let afterFloor = durations.filter { $0 >= anomalyHardFloor }
+        guard afterFloor.count >= 4 else {
+            return AnomalyFilterResult(
+                filtered: afterFloor,
+                anomalyCount: durations.count - afterFloor.count
+            )
+        }
+        let sorted = afterFloor.sorted()
+        let n = sorted.count
+        let q1 = sorted[n / 4]
+        let q3 = sorted[(3 * n) / 4]
+        let iqr = q3 - q1
+        let lowerBound = q1 - 1.5 * iqr
+        let filtered = afterFloor.filter { $0 >= lowerBound }
+        return AnomalyFilterResult(
+            filtered: filtered,
+            anomalyCount: durations.count - filtered.count
+        )
+    }
+
+    // MARK: - Build Per-Location Stats
+
     private func buildStats(
         for location: Location,
         overallAverage: Double?
@@ -65,10 +105,12 @@ final class StatisticsViewModel {
         let entries = location.entries
         let completedDurations = entries.compactMap(\.durationHours)
         let totalUses = entries.count
-        let avg = Self.computeMean(completedDurations)
-        let median = Self.computeMedian(completedDurations)
-        let minDur = completedDurations.min()
-        let maxDur = completedDurations.max()
+        let anomalyResult = Self.filterAnomalies(completedDurations)
+        let filteredDurations = anomalyResult.filtered
+        let avg = Self.computeMean(filteredDurations)
+        let median = Self.computeMedian(filteredDurations)
+        let minDur = filteredDurations.min()
+        let maxDur = filteredDurations.max()
         let lastUsed = entries.map(\.startTime).max()
 
         var daysSince: Int?
@@ -82,8 +124,8 @@ final class StatisticsViewModel {
         }
 
         let flag = computeAbsorptionFlag(
-            locationAvg: avg,
-            overallAvg: overallAverage
+            locationMedian: median,
+            overallMedian: overallAverage
         )
 
         return LocationStats(
@@ -95,37 +137,29 @@ final class StatisticsViewModel {
             maxDuration: maxDur,
             lastUsed: lastUsed,
             daysSinceLastUse: daysSince,
-            absorptionFlag: flag
+            absorptionFlag: flag,
+            anomalyCount: anomalyResult.anomalyCount
         )
     }
 
     private func computeAbsorptionFlag(
-        locationAvg: Double?,
-        overallAvg: Double?
+        locationMedian: Double?,
+        overallMedian: Double?
     ) -> String? {
-        guard let locAvg = locationAvg,
-              let overall = overallAvg,
+        guard let locMedian = locationMedian,
+              let overall = overallMedian,
               overall > 0 else {
             return nil
         }
 
         let cutoff = overall * (1.0 - Double(absorptionThreshold) / 100.0)
-        guard locAvg < cutoff else { return nil }
+        guard locMedian < cutoff else { return nil }
 
-        let percentBelow = Int(round((overall - locAvg) / overall * 100))
+        let percentBelow = Int(round((overall - locMedian) / overall * 100))
         return "\(percentBelow)% below your overall average"
     }
 
-    func timelineEntries(days: Int) -> [(entry: SiteChangeEntry, locationName: String)] {
-        let cutoff = Date().addingTimeInterval(-Double(days) * 86400)
-        let descriptor = FetchDescriptor<SiteChangeEntry>(
-            sortBy: [SortDescriptor(\SiteChangeEntry.startTime)]
-        )
-        let entries = (try? modelContext.fetch(descriptor)) ?? []
-        return entries
-            .filter { $0.startTime >= cutoff }
-            .map { ($0, $0.location?.fullDisplayName ?? "Unknown") }
-    }
+    // MARK: - Statistics Helpers
 
     static func computeMean(_ values: [Double]) -> Double? {
         guard !values.isEmpty else { return nil }
