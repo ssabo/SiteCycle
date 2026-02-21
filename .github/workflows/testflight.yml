@@ -35,6 +35,9 @@ jobs:
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           xcodebuild -version
 
+      - name: Install iOS platform
+        run: xcodebuild -downloadPlatform iOS
+
       - name: Install Apple certificate and provisioning profile
         env:
           APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
