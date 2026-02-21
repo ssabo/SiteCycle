@@ -59,12 +59,6 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 - **All Locations section:** Every enabled location sorted by most-recent-use, with inline badges — orange warning for the 3 most recently used (avoid), green checkmark for recommended
 - Never-used locations sort as oldest (always recommended until used)
 
-## Key Documentation
-
-- **SPEC.md** — Complete product specification. Source of truth for what the app should do.
-- **PLAN.md** — Completed implementation roadmap (8 phases, all done).
-- **CI.md** — CI and TestFlight deployment documentation, including required GitHub Secrets.
-
 ## CI / GitHub Actions
 
 A CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
