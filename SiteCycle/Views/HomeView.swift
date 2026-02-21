@@ -5,8 +5,13 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
     @State private var viewModel: HomeViewModel?
+    @State private var siteChangeViewModel: SiteChangeViewModel?
     @State private var showingSiteSheet = false
     @State private var now = Date()
+    @State private var quickLogLocation: Location?
+    @State private var quickLogNote = ""
+    @State private var showingQuickLogConfirmation = false
+    @State private var isQuickLogging = false
 
     private let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -30,8 +35,28 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {
             viewModel?.refreshActiveSite()
+            siteChangeViewModel?.refresh()
         }, content: {
             SiteSelectionSheet()
+        })
+        .alert("Confirm Site Change", isPresented: $showingQuickLogConfirmation, actions: {
+            TextField("Add a note (optional)", text: $quickLogNote)
+            Button("Confirm") {
+                guard !isQuickLogging, let location = quickLogLocation else { return }
+                isQuickLogging = true
+                siteChangeViewModel?.logSiteChange(location: location, note: quickLogNote)
+                viewModel?.refreshActiveSite()
+                siteChangeViewModel?.refresh()
+                isQuickLogging = false
+                quickLogLocation = nil
+                quickLogNote = ""
+            }
+            Button("Cancel", role: .cancel) {
+                quickLogLocation = nil
+                quickLogNote = ""
+            }
+        }, message: {
+            Text("Log site change to \(quickLogLocation?.fullDisplayName ?? "")?")
         })
     }
 
@@ -43,6 +68,11 @@ struct HomeView: View {
             )
         } else {
             viewModel?.refreshActiveSite()
+        }
+        if siteChangeViewModel == nil {
+            siteChangeViewModel = SiteChangeViewModel(modelContext: modelContext)
+        } else {
+            siteChangeViewModel?.refresh()
         }
     }
 
@@ -60,13 +90,69 @@ struct HomeView: View {
 
                 locationInfo(viewModel: viewModel)
 
-                Spacer(minLength: 40)
+                if let scvm = siteChangeViewModel, !scvm.recommendations.recommended.isEmpty {
+                    recommendedShortcuts(scvm: scvm)
+                }
 
-                logSiteChangeButton
+                allLocationsButton
                     .padding(.bottom, 24)
             }
         }
     }
+
+    private func recommendedShortcuts(scvm: SiteChangeViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Recommended Next", systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.green)
+                .padding(.horizontal)
+
+            VStack(spacing: 8) {
+                ForEach(scvm.recommendations.recommended) { location in
+                    quickLogButton(for: location)
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private func quickLogButton(for location: Location) -> some View {
+        Button {
+            quickLogLocation = location
+            quickLogNote = ""
+            showingQuickLogConfirmation = true
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    LocationLabelView(location: location)
+                        .fontWeight(.medium)
+                    Text(daysAgoText(for: location))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "plus.circle.fill")
+                    .foregroundStyle(.green)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .tint(.primary)
+    }
+
+    private func daysAgoText(for location: Location) -> String {
+        guard let lastUsed = location.entries.map(\.startTime).max() else { return "Never used" }
+        let days = Calendar.current.dateComponents([.day], from: lastUsed, to: .now).day ?? 0
+        switch days {
+        case 0: return "Today"
+        case 1: return "1 day ago"
+        default: return "\(days) days ago"
+        }
+    }
+
+    // MARK: - Progress Ring
 
     private func progressRing(elapsed: Double, fraction: Double, color: Color) -> some View {
         ZStack {
@@ -117,53 +203,46 @@ struct HomeView: View {
     // MARK: - Empty State
 
     private var emptyStateContent: some View {
-        VStack(spacing: 20) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 20) {
+                Image(systemName: "cross.circle")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 40)
 
-            Image(systemName: "cross.circle")
-                .font(.system(size: 64))
-                .foregroundStyle(.secondary)
+                Text("No Active Site")
+                    .font(.title2)
+                    .fontWeight(.semibold)
 
-            Text("No Active Site")
-                .font(.title2)
-                .fontWeight(.semibold)
+                Text("Log your first site change to start tracking your rotation.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
 
-            Text("Log your first site change to start tracking your rotation.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                if let scvm = siteChangeViewModel, !scvm.recommendations.recommended.isEmpty {
+                    recommendedShortcuts(scvm: scvm)
+                        .padding(.top, 8)
+                }
 
-            Button {
-                showingSiteSheet = true
-            } label: {
-                Label("Log Your First Site Change", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
+                allLocationsButton
+                    .padding(.bottom, 24)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .padding(.horizontal)
-
-            Spacer()
         }
     }
 
     // MARK: - Shared Components
 
-    private var logSiteChangeButton: some View {
+    private var allLocationsButton: some View {
         Button {
             showingSiteSheet = true
         } label: {
-            Label("Log Site Change", systemImage: "arrow.triangle.2.circlepath")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
+            Label("All Locations", systemImage: "list.bullet")
+                .font(.subheadline)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .padding(.horizontal)
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
+        .tint(.secondary)
     }
 
     // MARK: - Helpers
