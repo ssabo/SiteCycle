@@ -33,11 +33,6 @@ xcodebuild build-for-testing \
   CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 ```
 
-**Linting:** SwiftLint is used in CI (`swiftlint lint --strict`). Not currently installed as a local dev dependency — CI installs via Homebrew. Key rules to watch for:
-- `large_tuple`: Tuples may have at most 2 members. Use a struct instead of 3+ member tuples.
-- `empty_count` (opt-in, enabled): Use `.isEmpty` instead of `.count == 0`.
-- All warnings are errors in `--strict` mode.
-
 ## Architecture
 
 ### Data Models (SwiftData)
@@ -49,7 +44,7 @@ Two `@Model` classes in `Models/`:
 
 ### App Initialization
 
-`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and falls back to local-only storage (`.none`) if CloudKit is unavailable (e.g., CI without code signing entitlements). Seeds 14 default locations (7 zones × left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`.
+`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and falls back to local-only storage (`.none`) if CloudKit is unavailable (e.g., CI without code signing entitlements). Seeds 14 default locations (7 zones x left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`.
 
 Onboarding state is tracked via `@AppStorage("hasCompletedOnboarding")`.
 
@@ -64,28 +59,6 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 - **All Locations section:** Every enabled location sorted by most-recent-use, with inline badges — orange warning for the 3 most recently used (avoid), green checkmark for recommended
 - Never-used locations sort as oldest (always recommended until used)
 
-## Key Documentation
-
-- **SPEC.md** — Complete product specification. Covers all features (site change logging, location configuration, history, statistics, CSV export), data models, UI/UX design, recommendation logic, acceptance criteria, and out-of-scope items. This is the source of truth for what the app should do.
-- **PLAN.md** — Phased implementation roadmap (8 phases). Each phase lists deliverables, files to create/modify, and verification steps. Phases are designed to be completed sequentially in individual sessions.
-- **CI.md** — CI and TestFlight deployment documentation. Covers GitHub Actions workflows, required secrets, and step-by-step setup instructions for Apple Developer credentials.
-
-Always consult SPEC.md for feature requirements and PLAN.md for implementation order and scope when building new phases.
-
-## Implementation Status
-
-**All 8 phases are complete.** Phase 8 (TestFlight deployment) requires Apple Developer credentials configured as GitHub Secrets — see `CI.md` for setup instructions.
-
-| Phase | Focus | Status |
-|-------|-------|--------|
-| 2 | Location configuration & onboarding | complete |
-| 3 | Home screen & site change logging | complete |
-| 4 | History view | complete |
-| 5 | Statistics & charts | complete |
-| 6 | CSV export, settings completion, polish | complete |
-| 7 | GitHub Actions CI & test audit | complete |
-| 8 | TestFlight deployment | complete |
-
 ## CI / GitHub Actions
 
 A CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
@@ -99,29 +72,12 @@ Key CI considerations:
 
 ## Testing
 
-Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Testing`, `@Test`, `#expect`, `#require`).
-
-### Test files
-
-| File | What it covers |
-|------|---------------|
-| `LocationTests.swift` | `Location` model: display name formatting, default/custom init, unique IDs |
-| `SiteChangeEntryTests.swift` | `SiteChangeEntry` model: `durationHours` computation, default/custom init, unique IDs |
-| `DefaultLocationsTests.swift` | `seedDefaultLocations()`: correct count (14), idempotency, zones, sides, sort orders |
-| `LocationConfigTests.swift` | Zone CRUD: custom zone creation (with/without laterality), soft/hard delete, toggle, reorder, display names |
-| `HomeViewModelTests.swift` | `HomeViewModel`: active site query, elapsed hours, progress fraction, target duration |
-| `SiteChangeViewModelTests.swift` | `SiteChangeViewModel`: recommendation engine (avoid/recommended lists, edge cases), logSiteChange, lastUsedDate |
-| `HistoryViewModelTests.swift` | `HistoryViewModel`: fetch ordering, location/date filtering, combined filters, entry editing, entry deletion |
-| `StatisticsViewModelTests.swift` | `StatisticsViewModel`: total uses, average/median duration per location |
-| `StatisticsViewModelDurationTests.swift` | `StatisticsViewModel`: min/max duration, last used, days since last use |
-| `StatisticsViewModelAggregateTests.swift` | `StatisticsViewModel`: overall average, absorption insight flags |
-| `StatisticsViewModelDistributionTests.swift` | `StatisticsViewModel`: usage distribution, edge cases (empty data, single entry) |
-| `CSVExporterTests.swift` | `CSVExporter`: CSV format, headers, field formatting, RFC 4180 escaping, ordering, file naming |
+Tests are in `SiteCycleTests/` (13 files, 123 tests) using the **Swift Testing** framework (`import Testing`, `@Test`, `#expect`, `#require`).
 
 ### Writing tests — important patterns
 
-- **Swift Testing `throws` requirement:** Any test function using `try #require(...)` must be marked `throws`. Omitting it causes a compilation error ("errors thrown from here are not handled").
-- **SwiftData in tests:** Tests that need a `ModelContainer` should create an in-memory container with CloudKit disabled. See the helper in `DefaultLocationsTests.swift`:
+- **Swift Testing `throws` requirement:** Any test function using `try #require(...)` must be marked `throws`. Omitting it causes a compilation error.
+- **SwiftData in tests:** Tests that need a `ModelContainer` should create an in-memory container with CloudKit disabled:
   ```swift
   private func makeContainer() throws -> ModelContainer {
       let schema = Schema([Location.self, SiteChangeEntry.self])
@@ -133,29 +89,31 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
       return try ModelContainer(for: schema, configurations: [config])
   }
   ```
-- **Model instantiation without a container:** Simple `Location` and `SiteChangeEntry` objects can be created without a `ModelContainer` for basic property/computed-property tests. A container is only needed when using `ModelContext` operations (insert, fetch, save).
+- **Model instantiation without a container:** Simple `Location` and `SiteChangeEntry` objects can be created without a `ModelContainer` for basic property tests. A container is only needed when using `ModelContext` operations (insert, fetch, save).
 - **`@MainActor` on test structs:** Test structs that create ViewModels or use `ModelContext` must be annotated with `@MainActor` because the ViewModels and utility functions are `@MainActor`-isolated (Swift 6 strict concurrency).
 
 ## SwiftUI Pitfalls
 
-- `.foregroundStyle(.accent)` does not compile — `ShapeStyle` has no `.accent` member. Use `.tint` for accent color styling (available iOS 15+).
+- `.foregroundStyle(.accent)` does not compile — `ShapeStyle` has no `.accent` member. Use `.tint` for accent color styling.
 - **`@Observable` needs `import Observation`** — `SwiftData` does NOT re-export the `Observation` framework. ViewModels that use `@Observable` without importing `SwiftUI` must explicitly `import Observation`.
-- **Multiple closures:** When a SwiftUI modifier takes 2+ closure arguments (e.g., `.sheet(isPresented:onDismiss:content:)`), use explicit parameter labels for all closures — do NOT use trailing closure syntax. SwiftLint enforces `multiple_closures_with_trailing_closure`.
+- **Multiple closures:** When a SwiftUI modifier takes 2+ closure arguments (e.g., `.sheet(isPresented:onDismiss:content:)`), use explicit parameter labels for all closures — do NOT use trailing closure syntax.
 
 ## SwiftLint Rules (CI-enforced)
 
-Beyond `large_tuple` and `empty_count` (listed above), watch for these in `--strict` mode:
-- `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)` instead of `value!`.
-- `multiple_closures_with_trailing_closure`: When passing 2+ closures, use explicit labels for all (no trailing closure syntax).
-- `function_body_length`: Function bodies must be ≤50 lines (excluding comments/whitespace). Extract helper methods to stay under the limit.
-- `file_length`: Files must be ≤500 lines. Split large test files into multiple files if needed.
-- `type_body_length`: Struct/class bodies must be ≤300 lines. For test structs, split tests across multiple structs/files by category (e.g., filtering tests vs. edit/delete tests).
+SwiftLint runs in CI with `--strict` mode (all warnings are errors). Key rules:
+- `large_tuple`: Tuples may have at most 2 members. Use a struct instead.
+- `empty_count` (opt-in, enabled): Use `.isEmpty` instead of `.count == 0`.
+- `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)`.
+- `multiple_closures_with_trailing_closure`: When passing 2+ closures, use explicit labels for all.
+- `function_body_length`: Function bodies must be <=50 lines. Extract helper methods.
+- `file_length`: Files must be <=500 lines. Split large files if needed.
+- `type_body_length`: Struct/class bodies must be <=300 lines.
 
 ## Adding Files to the Xcode Project
 
 When creating a new Swift file, it must be registered in `SiteCycle.xcodeproj/project.pbxproj` in three places:
 1. **PBXFileReference** — declares the file
-2. **PBXGroup** — adds it to the correct folder group (e.g., `SiteCycleTests`)
+2. **PBXGroup** — adds it to the correct folder group
 3. **PBXSourcesBuildPhase** — adds it to the correct target's compile sources (via a PBXBuildFile entry)
 
 Use sequential hex IDs following the existing pattern (e.g., `8A0000000000000000000013` for the file ref, `8A0000000000000000000113` for the build file).
@@ -164,11 +122,10 @@ Use sequential hex IDs following the existing pattern (e.g., `8A0000000000000000
 
 The project uses Swift 6 language mode with strict concurrency checking:
 
-- **ViewModels** (`HomeViewModel`, `HistoryViewModel`, `SiteChangeViewModel`, `StatisticsViewModel`) are all `@MainActor`-isolated because they hold a `ModelContext` and drive UI state.
-- **Utility functions** (`seedDefaultLocations()`, `migrateLocationBodyParts()`, `CSVImporter.importCSV()`) that accept `ModelContext` are `@MainActor`.
+- **ViewModels** are all `@MainActor`-isolated because they hold a `ModelContext` and drive UI state.
+- **Utility functions** that accept `ModelContext` are `@MainActor`.
 - **Views** inherit main actor isolation from SwiftUI.
-- **Models** (`Location`, `SiteChangeEntry`) — isolation is handled by SwiftData's `@Model` macro.
-- When compiled with Xcode 26 / iOS 26 SDK, standard SwiftUI components automatically adopt **Liquid Glass** styling (glass tab bar, navigation bars, sheets).
+- **Models** — isolation is handled by SwiftData's `@Model` macro.
 
 ## Key Design Decisions
 
