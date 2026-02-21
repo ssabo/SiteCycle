@@ -101,7 +101,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="SiteCycle App Store Profile"
+            PROVISIONING_PROFILE_SPECIFIER="SiteCycle App Store Profile" \
+            ENABLE_ON_DEMAND_RESOURCES=NO
 
       - name: Export IPA
         run: |
