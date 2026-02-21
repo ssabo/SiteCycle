@@ -28,7 +28,11 @@ jobs:
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          # Prefer stable (non-beta) Xcode 26; fall back to beta only if needed
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          fi
           if [ -z "$XCODE_PATH" ]; then
             XCODE_PATH="/Applications/Xcode.app"
           fi
