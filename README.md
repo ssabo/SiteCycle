@@ -2,6 +2,10 @@
 
 Insulin pump users must rotate infusion sites every few days to prevent lipohypertrophy — hardened tissue that impairs insulin absorption. Most people rely on memory alone to track where they last placed their site, which leads to overusing familiar spots and neglecting others. SiteCycle is a focused iOS app that logs each site change, tracks recovery time per location, and recommends where to go next.
 
+## Disclaimer
+
+SiteCycle is a personal tracking tool and is not a medical device. It does not provide medical advice, diagnosis, or treatment recommendations. The site rotation suggestions it provides are based solely on logged usage history and simple timing logic. Always consult your healthcare provider or diabetes care team for guidance on infusion site management.
+
 ## Motivation
 
 I built SiteCycle out of personal need as an insulin pump user. After years of relying on mental notes and occasionally landing on the same few spots, I wanted a simple tool that would take the guesswork out of site rotation. Existing solutions were either buried inside broader diabetes management apps or didn't exist at all. SiteCycle is intentionally focused — it does one thing and aims to do it well.
@@ -123,10 +127,6 @@ The following are potential future enhancements:
 - Apple Watch companion app
 - Visual body diagram for site selection
 - Integration with CGM data for absorption correlation
-
-## Disclaimer
-
-SiteCycle is a personal tracking tool and is not a medical device. It does not provide medical advice, diagnosis, or treatment recommendations. The site rotation suggestions it provides are based solely on logged usage history and simple timing logic. Always consult your healthcare provider or diabetes care team for guidance on infusion site management.
 
 ## License
 
