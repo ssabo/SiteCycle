@@ -1,10 +1,10 @@
 # SiteCycle
 
-An iOS app for insulin pump users to track and manage infusion site rotation. SiteCycle recommends optimal pump site placement based on your usage history to help prevent lipohypertrophy, scarring, and absorption issues.
+Insulin pump users must rotate infusion sites every few days to prevent lipohypertrophy — hardened tissue that impairs insulin absorption. Most people rely on memory alone to track where they last placed their site, which leads to overusing familiar spots and neglecting others. SiteCycle is a focused iOS app that logs each site change, tracks recovery time per location, and recommends where to go next.
 
-## Why SiteCycle?
+## Motivation
 
-Insulin pump users must rotate infusion sites every 2-3 days to prevent lipohypertrophy (tissue hardening), scarring, and reduced insulin absorption. Without systematic tracking, it's easy to default to the same few locations — overusing some areas while neglecting others. SiteCycle provides a simple, structured workflow: log your site change, get a smart recommendation for where to go next, and build up insights over time about your rotation patterns.
+I built SiteCycle out of personal need as an insulin pump user. After years of relying on mental notes and occasionally landing on the same few spots, I wanted a simple tool that would take the guesswork out of site rotation. Existing solutions were either buried inside broader diabetes management apps or didn't exist at all. SiteCycle is intentionally focused — it does one thing and aims to do it well.
 
 ## Features
 
@@ -42,11 +42,22 @@ Insulin pump users must rotate infusion sites every 2-3 days to prevent lipohype
   </tr>
 </table>
 
+## How It Works
+
+When you change your infusion site, open SiteCycle and tap "Log Site Change." The app shows your locations sorted into two sections:
+
+1. **Recommended** (green) - The 3 least recently used locations with the most recovery time
+2. **All Locations** - Every configured location with inline badges: orange warnings for recently-used sites to avoid, green checkmarks for recommended sites
+
+Select a location, optionally add a note, and confirm. The app handles the rest: timestamping, closing the previous session, and updating recommendations for next time.
+
 ## Requirements
 
 - iOS 26.0+
 - Xcode 26
 - Swift 6.0
+
+> **Note:** This project targets iOS 26, which requires Xcode 26. These version numbers reflect Apple's 2025 platform renumbering — iOS 26 is the successor to iOS 18.
 
 ## Tech Stack
 
@@ -99,23 +110,9 @@ SiteCycle/
 SiteCycleTests/                 # Swift Testing suite
 ```
 
-## How It Works
-
-When you change your infusion site, open SiteCycle and tap "Log Site Change." The app shows your locations sorted into three sections:
-
-1. **Recommended** (green) - The 3 least recently used locations with the most recovery time
-2. **All Locations** - Every configured location with inline badges: orange warnings for recently-used sites to avoid, green checkmarks for recommended sites
-
-Select a location, optionally add a note, and confirm. The app handles the rest: timestamping, closing the previous session, and updating recommendations for next time.
-
 ## CI/CD
 
-GitHub Actions workflows handle continuous integration and deployment:
-
-- **CI** (`ci.yml`) - Runs SwiftLint and builds/tests on every push and PR to `main`
-- **TestFlight** (`testflight.yml`) - Automated TestFlight builds for beta distribution
-
-See [CI.md](CI.md) for setup details.
+GitHub Actions runs SwiftLint and builds/tests on every push and PR to `main`. Automated TestFlight distribution is also configured but requires Apple Developer credentials (distribution certificates and provisioning profiles) set up as repository secrets — see [CI.md](CI.md) for details.
 
 ## Roadmap
 
@@ -127,6 +124,10 @@ The following are potential future enhancements:
 - Visual body diagram for site selection
 - Integration with CGM data for absorption correlation
 
+## Disclaimer
+
+SiteCycle is a personal tracking tool and is not a medical device. It does not provide medical advice, diagnosis, or treatment recommendations. The site rotation suggestions it provides are based solely on logged usage history and simple timing logic. Always consult your healthcare provider or diabetes care team for guidance on infusion site management.
+
 ## License
 
-All rights reserved.
+MIT License — see [LICENSE](./LICENSE) for details.
