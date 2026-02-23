@@ -94,6 +94,31 @@ enum CloudKitSyncState: Equatable {
         formatter.unitsStyle = .full
         return "Last synced \(formatter.localizedString(for: date, relativeTo: Date()))."
     }
+
+    static func fromSyncError(_ error: (any Error)?) -> CloudKitSyncState {
+        guard let error else {
+            return .error("Sync failed. Tap for details.")
+        }
+        let nsError = error as NSError
+        guard nsError.domain == CKError.errorDomain else {
+            return .error("Sync failed. Tap for details.")
+        }
+        guard let code = CKError.Code(rawValue: nsError.code) else {
+            return .error("Sync failed. Tap for details.")
+        }
+        switch code {
+        case .networkUnavailable, .networkFailure:
+            return .offline
+        case .serviceUnavailable:
+            return .error("iCloud is temporarily unavailable. Sync will retry automatically.")
+        case .requestRateLimited, .zoneBusy:
+            return .error("iCloud is busy. Sync will retry shortly.")
+        case .notAuthenticated:
+            return .noAccount
+        default:
+            return .error("Sync failed. Tap for details.")
+        }
+    }
 }
 
 @MainActor @Observable final class CloudKitSyncViewModel {
@@ -203,7 +228,7 @@ enum CloudKitSyncState: Equatable {
         } else {
             let message = event.error?.localizedDescription ?? "Unknown error"
             Self.logger.error("CloudKit sync failed: type=\(typeName), store=\(store), error=\(message)")
-            state = .error(message)
+            state = CloudKitSyncState.fromSyncError(event.error)
         }
     }
 
