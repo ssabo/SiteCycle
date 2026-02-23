@@ -16,7 +16,7 @@ concurrency:
 jobs:
   lint:
     name: SwiftLint
-    runs-on: macos-26
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -28,22 +28,21 @@ jobs:
 
   build-and-test:
     name: Build & Test
-    runs-on: macos-26
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$XCODE_PATH" ]; then
             XCODE_PATH="/Applications/Xcode.app"
           fi
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           xcodebuild -version
 
-      - name: Prepare iOS Simulator
+      - name: Find iOS Simulator
         run: |
-          xcodebuild -downloadPlatform iOS || true
           SIMULATOR_NAME=$(xcrun simctl list devices available iPhone -j | \
             python3 -c "
           import sys, json
@@ -80,7 +79,7 @@ jobs:
 
   archive:
     name: Archive (TestFlight dry run)
-    runs-on: macos-26
+    runs-on: macos-15
     needs: build-and-test
     if: github.event.pull_request.head.repo.full_name == github.repository
     env:
@@ -97,15 +96,12 @@ jobs:
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
           if [ -z "$XCODE_PATH" ]; then
             XCODE_PATH="/Applications/Xcode.app"
           fi
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           xcodebuild -version
-
-      - name: Install iOS platform
-        run: xcodebuild -downloadPlatform iOS
 
       - name: Install Apple certificate and provisioning profile
         env:
