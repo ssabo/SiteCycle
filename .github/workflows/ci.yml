@@ -34,7 +34,7 @@ jobs:
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$XCODE_PATH" ]; then
             XCODE_PATH="/Applications/Xcode.app"
           fi
@@ -96,7 +96,7 @@ jobs:
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
           if [ -z "$XCODE_PATH" ]; then
             XCODE_PATH="/Applications/Xcode.app"
           fi
