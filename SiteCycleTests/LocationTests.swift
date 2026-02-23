@@ -28,7 +28,7 @@ struct LocationTests {
         #expect(location.isEnabled == true)
         #expect(location.isCustom == false)
         #expect(location.sortOrder == 0)
-        #expect(location.entries.isEmpty)
+        #expect(location.safeEntries.isEmpty)
     }
 
     @Test func customInitValues() {

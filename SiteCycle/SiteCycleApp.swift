@@ -32,6 +32,7 @@ struct SiteCycleApp: App {
             )
             return (container, true)
         } catch {
+            print("CloudKit ModelContainer failed: \(error)")
             // CloudKit unavailable (e.g. CI, no entitlements) — fall back to local storage
             let localConfig = ModelConfiguration(
                 schema: schema,

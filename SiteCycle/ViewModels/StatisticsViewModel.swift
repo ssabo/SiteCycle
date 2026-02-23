@@ -42,7 +42,7 @@ final class StatisticsViewModel {
         )
         let locations = (try? modelContext.fetch(descriptor)) ?? []
 
-        let allEntries = locations.flatMap(\.entries)
+        let allEntries = locations.flatMap(\.safeEntries)
         let completedDurations = allEntries.compactMap(\.durationHours)
         let overallResult = Self.filterAnomalies(completedDurations)
         overallMedianDuration = Self.computeMedian(overallResult.filtered)
@@ -55,8 +55,8 @@ final class StatisticsViewModel {
         }
 
         usageDistribution = locations
-            .filter { !$0.entries.isEmpty }
-            .map { UsageDistributionItem(locationName: $0.fullDisplayName, count: $0.entries.count) }
+            .filter { !$0.safeEntries.isEmpty }
+            .map { UsageDistributionItem(locationName: $0.fullDisplayName, count: $0.safeEntries.count) }
     }
 
     // MARK: - Anomaly Filtering
@@ -102,7 +102,7 @@ final class StatisticsViewModel {
         for location: Location,
         overallMedian: Double?
     ) -> LocationStats {
-        let entries = location.entries
+        let entries = location.safeEntries
         let completedDurations = entries.compactMap(\.durationHours)
         let totalUses = entries.count
         let anomalyResult = Self.filterAnomalies(completedDurations)

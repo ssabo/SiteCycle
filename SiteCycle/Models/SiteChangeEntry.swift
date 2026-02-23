@@ -3,8 +3,8 @@ import SwiftData
 
 @Model
 final class SiteChangeEntry {
-    var id: UUID
-    var startTime: Date
+    var id: UUID = UUID()
+    var startTime: Date = Date()
     var endTime: Date?
     var note: String?
 
