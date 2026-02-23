@@ -8,8 +8,22 @@ struct CloudKitSyncViewModelTests {
         #expect(vm.state == .localOnly)
     }
 
-    @Test func initialStateIsSyncedWhenEnabled() {
+    @Test func initialStateIsWaitingWhenEnabled() {
         let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
+        #expect(vm.state == .waiting)
+    }
+
+    @Test func waitingStateProperties() {
+        let state = CloudKitSyncState.waiting
+        #expect(state.iconName == "icloud")
+        #expect(state.accessibilityLabel == "Waiting for iCloud sync…")
+        #expect(state.tooltip(lastSyncDate: nil) == "Waiting for iCloud sync…")
+    }
+
+    @Test func waitingTransitionsToSyncedOnSuccessfulEvent() {
+        let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
+        #expect(vm.state == .waiting)
+        vm.setStateForTesting(.synced)
         #expect(vm.state == .synced)
     }
 
@@ -19,11 +33,11 @@ struct CloudKitSyncViewModelTests {
         #expect(vm.state == .offline)
     }
 
-    @Test func networkOnlineFromOfflineRestoresSynced() {
+    @Test func networkOnlineFromOfflineRestoresWaiting() {
         let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
         vm.updateNetworkState(isConnected: false)
         vm.updateNetworkState(isConnected: true)
-        #expect(vm.state == .synced)
+        #expect(vm.state == .waiting)
     }
 
     @Test func localOnlyIgnoresNetworkChanges() {
