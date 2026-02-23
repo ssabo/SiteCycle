@@ -4,9 +4,11 @@ import Observation
 import Network
 import CloudKit
 import CoreData
+import os
 
 enum CloudKitSyncState: Equatable {
     case localOnly
+    case waiting
     case offline
     case noAccount
     case syncing
@@ -16,6 +18,7 @@ enum CloudKitSyncState: Equatable {
     var iconName: String {
         switch self {
         case .localOnly: return "internaldrive"
+        case .waiting: return "icloud"
         case .offline: return "icloud.slash"
         case .noAccount: return "person.icloud"
         case .syncing: return "arrow.triangle.2.circlepath.icloud"
@@ -26,7 +29,7 @@ enum CloudKitSyncState: Equatable {
 
     var foregroundColor: AnyShapeStyle {
         switch self {
-        case .localOnly, .offline, .synced: return AnyShapeStyle(.secondary)
+        case .localOnly, .waiting, .offline, .synced: return AnyShapeStyle(.secondary)
         case .noAccount: return AnyShapeStyle(Color.orange)
         case .syncing: return AnyShapeStyle(.tint)
         case .error: return AnyShapeStyle(Color.red)
@@ -36,6 +39,7 @@ enum CloudKitSyncState: Equatable {
     var accessibilityLabel: String {
         switch self {
         case .localOnly: return "Stored locally — iCloud not available"
+        case .waiting: return "Waiting for iCloud sync…"
         case .offline: return "Offline — sync paused"
         case .noAccount: return "Sign in to iCloud to enable sync"
         case .syncing: return "Syncing with iCloud…"
@@ -47,6 +51,7 @@ enum CloudKitSyncState: Equatable {
     var alertTitle: String {
         switch self {
         case .localOnly: return "Local Storage"
+        case .waiting: return "Connecting"
         case .offline: return "Offline"
         case .noAccount: return "iCloud Unavailable"
         case .syncing: return "Syncing"
@@ -59,6 +64,8 @@ enum CloudKitSyncState: Equatable {
         switch self {
         case .localOnly:
             return "iCloud is not available. Your data is stored on this device only."
+        case .waiting:
+            return "Waiting for the first iCloud sync to complete."
         case .offline:
             return "No network connection. Sync will resume when you're back online."
                 + Self.lastSyncSuffix(lastSyncDate)
@@ -95,6 +102,10 @@ enum CloudKitSyncState: Equatable {
     var showingStatusAlert = false
     var statusAlertMessage: String?
 
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.sitecycle.app",
+        category: "CloudKitSync"
+    )
     private let isCloudKitEnabled: Bool
     private var networkMonitor: NWPathMonitor?
     private var cloudKitEventTask: Task<Void, Never>?
@@ -104,7 +115,7 @@ enum CloudKitSyncState: Equatable {
     init(isCloudKitEnabled: Bool) {
         self.isCloudKitEnabled = isCloudKitEnabled
         if isCloudKitEnabled {
-            state = .synced
+            state = .waiting
             startMonitoring()
         } else {
             state = .localOnly
@@ -121,7 +132,7 @@ enum CloudKitSyncState: Equatable {
         if !isConnected {
             state = .offline
         } else if state == .offline {
-            state = .synced
+            state = .waiting
             accountTask = Task { await checkAccountStatus() }
         }
     }
@@ -180,14 +191,30 @@ enum CloudKitSyncState: Equatable {
     }
 
     private func applyEvent(_ event: NSPersistentCloudKitContainer.Event) {
+        let typeName = Self.eventTypeName(event.type)
+        let store = event.storeIdentifier
         if event.endDate == nil {
+            Self.logger.info("CloudKit sync started: type=\(typeName), store=\(store)")
             state = .syncing
         } else if event.succeeded {
+            Self.logger.info("CloudKit sync succeeded: type=\(typeName), store=\(store)")
             state = .synced
             lastSyncDate = event.endDate
         } else {
             let message = event.error?.localizedDescription ?? "Unknown error"
+            Self.logger.error("CloudKit sync failed: type=\(typeName), store=\(store), error=\(message)")
             state = .error(message)
+        }
+    }
+
+    private static func eventTypeName(
+        _ type: NSPersistentCloudKitContainer.EventType
+    ) -> String {
+        switch type {
+        case .setup: return "setup"
+        case .import: return "import"
+        case .export: return "export"
+        @unknown default: return "unknown(\(type.rawValue))"
         }
     }
 
@@ -211,7 +238,7 @@ enum CloudKitSyncState: Equatable {
                     state = .noAccount
                 }
             } else if state == .noAccount {
-                state = .synced
+                state = .waiting
             }
         } catch {
             // Ignore account status errors silently

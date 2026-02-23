@@ -8,8 +8,22 @@ struct CloudKitSyncViewModelTests {
         #expect(vm.state == .localOnly)
     }
 
-    @Test func initialStateIsSyncedWhenEnabled() {
+    @Test func initialStateIsWaitingWhenEnabled() {
         let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
+        #expect(vm.state == .waiting)
+    }
+
+    @Test func waitingStateProperties() {
+        let state = CloudKitSyncState.waiting
+        #expect(state.iconName == "icloud")
+        #expect(state.accessibilityLabel == "Waiting for iCloud sync…")
+        #expect(state.alertTitle == "Connecting")
+    }
+
+    @Test func waitingTransitionsToSyncedOnSuccessfulEvent() {
+        let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
+        #expect(vm.state == .waiting)
+        vm.setStateForTesting(.synced)
         #expect(vm.state == .synced)
     }
 
@@ -19,11 +33,11 @@ struct CloudKitSyncViewModelTests {
         #expect(vm.state == .offline)
     }
 
-    @Test func networkOnlineFromOfflineRestoresSynced() {
+    @Test func networkOnlineFromOfflineRestoresWaiting() {
         let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
         vm.updateNetworkState(isConnected: false)
         vm.updateNetworkState(isConnected: true)
-        #expect(vm.state == .synced)
+        #expect(vm.state == .waiting)
     }
 
     @Test func localOnlyIgnoresNetworkChanges() {
@@ -71,8 +85,16 @@ struct CloudKitSyncViewModelTests {
         #expect(vm.statusAlertMessage?.starts(with: "Syncing with iCloud") == true)
     }
 
+    @Test func handleTapInWaitingStateSetsAlert() {
+        let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
+        vm.handleTap()
+        #expect(vm.showingStatusAlert == true)
+        #expect(vm.statusAlertMessage == "Waiting for the first iCloud sync to complete.")
+    }
+
     @Test func handleTapInSyncedStateSetsAlert() {
         let vm = CloudKitSyncViewModel(isCloudKitEnabled: true)
+        vm.setStateForTesting(.synced)
         vm.handleTap()
         #expect(vm.showingStatusAlert == true)
         #expect(vm.statusAlertMessage == "iCloud sync is active.")
