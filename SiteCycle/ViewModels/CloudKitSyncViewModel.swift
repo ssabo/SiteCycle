@@ -97,14 +97,34 @@ enum CloudKitSyncState: Equatable {
 
     static func fromSyncError(_ error: (any Error)?) -> CloudKitSyncState {
         guard let error else {
-            return .error("Sync failed. Tap for details.")
+            return .error("Sync failed with an unknown error.")
         }
         let nsError = error as NSError
-        guard nsError.domain == CKError.errorDomain else {
-            return .error("Sync failed. Tap for details.")
+
+        // Check for direct CKError
+        if let state = classifyCKError(nsError) {
+            return state
         }
-        guard let code = CKError.Code(rawValue: nsError.code) else {
-            return .error("Sync failed. Tap for details.")
+
+        // Check for CoreData-CloudKit error codes (NSCocoaErrorDomain)
+        if nsError.domain == NSCocoaErrorDomain {
+            if let state = classifyCocoaError(nsError) {
+                return state
+            }
+        }
+
+        // Search underlying errors for wrapped CKErrors
+        if let state = findCKErrorInChain(nsError) {
+            return state
+        }
+
+        return .error(nsError.localizedDescription)
+    }
+
+    private static func classifyCKError(_ nsError: NSError) -> CloudKitSyncState? {
+        guard nsError.domain == CKError.errorDomain,
+              let code = CKError.Code(rawValue: nsError.code) else {
+            return nil
         }
         switch code {
         case .networkUnavailable, .networkFailure:
@@ -116,8 +136,41 @@ enum CloudKitSyncState: Equatable {
         case .notAuthenticated:
             return .noAccount
         default:
-            return .error("Sync failed. Tap for details.")
+            return nil
         }
+    }
+
+    private static func classifyCocoaError(_ nsError: NSError) -> CloudKitSyncState? {
+        switch nsError.code {
+        case 134400, 134405:
+            return .noAccount
+        default:
+            return nil
+        }
+    }
+
+    private static func findCKErrorInChain(_ nsError: NSError) -> CloudKitSyncState? {
+        // Check NSUnderlyingErrorKey
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
+            if let state = classifyCKError(underlying) {
+                return state
+            }
+            if let state = findCKErrorInChain(underlying) {
+                return state
+            }
+        }
+        // Check NSMultipleUnderlyingErrorsKey
+        if let errors = nsError.userInfo["NSMultipleUnderlyingErrorsKey"] as? [NSError] {
+            for underlyingError in errors {
+                if let state = classifyCKError(underlyingError) {
+                    return state
+                }
+                if let state = findCKErrorInChain(underlyingError) {
+                    return state
+                }
+            }
+        }
+        return nil
     }
 }
 

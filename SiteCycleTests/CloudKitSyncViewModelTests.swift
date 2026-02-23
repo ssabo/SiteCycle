@@ -130,9 +130,41 @@ struct CloudKitSyncViewModelTests {
         #expect(CloudKitSyncState.fromSyncError(error) == .noAccount)
     }
 
-    @Test func fromSyncErrorUnknownNSErrorMapsGeneric() {
-        let error = NSError(domain: "TestDomain", code: 999)
+    @Test func fromSyncErrorUnknownNSErrorPreservesMessage() {
+        let error = NSError(
+            domain: "TestDomain",
+            code: 999,
+            userInfo: [NSLocalizedDescriptionKey: "Something specific went wrong"]
+        )
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("Sync failed. Tap for details."))
+        #expect(state == .error("Something specific went wrong"))
+    }
+
+    @Test func fromSyncErrorCocoaDomain134400MapsToNoAccount() {
+        let error = NSError(domain: NSCocoaErrorDomain, code: 134400)
+        #expect(CloudKitSyncState.fromSyncError(error) == .noAccount)
+    }
+
+    @Test func fromSyncErrorCocoaDomain134405MapsToNoAccount() {
+        let error = NSError(domain: NSCocoaErrorDomain, code: 134405)
+        #expect(CloudKitSyncState.fromSyncError(error) == .noAccount)
+    }
+
+    @Test func fromSyncErrorWrappedCKErrorIsFound() {
+        let ckError = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.notAuthenticated.rawValue
+        )
+        let wrapper = NSError(
+            domain: NSCocoaErrorDomain,
+            code: 134399,
+            userInfo: [NSUnderlyingErrorKey: ckError]
+        )
+        #expect(CloudKitSyncState.fromSyncError(wrapper) == .noAccount)
+    }
+
+    @Test func fromSyncErrorNilReturnsGenericError() {
+        let state = CloudKitSyncState.fromSyncError(nil)
+        #expect(state == .error("Sync failed with an unknown error."))
     }
 }
