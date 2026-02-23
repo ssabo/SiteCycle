@@ -8,7 +8,6 @@ on:
       - 'LICENSE'
       - 'images/**'
       - '*.py'
-      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
