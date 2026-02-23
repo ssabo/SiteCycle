@@ -44,27 +44,56 @@ enum CloudKitSyncState: Equatable {
         }
     }
 
-    func tooltip(lastSyncDate: Date?) -> String {
+    var alertTitle: String {
         switch self {
-        case .localOnly: return "Stored locally — iCloud not available"
-        case .offline: return "Offline — sync paused"
-        case .noAccount: return "Sign in to iCloud to enable sync"
-        case .syncing: return "Syncing with iCloud…"
-        case .synced:
-            guard let date = lastSyncDate else { return "iCloud synced" }
-            let formatter = RelativeDateTimeFormatter()
-            formatter.unitsStyle = .full
-            return "iCloud synced \(formatter.localizedString(for: date, relativeTo: Date()))"
-        case .error: return "Sync error — tap for details"
+        case .localOnly: return "Local Storage"
+        case .offline: return "Offline"
+        case .noAccount: return "iCloud Unavailable"
+        case .syncing: return "Syncing"
+        case .synced: return "iCloud Sync"
+        case .error: return "Sync Error"
         }
+    }
+
+    func alertMessage(lastSyncDate: Date?) -> String {
+        switch self {
+        case .localOnly:
+            return "iCloud is not available. Your data is stored on this device only."
+        case .offline:
+            return "No network connection. Sync will resume when you're back online."
+                + Self.lastSyncSuffix(lastSyncDate)
+        case .noAccount:
+            return "Sign in to iCloud in Settings to sync your data across devices."
+        case .syncing:
+            return "Syncing with iCloud…"
+                + Self.lastSyncSuffix(lastSyncDate)
+        case .synced:
+            return Self.syncedMessage(lastSyncDate)
+        case .error(let message):
+            return message
+        }
+    }
+
+    private static func lastSyncSuffix(_ date: Date?) -> String {
+        guard let date else { return "" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return "\nLast synced \(formatter.localizedString(for: date, relativeTo: Date()))."
+    }
+
+    private static func syncedMessage(_ date: Date?) -> String {
+        guard let date else { return "iCloud sync is active." }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return "Last synced \(formatter.localizedString(for: date, relativeTo: Date()))."
     }
 }
 
 @MainActor @Observable final class CloudKitSyncViewModel {
     private(set) var state: CloudKitSyncState
     private(set) var lastSyncDate: Date?
-    var showingErrorAlert = false
-    var errorAlertMessage: String?
+    var showingStatusAlert = false
+    var statusAlertMessage: String?
 
     private let isCloudKitEnabled: Bool
     private var networkMonitor: NWPathMonitor?
@@ -82,11 +111,9 @@ enum CloudKitSyncState: Equatable {
         }
     }
 
-    func handleErrorTap() {
-        if case .error(let message) = state {
-            errorAlertMessage = message
-            showingErrorAlert = true
-        }
+    func handleTap() {
+        statusAlertMessage = state.alertMessage(lastSyncDate: lastSyncDate)
+        showingStatusAlert = true
     }
 
     func updateNetworkState(isConnected: Bool) {

@@ -42,13 +42,13 @@ struct ContentView: View {
             }
         }
         .alert(
-            "Sync Error",
-            isPresented: $syncViewModel.showingErrorAlert,
+            syncViewModel.state.alertTitle,
+            isPresented: $syncViewModel.showingStatusAlert,
             actions: {
                 Button("OK", role: .cancel) {}
             },
             message: {
-                Text(syncViewModel.errorAlertMessage ?? "")
+                Text(syncViewModel.statusAlertMessage ?? "")
             }
         )
     }
@@ -65,21 +65,13 @@ struct ContentView: View {
         }
     }
 
-    @ViewBuilder
     private var syncIconView: some View {
-        if case .error = syncViewModel.state {
-            Button(action: { syncViewModel.handleErrorTap() }, label: {
-                Image(systemName: syncViewModel.state.iconName)
-                    .foregroundStyle(Color.red)
-            })
-            .accessibilityLabel(syncViewModel.state.accessibilityLabel)
-        } else {
+        Button(action: { syncViewModel.handleTap() }, label: {
             Image(systemName: syncViewModel.state.iconName)
                 .font(.subheadline)
                 .foregroundStyle(syncViewModel.state.foregroundColor)
-                .accessibilityLabel(syncViewModel.state.accessibilityLabel)
-                .help(syncViewModel.state.tooltip(lastSyncDate: syncViewModel.lastSyncDate))
-        }
+        })
+        .accessibilityLabel(syncViewModel.state.accessibilityLabel)
     }
 }
 
