@@ -1,10 +1,13 @@
 import SwiftUI
-import Network
 
 struct ContentView: View {
-    @State private var isConnected = true
+    let isCloudKitEnabled: Bool
+    @State private var syncViewModel: CloudKitSyncViewModel
 
-    private let monitor = NWPathMonitor()
+    init(isCloudKitEnabled: Bool) {
+        self.isCloudKitEnabled = isCloudKitEnabled
+        _syncViewModel = State(initialValue: CloudKitSyncViewModel(isCloudKitEnabled: isCloudKitEnabled))
+    }
 
     var body: some View {
         TabView {
@@ -38,16 +41,22 @@ struct ContentView: View {
                 Label("Statistics", systemImage: "chart.bar")
             }
         }
-        .onAppear { startMonitoring() }
+        .alert(
+            "Sync Error",
+            isPresented: $syncViewModel.showingErrorAlert,
+            actions: {
+                Button("OK", role: .cancel) {}
+            },
+            message: {
+                Text(syncViewModel.errorAlertMessage ?? "")
+            }
+        )
     }
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
         ToolbarItem(placement: .navigationBarLeading) {
-            Image(systemName: syncIconName)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(syncAccessibilityLabel)
+            syncIconView
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             NavigationLink(destination: SettingsView()) {
@@ -56,26 +65,25 @@ struct ContentView: View {
         }
     }
 
-    private var syncIconName: String {
-        isConnected ? "checkmark.icloud" : "icloud.slash"
-    }
-
-    private var syncAccessibilityLabel: String {
-        isConnected ? "iCloud synced" : "Offline"
-    }
-
-    private func startMonitoring() {
-        monitor.pathUpdateHandler = { path in
-            let connected = path.status == .satisfied
-            Task { @MainActor in
-                isConnected = connected
-            }
+    @ViewBuilder
+    private var syncIconView: some View {
+        if case .error = syncViewModel.state {
+            Button(action: { syncViewModel.handleErrorTap() }, label: {
+                Image(systemName: syncViewModel.state.iconName)
+                    .foregroundStyle(Color.red)
+            })
+            .accessibilityLabel(syncViewModel.state.accessibilityLabel)
+        } else {
+            Image(systemName: syncViewModel.state.iconName)
+                .font(.subheadline)
+                .foregroundStyle(syncViewModel.state.foregroundColor)
+                .accessibilityLabel(syncViewModel.state.accessibilityLabel)
+                .help(syncViewModel.state.tooltip(lastSyncDate: syncViewModel.lastSyncDate))
         }
-        monitor.start(queue: DispatchQueue.global(qos: .utility))
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(isCloudKitEnabled: false)
         .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
 }

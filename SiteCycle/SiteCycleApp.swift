@@ -5,7 +5,16 @@ import SwiftData
 struct SiteCycleApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
-    let sharedModelContainer: ModelContainer = {
+    let sharedModelContainer: ModelContainer
+    let isCloudKitEnabled: Bool
+
+    init() {
+        let result = Self.makeModelContainer()
+        sharedModelContainer = result.0
+        isCloudKitEnabled = result.1
+    }
+
+    static func makeModelContainer() -> (ModelContainer, Bool) {
         let schema = Schema([
             Location.self,
             SiteChangeEntry.self,
@@ -17,10 +26,11 @@ struct SiteCycleApp: App {
         )
 
         do {
-            return try ModelContainer(
+            let container = try ModelContainer(
                 for: schema,
                 configurations: [cloudConfig]
             )
+            return (container, true)
         } catch {
             // CloudKit unavailable (e.g. CI, no entitlements) — fall back to local storage
             let localConfig = ModelConfiguration(
@@ -29,19 +39,20 @@ struct SiteCycleApp: App {
                 cloudKitDatabase: .none
             )
             do {
-                return try ModelContainer(
+                let container = try ModelContainer(
                     for: schema,
                     configurations: [localConfig]
                 )
+                return (container, false)
             } catch {
                 fatalError("Could not create ModelContainer: \(error)")
             }
         }
-    }()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(isCloudKitEnabled: isCloudKitEnabled)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
                     seedDefaultLocations(context: context)
