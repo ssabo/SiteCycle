@@ -20,7 +20,7 @@ SiteCycle is an iOS app for insulin pump users to track infusion site rotation. 
 This is an Xcode project (no SPM Package.swift at the root). Build and test via `xcodebuild`:
 
 ```bash
-# Build for iOS Simulator (requires Xcode 16)
+# Build for iOS Simulator (requires Xcode 26)
 xcodebuild build -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
 
 # Run tests
@@ -64,7 +64,7 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 A CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
 
 1. **SwiftLint** — lints all Swift code with `--strict` mode.
-2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 16 and an available iPhone simulator, builds with code signing disabled, and runs all tests.
+2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all tests.
 
 Key CI considerations:
 - Code signing is disabled (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements are absent. The app's `ModelContainer` init has a fallback from `.automatic` to `.none` to handle this — **do not remove the fallback**.
