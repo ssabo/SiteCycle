@@ -3,17 +3,22 @@ import SwiftData
 
 @Model
 final class Location {
-    var id: UUID
-    var zone: String
+    var id: UUID = UUID()
+    var zone: String = ""
     var bodyPart: String = ""
     var subArea: String?
     var side: String?
-    var isEnabled: Bool
-    var isCustom: Bool
-    var sortOrder: Int
+    var isEnabled: Bool = true
+    var isCustom: Bool = false
+    var sortOrder: Int = 0
 
     @Relationship(deleteRule: .nullify, inverse: \SiteChangeEntry.location)
-    var entries: [SiteChangeEntry] = []
+    var entries: [SiteChangeEntry]?
+
+    /// Non-optional convenience accessor. To modify, set `entry.location` on the SiteChangeEntry side.
+    var safeEntries: [SiteChangeEntry] {
+        entries ?? []
+    }
 
     var sideLabel: String? {
         guard let side else { return nil }

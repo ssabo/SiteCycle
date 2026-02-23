@@ -101,7 +101,7 @@ struct LocationConfigView: View {
             let group = groups[index]
             guard group.isCustom else { continue }
 
-            let hasHistory = group.locations.contains { !$0.entries.isEmpty }
+            let hasHistory = group.locations.contains { !$0.safeEntries.isEmpty }
             for location in group.locations {
                 if hasHistory {
                     location.isEnabled = false

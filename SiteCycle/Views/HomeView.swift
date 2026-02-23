@@ -143,7 +143,7 @@ struct HomeView: View {
     }
 
     private func daysAgoText(for location: Location) -> String {
-        guard let lastUsed = location.entries.map(\.startTime).max() else { return "Never used" }
+        guard let lastUsed = location.safeEntries.map(\.startTime).max() else { return "Never used" }
         let days = Calendar.current.dateComponents([.day], from: lastUsed, to: .now).day ?? 0
         switch days {
         case 0: return "Today"

@@ -38,8 +38,8 @@ final class SiteChangeViewModel {
     /// Sorts locations by most-recent-use descending, then splits into avoid/recommended lists.
     static func computeRecommendations(locations: [Location]) -> SiteRecommendations {
         let sorted = locations.sorted { loc1, loc2 in
-            let date1 = loc1.entries.map(\.startTime).max()
-            let date2 = loc2.entries.map(\.startTime).max()
+            let date1 = loc1.safeEntries.map(\.startTime).max()
+            let date2 = loc2.safeEntries.map(\.startTime).max()
 
             switch (date1, date2) {
             case (.some(let d1), .some(let d2)):
@@ -54,7 +54,7 @@ final class SiteChangeViewModel {
         }
 
         // Avoid: up to 3 most recently used (only those with history)
-        let usedLocations = sorted.filter { !$0.entries.isEmpty }
+        let usedLocations = sorted.filter { !$0.safeEntries.isEmpty }
         let avoid = Array(usedLocations.prefix(3))
 
         // Recommended: up to 3 least recently used / never-used, excluding avoid
@@ -79,7 +79,7 @@ final class SiteChangeViewModel {
     }
 
     func lastUsedDate(for location: Location) -> Date? {
-        location.entries.map(\.startTime).max()
+        location.safeEntries.map(\.startTime).max()
     }
 
     func logSiteChange(location: Location, note: String?) {

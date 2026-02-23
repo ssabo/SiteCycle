@@ -92,7 +92,7 @@ struct LocationConfigTests {
         try context.save()
 
         // No history entries — hard delete
-        #expect(location.entries.isEmpty)
+        #expect(location.safeEntries.isEmpty)
         context.delete(location)
         try context.save()
 
@@ -113,7 +113,7 @@ struct LocationConfigTests {
         try context.save()
 
         // Has history — soft delete (disable instead of removing)
-        let hasHistory = !location.entries.isEmpty
+        let hasHistory = !location.safeEntries.isEmpty
         #expect(hasHistory == true)
 
         location.isEnabled = false
