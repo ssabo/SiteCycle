@@ -1,4 +1,5 @@
 import Testing
+import CloudKit
 @testable import SiteCycle
 
 @MainActor
@@ -98,5 +99,40 @@ struct CloudKitSyncViewModelTests {
         vm.handleTap()
         #expect(vm.showingStatusAlert == true)
         #expect(vm.statusAlertMessage == "iCloud sync is active.")
+    }
+
+    // MARK: - fromSyncError tests
+
+    @Test func fromSyncErrorNetworkUnavailableMapsToOffline() {
+        let error = CKError(CKError.networkUnavailable)
+        #expect(CloudKitSyncState.fromSyncError(error) == .offline)
+    }
+
+    @Test func fromSyncErrorNetworkFailureMapsToOffline() {
+        let error = CKError(CKError.networkFailure)
+        #expect(CloudKitSyncState.fromSyncError(error) == .offline)
+    }
+
+    @Test func fromSyncErrorServiceUnavailableMapsFriendly() {
+        let error = CKError(CKError.serviceUnavailable)
+        let state = CloudKitSyncState.fromSyncError(error)
+        #expect(state == .error("iCloud is temporarily unavailable. Sync will retry automatically."))
+    }
+
+    @Test func fromSyncErrorRateLimitedMapsFriendly() {
+        let error = CKError(CKError.requestRateLimited)
+        let state = CloudKitSyncState.fromSyncError(error)
+        #expect(state == .error("iCloud is busy. Sync will retry shortly."))
+    }
+
+    @Test func fromSyncErrorNotAuthenticatedMapsToNoAccount() {
+        let error = CKError(CKError.notAuthenticated)
+        #expect(CloudKitSyncState.fromSyncError(error) == .noAccount)
+    }
+
+    @Test func fromSyncErrorUnknownNSErrorMapsGeneric() {
+        let error = NSError(domain: "TestDomain", code: 999)
+        let state = CloudKitSyncState.fromSyncError(error)
+        #expect(state == .error("Sync failed. Tap for details."))
     }
 }
