@@ -8,7 +8,6 @@ on:
       - 'LICENSE'
       - 'images/**'
       - '*.py'
-      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -78,3 +77,109 @@ jobs:
             -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO | xcpretty && exit ${PIPESTATUS[0]}
+
+  archive:
+    name: Archive (TestFlight dry run)
+    runs-on: macos-26
+    needs: build-and-test
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      KEYCHAIN_NAME: build.keychain
+      KEYCHAIN_PASSWORD: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set environment paths
+        run: |
+          echo "ARCHIVE_PATH=$RUNNER_TEMP/SiteCycle.xcarchive" >> "$GITHUB_ENV"
+          echo "EXPORT_PATH=$RUNNER_TEMP/export" >> "$GITHUB_ENV"
+
+      - name: Select Xcode
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH="/Applications/Xcode.app"
+          fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+
+      - name: Install iOS platform
+        run: xcodebuild -downloadPlatform iOS
+
+      - name: Install Apple certificate and provisioning profile
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security default-keychain -s "$KEYCHAIN_NAME"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_NAME"
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | sed 's/"//g')
+
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          security import "$CERT_PATH" \
+            -k "$KEYCHAIN_NAME" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< \
+            "$(security cms -D -i "$PROFILE_PATH")")
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision"
+
+      - name: Install App Store Connect API key
+        env:
+          APPSTORE_CONNECT_API_KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_BASE64 }}
+          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+        run: |
+          mkdir -p "$HOME/.private_keys"
+          echo "$APPSTORE_CONNECT_API_KEY_BASE64" | base64 --decode > "$HOME/.private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8"
+
+      - name: Verify signing assets
+        run: |
+          echo "=== Keychain search list ==="
+          security list-keychains -d user
+          echo ""
+          echo "=== Signing identities ==="
+          security find-identity -v -p codesigning "$KEYCHAIN_NAME"
+          echo ""
+          echo "=== Provisioning profiles ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -scheme SiteCycle \
+            -project SiteCycle.xcodeproj \
+            -archivePath "$ARCHIVE_PATH" \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="SiteCycle App Store Profile" \
+            ENABLE_ON_DEMAND_RESOURCES=NO
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
+          security default-keychain -s login.keychain 2>/dev/null || true
+          rm -f ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision
+          rm -rf "$HOME/.private_keys"
+          rm -f "$RUNNER_TEMP/cert.p12"
+          rm -f "$RUNNER_TEMP/profile.mobileprovision"
