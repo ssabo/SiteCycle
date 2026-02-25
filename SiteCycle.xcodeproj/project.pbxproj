@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -27,6 +27,7 @@
 		8A000000000000000000011B /* StatisticsViewModelDurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */; };
 		8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */; };
 		8A000000000000000000011D /* CSVExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001D /* CSVExporterTests.swift */; };
+		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
 		8A0000000000000000000120 /* LocationConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000020 /* LocationConfigView.swift */; };
 		8A0000000000000000000121 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000021 /* SettingsView.swift */; };
 		8A0000000000000000000122 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000022 /* OnboardingView.swift */; };
@@ -42,11 +43,9 @@
 		8A000000000000000000012C /* CSVExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002C /* CSVExporter.swift */; };
 		8A000000000000000000012D /* CSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002D /* CSVImporter.swift */; };
 		8A000000000000000000012E /* DocumentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002E /* DocumentPickerView.swift */; };
-		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
 		8A000000000000000000012F /* LocationLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002F /* LocationLabelView.swift */; };
 		8A0000000000000000000130 /* CloudKitSyncViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000030 /* CloudKitSyncViewModel.swift */; };
 		8A0000000000000000000131 /* CloudKitSyncViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000031 /* CloudKitSyncViewModelTests.swift */; };
-/* Watch App build files */
 		8A0000000000000000000140 /* SiteCycleWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000032 /* SiteCycleWatchApp.swift */; };
 		8A0000000000000000000141 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
 		8A0000000000000000000142 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
@@ -58,7 +57,6 @@
 		8A0000000000000000000148 /* WatchLocationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000037 /* WatchLocationRow.swift */; };
 		8A0000000000000000000149 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000034 /* Assets.xcassets */; };
 		8A000000000000000000014A /* SiteCycleWatchWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003C /* SiteCycleWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-/* Widget Extension build files */
 		8A0000000000000000000150 /* SiteCycleWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000039 /* SiteCycleWidgets.swift */; };
 		8A0000000000000000000151 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
 		8A0000000000000000000152 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
@@ -120,6 +118,7 @@
 		8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDurationTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDistributionTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000001D /* CSVExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporterTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000020 /* LocationConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000022 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -135,11 +134,9 @@
 		8A000000000000000000002C /* CSVExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporter.swift; sourceTree = "<group>"; };
 		8A000000000000000000002D /* CSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporter.swift; sourceTree = "<group>"; };
 		8A000000000000000000002E /* DocumentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickerView.swift; sourceTree = "<group>"; };
-		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000002F /* LocationLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationLabelView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000030 /* CloudKitSyncViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncViewModel.swift; sourceTree = "<group>"; };
 		8A0000000000000000000031 /* CloudKitSyncViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncViewModelTests.swift; sourceTree = "<group>"; };
-/* Watch App file references */
 		8A0000000000000000000032 /* SiteCycleWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleWatchApp.swift; sourceTree = "<group>"; };
 		8A0000000000000000000033 /* SiteCycleWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWatch.entitlements; sourceTree = "<group>"; };
 		8A0000000000000000000034 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -147,7 +144,6 @@
 		8A0000000000000000000036 /* WatchSiteSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSiteSelectionView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000037 /* WatchLocationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLocationRow.swift; sourceTree = "<group>"; };
 		8A0000000000000000000038 /* SiteCycleWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiteCycleWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-/* Widget Extension file references */
 		8A0000000000000000000039 /* SiteCycleWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleWidgets.swift; sourceTree = "<group>"; };
 		8A000000000000000000003A /* SiteCycleWatchWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWatchWidgets.entitlements; sourceTree = "<group>"; };
 		8A000000000000000000003B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -713,11 +709,11 @@
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -799,7 +795,6 @@
 			};
 			name = Release;
 		};
-/* Watch App build configurations */
 		8A0000000000000000000720 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -860,7 +855,6 @@
 			};
 			name = Release;
 		};
-/* Widget Extension build configurations */
 		8A0000000000000000000730 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -872,6 +866,7 @@
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteCycleWatchWidgets;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -901,6 +896,7 @@
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteCycleWatchWidgets;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
