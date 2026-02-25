@@ -224,10 +224,13 @@ struct SiteCycleComplicationEntryView: View {
         switch family {
         case .accessoryCircular:
             AccessoryCircularView(entry: entry)
+                .containerBackground(.clear, for: .widget)
         case .accessoryInline:
             AccessoryInlineView(entry: entry)
+                .containerBackground(.clear, for: .widget)
         default:
             AccessoryRectangularView(entry: entry)
+                .containerBackground(.clear, for: .widget)
         }
     }
 }
