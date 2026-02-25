@@ -204,7 +204,7 @@ struct SiteCycleComplication: Widget {
             kind: kind,
             provider: SiteCycleTimelineProvider()
         ) { entry in
-            AccessoryRectangularView(entry: entry)
+            SiteCycleComplicationEntryView(entry: entry)
         }
         .configurationDisplayName("Site Status")
         .description("Shows your current infusion site and elapsed time.")
@@ -213,5 +213,21 @@ struct SiteCycleComplication: Widget {
             .accessoryCircular,
             .accessoryInline,
         ])
+    }
+}
+
+struct SiteCycleComplicationEntryView: View {
+    @Environment(\.widgetFamily) var family
+    let entry: SiteCycleEntry
+
+    var body: some View {
+        switch family {
+        case .accessoryCircular:
+            AccessoryCircularView(entry: entry)
+        case .accessoryInline:
+            AccessoryInlineView(entry: entry)
+        default:
+            AccessoryRectangularView(entry: entry)
+        }
     }
 }
