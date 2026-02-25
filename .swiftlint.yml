@@ -1,6 +1,8 @@
 included:
   - SiteCycle
   - SiteCycleTests
+  - SiteCycleWatch
+  - SiteCycleWatchWidgets
 
 excluded:
   - SiteCycle/Preview Content

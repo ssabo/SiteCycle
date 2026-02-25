@@ -44,15 +44,14 @@ struct SiteCycleTimelineProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping @Sendable (SiteCycleEntry) -> Void) {
-        let entry = MainActor.assumeIsolated { fetchCurrentEntry() }
-        completion(entry)
+        completion(fetchCurrentEntry())
     }
 
     func getTimeline(
         in context: Context,
         completion: @escaping @Sendable (Timeline<SiteCycleEntry>) -> Void
     ) {
-        let current = MainActor.assumeIsolated { fetchCurrentEntry() }
+        let current = fetchCurrentEntry()
         var entries = [current]
 
         for offset in stride(from: 15, through: 120, by: 15) {
@@ -69,7 +68,6 @@ struct SiteCycleTimelineProvider: TimelineProvider {
         completion(Timeline(entries: entries, policy: .after(refreshDate)))
     }
 
-    @MainActor
     private func fetchCurrentEntry() -> SiteCycleEntry {
         guard let container = modelContainer else {
             return SiteCycleEntry(
@@ -79,7 +77,7 @@ struct SiteCycleTimelineProvider: TimelineProvider {
                 targetHours: 72
             )
         }
-        let context = container.mainContext
+        let context = ModelContext(container)
         var descriptor = FetchDescriptor<SiteChangeEntry>(
             predicate: #Predicate<SiteChangeEntry> { $0.endTime == nil },
             sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]

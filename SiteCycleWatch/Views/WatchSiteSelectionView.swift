@@ -54,22 +54,28 @@ struct WatchSiteSelectionView: View {
             if !viewModel.recommendations.recommended.isEmpty {
                 Section("Recommended") {
                     ForEach(viewModel.recommendations.recommended) { location in
-                        WatchLocationRow(
-                            location: location,
-                            category: .recommended
-                        )
-                        .onTapGesture { confirmingLocation = location }
+                        Button {
+                            confirmingLocation = location
+                        } label: {
+                            WatchLocationRow(
+                                location: location,
+                                category: .recommended
+                            )
+                        }
                     }
                 }
             }
 
             Section("All Locations") {
                 ForEach(viewModel.recommendations.allSorted) { location in
-                    WatchLocationRow(
-                        location: location,
-                        category: viewModel.category(for: location)
-                    )
-                    .onTapGesture { confirmingLocation = location }
+                    Button {
+                        confirmingLocation = location
+                    } label: {
+                        WatchLocationRow(
+                            location: location,
+                            category: viewModel.category(for: location)
+                        )
+                    }
                 }
             }
         }
