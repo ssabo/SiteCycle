@@ -61,6 +61,7 @@
 		8A0000000000000000000151 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
 		8A0000000000000000000152 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
 		8A0000000000000000000153 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003B /* Assets.xcassets */; };
+		8A0000000000000000000160 /* SiteCycleWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000038 /* SiteCycleWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,9 +79,27 @@
 			remoteGlobalIDString = 8A0000000000000000000430;
 			remoteInfo = SiteCycleWatchWidgets;
 		};
+		8A0000000000000000000812 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A0000000000000000000501 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A0000000000000000000420;
+			remoteInfo = SiteCycleWatch;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		8A0000000000000000000304 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				8A0000000000000000000160 /* SiteCycleWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8A0000000000000000000323 /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -341,10 +360,12 @@
 				8A0000000000000000000301 /* Sources */,
 				8A0000000000000000000302 /* Frameworks */,
 				8A0000000000000000000303 /* Resources */,
+				8A0000000000000000000304 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8A0000000000000000000822 /* PBXTargetDependency */,
 			);
 			name = SiteCycle;
 			productName = SiteCycle;
@@ -576,6 +597,11 @@
 			isa = PBXTargetDependency;
 			target = 8A0000000000000000000430 /* SiteCycleWatchWidgets */;
 			targetProxy = 8A0000000000000000000811 /* PBXContainerItemProxy */;
+		};
+		8A0000000000000000000822 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8A0000000000000000000420 /* SiteCycleWatch */;
+			targetProxy = 8A0000000000000000000812 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
