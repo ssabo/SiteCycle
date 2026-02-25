@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct WatchSiteSelectionView: View {
     @Environment(\.modelContext) private var modelContext
@@ -29,6 +30,7 @@ struct WatchSiteSelectionView: View {
                 if let location = confirmingLocation {
                     Button("Log to \(location.fullDisplayName)") {
                         viewModel?.logSiteChange(location: location, note: nil)
+                        WidgetCenter.shared.reloadAllTimelines()
                         onComplete()
                     }
                     Button("Cancel", role: .cancel) {

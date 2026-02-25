@@ -1,8 +1,10 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 @main
 struct SiteCycleWatchApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     let sharedModelContainer: ModelContainer
 
     init() {
@@ -56,5 +58,10 @@ struct SiteCycleWatchApp: App {
                 }
         }
         .modelContainer(sharedModelContainer)
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+        }
     }
 }
