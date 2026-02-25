@@ -148,6 +148,7 @@
 		8A000000000000000000003A /* SiteCycleWatchWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWatchWidgets.entitlements; sourceTree = "<group>"; };
 		8A000000000000000000003B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8A000000000000000000003C /* SiteCycleWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiteCycleWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A000000000000000000003D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -323,6 +324,7 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000039 /* SiteCycleWidgets.swift */,
+				8A000000000000000000003D /* Info.plist */,
 				8A000000000000000000003B /* Assets.xcassets */,
 				8A000000000000000000003A /* SiteCycleWatchWidgets.entitlements */,
 			);
@@ -865,8 +867,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycleWatchWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteCycleWatchWidgets;
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -895,8 +897,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycleWatchWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteCycleWatchWidgets;
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.widgetkit-extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
