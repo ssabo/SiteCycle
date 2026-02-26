@@ -152,4 +152,72 @@ struct DefaultLocationsTests {
         #expect(locations.count == 1)
         #expect(locations.first?.bodyPart == "Custom Zone")
     }
+
+    // MARK: - Deduplication Tests
+
+    @Test func deduplicateLocationsMergesDuplicates() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let entry = SiteChangeEntry(startTime: Date())
+        entry.location = loc1
+        context.insert(entry)
+        try context.save()
+
+        deduplicateLocations(context: context)
+
+        let locations = try context.fetch(FetchDescriptor<Location>())
+        #expect(locations.count == 1)
+        #expect(locations.first?.safeEntries.count == 1)
+    }
+
+    @Test func deduplicateLocationsPreservesUniqueLocations() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Front", side: "right", sortOrder: 1)
+        let loc3 = Location(bodyPart: "Thigh", subArea: "Front", side: "left", sortOrder: 2)
+        context.insert(loc1)
+        context.insert(loc2)
+        context.insert(loc3)
+        try context.save()
+
+        deduplicateLocations(context: context)
+
+        let locations = try context.fetch(FetchDescriptor<Location>())
+        #expect(locations.count == 3)
+    }
+
+    @Test func deduplicateLocationsReassignsEntries() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let entry1 = SiteChangeEntry(startTime: Date().addingTimeInterval(-3600))
+        entry1.location = loc1
+        context.insert(entry1)
+
+        let entry2 = SiteChangeEntry(startTime: Date())
+        entry2.location = loc2
+        context.insert(entry2)
+        try context.save()
+
+        deduplicateLocations(context: context)
+
+        let locations = try context.fetch(FetchDescriptor<Location>())
+        #expect(locations.count == 1)
+
+        let keeper = try #require(locations.first)
+        #expect(keeper.safeEntries.count == 2)
+    }
 }

@@ -53,7 +53,6 @@ struct SiteCycleWatchApp: App {
             WatchHomeView()
                 .onAppear {
                     let context = sharedModelContainer.mainContext
-                    seedDefaultLocations(context: context)
                     migrateLocationBodyParts(context: context)
                 }
         }
