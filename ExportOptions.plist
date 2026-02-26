@@ -10,6 +10,10 @@
 	<dict>
 		<key>com.sitecycle.app</key>
 		<string>SiteCycle App Store Profile</string>
+		<key>com.sitecycle.app.watchkitapp</key>
+		<string>SiteCycle Watch App Store Profile</string>
+		<key>com.sitecycle.app.watchkitapp.widgets</key>
+		<string>SiteCycle Watch Widgets App Store Profile</string>
 	</dict>
 	<key>uploadBitcode</key>
 	<false/>
