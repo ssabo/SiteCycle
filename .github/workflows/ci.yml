@@ -183,10 +183,13 @@ jobs:
             -project SiteCycle.xcodeproj \
             -archivePath "$ARCHIVE_PATH" \
             -destination 'generic/platform=iOS' \
+            -skipPackagePluginValidation \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="SiteCycle App Store Profile" \
-            ENABLE_ON_DEMAND_RESOURCES=NO
+            ENABLE_ON_DEMAND_RESOURCES=NO \
+            'CODE_SIGN_IDENTITY[sdk=watch*]=' \
+            'CODE_SIGNING_REQUIRED[sdk=watch*]=NO'
 
       - name: Export IPA
         run: |
