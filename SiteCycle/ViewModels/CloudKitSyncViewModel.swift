@@ -136,17 +136,21 @@ enum CloudKitSyncState: Equatable {
         case .notAuthenticated:
             return .noAccount
         case .partialFailure:
-            if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
-                for (_, innerError) in partialErrors {
-                    if let innerState = classifyCKError(innerError) {
-                        return innerState
-                    }
-                }
-            }
-            return .error("iCloud sync encountered partial errors. Sync will retry automatically.")
+            return classifyPartialFailure(nsError)
         default:
             return nil
         }
+    }
+
+    private static func classifyPartialFailure(_ nsError: NSError) -> CloudKitSyncState {
+        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
+            for (_, innerError) in partialErrors {
+                if let innerState = classifyCKError(innerError) {
+                    return innerState
+                }
+            }
+        }
+        return .error("iCloud sync encountered partial errors. Sync will retry automatically.")
     }
 
     private static func classifyCocoaError(_ nsError: NSError) -> CloudKitSyncState? {
