@@ -29,9 +29,15 @@ struct WatchSiteSelectionView: View {
             actions: {
                 if let location = confirmingLocation {
                     Button("Log to \(location.fullDisplayName)") {
-                        viewModel?.logSiteChange(location: location, note: nil)
-                        WidgetCenter.shared.reloadAllTimelines()
-                        onComplete()
+                        Task {
+                            let sent = await WatchConnectivityManager.shared
+                                .requestLogSiteChange(locationID: location.id)
+                            if !sent {
+                                viewModel?.logSiteChange(location: location, note: nil)
+                            }
+                            WidgetCenter.shared.reloadAllTimelines()
+                            onComplete()
+                        }
                     }
                     Button("Cancel", role: .cancel) {
                         confirmingLocation = nil

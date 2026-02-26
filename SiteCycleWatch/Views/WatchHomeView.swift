@@ -7,11 +7,34 @@ struct WatchHomeView: View {
     @State private var viewModel: HomeViewModel?
     @State private var showingSiteSelection = false
 
+    // MARK: - Effective state (prefers WC data until CloudKit syncs)
+
+    private var effectiveHasActiveSite: Bool {
+        viewModel?.hasActiveSite == true ||
+        WatchConnectivityManager.shared.lastLoggedStartTime != nil
+    }
+
+    private var effectiveStartTime: Date? {
+        let wcTime = WatchConnectivityManager.shared.lastLoggedStartTime
+        let vmTime = viewModel?.startTime
+        if let wcTime, wcTime > (vmTime ?? .distantPast) { return wcTime }
+        return vmTime
+    }
+
+    private var effectiveLocationName: String? {
+        let wcTime = WatchConnectivityManager.shared.lastLoggedStartTime
+        let vmTime = viewModel?.startTime
+        guard let wcTime, wcTime > (vmTime ?? .distantPast) else {
+            return viewModel?.currentLocation?.fullDisplayName
+        }
+        return WatchConnectivityManager.shared.lastLoggedLocationName
+    }
+
     var body: some View {
         NavigationStack {
             Group {
                 if let viewModel {
-                    if viewModel.hasActiveSite {
+                    if effectiveHasActiveSite {
                         activeSiteContent(viewModel: viewModel)
                     } else {
                         emptyStateContent
@@ -44,8 +67,9 @@ struct WatchHomeView: View {
     private func activeSiteContent(viewModel: HomeViewModel) -> some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
             let now = timeline.date
-            let elapsed = viewModel.elapsedHours(at: now)
-            let fraction = viewModel.progressFraction(at: now)
+            let start = effectiveStartTime ?? now
+            let elapsed = now.timeIntervalSince(start) / 3600.0
+            let fraction = elapsed / viewModel.targetDurationHours
 
             ScrollView {
                 VStack(spacing: 12) {
@@ -55,7 +79,7 @@ struct WatchHomeView: View {
                         color: progressColor(for: fraction)
                     )
 
-                    locationLabel(viewModel: viewModel)
+                    locationLabel(name: effectiveLocationName, startTime: effectiveStartTime)
 
                     changeSiteButton
                 }
@@ -89,14 +113,14 @@ struct WatchHomeView: View {
         .frame(width: 110, height: 110)
     }
 
-    private func locationLabel(viewModel: HomeViewModel) -> some View {
+    private func locationLabel(name: String?, startTime: Date?) -> some View {
         VStack(spacing: 2) {
-            if let loc = viewModel.currentLocation {
-                Text(loc.fullDisplayName)
+            if let name {
+                Text(name)
                     .font(.footnote.weight(.semibold))
                     .multilineTextAlignment(.center)
             }
-            if let startTime = viewModel.startTime {
+            if let startTime {
                 Text(startTime, format: .dateTime.month(.abbreviated).day().hour().minute())
                     .font(.caption2)
                     .foregroundStyle(.secondary)

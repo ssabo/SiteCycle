@@ -51,6 +51,9 @@ struct SiteCycleWatchApp: App {
     var body: some Scene {
         WindowGroup {
             WatchHomeView()
+                .onAppear {
+                    WatchConnectivityManager.shared.activate()
+                }
         }
         .modelContainer(sharedModelContainer)
         .onChange(of: scenePhase) {
