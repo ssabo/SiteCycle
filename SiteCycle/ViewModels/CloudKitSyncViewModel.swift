@@ -163,36 +163,21 @@ enum CloudKitSyncState: Equatable {
     }
 
     private static func findCKErrorInChain(_ nsError: NSError) -> CloudKitSyncState? {
-        // Check NSUnderlyingErrorKey
         if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
-            if let state = classifyCKError(underlying) {
-                return state
-            }
-            if let state = findCKErrorInChain(underlying) {
-                return state
-            }
+            if let state = classifyCKError(underlying) { return state }
+            if let state = findCKErrorInChain(underlying) { return state }
         }
-        // Check NSMultipleUnderlyingErrorsKey
-        if let errors = nsError.userInfo["NSMultipleUnderlyingErrorsKey"] as? [NSError] {
-            for underlyingError in errors {
-                if let state = classifyCKError(underlyingError) {
-                    return state
-                }
-                if let state = findCKErrorInChain(underlyingError) {
-                    return state
-                }
-            }
-        }
-        // Check CKPartialErrorsByItemIDKey (present on CKError.partialFailure)
-        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
-            for (_, innerError) in partialErrors {
-                if let state = classifyCKError(innerError) {
-                    return state
-                }
-                if let state = findCKErrorInChain(innerError) {
-                    return state
-                }
-            }
+        if let errors = nsError.userInfo["NSMultipleUnderlyingErrorsKey"] as? [NSError],
+           let state = findStateInErrors(errors) { return state }
+        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError],
+           let state = findStateInErrors(Array(partialErrors.values)) { return state }
+        return nil
+    }
+
+    private static func findStateInErrors(_ errors: [NSError]) -> CloudKitSyncState? {
+        for error in errors {
+            if let state = classifyCKError(error) { return state }
+            if let state = findCKErrorInChain(error) { return state }
         }
         return nil
     }
