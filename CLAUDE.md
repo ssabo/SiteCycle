@@ -8,11 +8,12 @@ SiteCycle is an iOS app for insulin pump users to track infusion site rotation. 
 
 ## Tech Stack
 
-- **Language:** Swift 6.0, targeting iOS 18.0+
+- **Language:** Swift 6.0, targeting iOS 18.0+ and watchOS 11.0+
 - **UI:** SwiftUI
 - **Persistence:** SwiftData with CloudKit sync (container: `iCloud.com.sitecycle.app`)
 - **Charts:** Swift Charts framework (for statistics views)
 - **Architecture:** MVVM — Models/, ViewModels/, Views/, Utilities/
+- **Watch App:** Companion watchOS app with WidgetKit complications
 - **No external dependencies** — uses only Apple frameworks
 
 ## Build Commands
@@ -20,10 +21,13 @@ SiteCycle is an iOS app for insulin pump users to track infusion site rotation. 
 This is an Xcode project (no SPM Package.swift at the root). Build and test via `xcodebuild`:
 
 ```bash
-# Build for iOS Simulator (requires Xcode 26)
+# Build iOS app for Simulator (requires Xcode 26)
 xcodebuild build -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
 
-# Run tests
+# Build Watch app for Simulator
+xcodebuild build -scheme SiteCycleWatch -project SiteCycle.xcodeproj -destination 'generic/platform=watchOS Simulator'
+
+# Run tests (iOS only)
 xcodebuild test -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
 
 # CI builds (no code signing)
@@ -63,11 +67,12 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 
 A CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main`:
 
-1. **SwiftLint** — lints all Swift code with `--strict` mode.
+1. **SwiftLint** — lints all Swift code with `--strict` mode (covers `SiteCycle/`, `SiteCycleWatch/`, `SiteCycleWatchWidgets/`).
 2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all tests.
+3. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
 
 Key CI considerations:
-- Code signing is disabled (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements are absent. The app's `ModelContainer` init has a fallback from `.automatic` to `.none` to handle this — **do not remove the fallback**.
+- Code signing is disabled (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements are absent. Both the iOS and Watch app's `ModelContainer` init have a fallback from `.automatic` to `.none` to handle this — **do not remove the fallbacks**.
 - The test target (`SiteCycleTests`) is **hosted by the app** (`TEST_HOST` is set in the Xcode project). The app must launch successfully for tests to run.
 
 ## Testing
@@ -127,9 +132,47 @@ The project uses Swift 6 language mode with strict concurrency checking:
 - **Views** inherit main actor isolation from SwiftUI.
 - **Models** — isolation is handled by SwiftData's `@Model` macro.
 
+## Apple Watch App
+
+### Targets
+
+| Target | Bundle ID | Platform |
+|--------|-----------|----------|
+| `SiteCycleWatch` | `com.sitecycle.app.watchkitapp` | watchOS 11+ |
+| `SiteCycleWatchWidgets` | `com.sitecycle.app.watchkitapp.widgets` | watchOS 11+ |
+
+### Shared Files (dual target membership — iOS + Watch)
+
+These files are compiled into both the iOS and Watch targets via target membership in the Xcode project:
+- `SiteCycle/Models/Location.swift`
+- `SiteCycle/Models/SiteChangeEntry.swift`
+- `SiteCycle/Utilities/DefaultLocations.swift`
+- `SiteCycle/ViewModels/HomeViewModel.swift`
+- `SiteCycle/ViewModels/SiteChangeViewModel.swift`
+
+### Data Sync
+
+Both iOS and Watch apps use the same CloudKit container (`iCloud.com.sitecycle.app`). The Watch app and its widget extension share a SwiftData store via an App Group (`group.com.sitecycle.app`) so complications can read the current site.
+
+### Watch Views
+
+- **WatchHomeView** — current site status with progress ring, elapsed time (updates via `TimelineView`), "Change Site" navigation
+- **WatchSiteSelectionView** — recommended-first location list, tap to log with confirmation dialog
+- **WatchLocationRow** — compact location row with L/R badge and category indicator
+
+### Complications (WidgetKit)
+
+The `SiteCycleWatchWidgets` extension provides watch face complications:
+- **AccessoryRectangular** — location name + elapsed time
+- **AccessoryCircular** — progress ring with abbreviated time
+- **AccessoryInline** — single line: "L Abdomen (Front) · 2h 15m"
+
+Timeline refreshes every 15 minutes with entries for the next 2 hours.
+
 ## Key Design Decisions
 
 - Settings values (target duration, absorption alert threshold) use `@AppStorage` (UserDefaults), not SwiftData.
 - Logging a new site change automatically closes the previous active entry by setting its `endTime`.
 - Soft-delete for locations with history (set `isEnabled = false`); hard-delete only if no history exists.
 - CloudKit sync is transparent — no account creation, works offline, syncs when connectivity returns.
+- Watch app has no onboarding flow, settings management, or history editing — these remain iPhone-only.

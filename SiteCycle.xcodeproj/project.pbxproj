@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -27,6 +27,7 @@
 		8A000000000000000000011B /* StatisticsViewModelDurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */; };
 		8A000000000000000000011C /* StatisticsViewModelDistributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */; };
 		8A000000000000000000011D /* CSVExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001D /* CSVExporterTests.swift */; };
+		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
 		8A0000000000000000000120 /* LocationConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000020 /* LocationConfigView.swift */; };
 		8A0000000000000000000121 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000021 /* SettingsView.swift */; };
 		8A0000000000000000000122 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000022 /* OnboardingView.swift */; };
@@ -42,10 +43,25 @@
 		8A000000000000000000012C /* CSVExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002C /* CSVExporter.swift */; };
 		8A000000000000000000012D /* CSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002D /* CSVImporter.swift */; };
 		8A000000000000000000012E /* DocumentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002E /* DocumentPickerView.swift */; };
-		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
 		8A000000000000000000012F /* LocationLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000002F /* LocationLabelView.swift */; };
 		8A0000000000000000000130 /* CloudKitSyncViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000030 /* CloudKitSyncViewModel.swift */; };
 		8A0000000000000000000131 /* CloudKitSyncViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000031 /* CloudKitSyncViewModelTests.swift */; };
+		8A0000000000000000000140 /* SiteCycleWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000032 /* SiteCycleWatchApp.swift */; };
+		8A0000000000000000000141 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
+		8A0000000000000000000142 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
+		8A0000000000000000000143 /* DefaultLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000005 /* DefaultLocations.swift */; };
+		8A0000000000000000000144 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000023 /* HomeViewModel.swift */; };
+		8A0000000000000000000145 /* SiteChangeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000024 /* SiteChangeViewModel.swift */; };
+		8A0000000000000000000146 /* WatchHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000035 /* WatchHomeView.swift */; };
+		8A0000000000000000000147 /* WatchSiteSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000036 /* WatchSiteSelectionView.swift */; };
+		8A0000000000000000000148 /* WatchLocationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000037 /* WatchLocationRow.swift */; };
+		8A0000000000000000000149 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000034 /* Assets.xcassets */; };
+		8A000000000000000000014A /* SiteCycleWatchWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003C /* SiteCycleWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8A0000000000000000000150 /* SiteCycleWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000039 /* SiteCycleWidgets.swift */; };
+		8A0000000000000000000151 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
+		8A0000000000000000000152 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
+		8A0000000000000000000153 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003B /* Assets.xcassets */; };
+		8A0000000000000000000160 /* SiteCycleWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000038 /* SiteCycleWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,7 +72,46 @@
 			remoteGlobalIDString = 8A0000000000000000000401;
 			remoteInfo = SiteCycle;
 		};
+		8A0000000000000000000811 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A0000000000000000000501 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A0000000000000000000430;
+			remoteInfo = SiteCycleWatchWidgets;
+		};
+		8A0000000000000000000812 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A0000000000000000000501 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A0000000000000000000420;
+			remoteInfo = SiteCycleWatch;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8A0000000000000000000304 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				8A0000000000000000000160 /* SiteCycleWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A0000000000000000000323 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8A000000000000000000014A /* SiteCycleWatchWidgets.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8A0000000000000000000001 /* SiteCycleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleApp.swift; sourceTree = "<group>"; };
@@ -82,6 +137,7 @@
 		8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDurationTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsViewModelDistributionTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000001D /* CSVExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporterTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000020 /* LocationConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000022 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -97,10 +153,21 @@
 		8A000000000000000000002C /* CSVExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporter.swift; sourceTree = "<group>"; };
 		8A000000000000000000002D /* CSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporter.swift; sourceTree = "<group>"; };
 		8A000000000000000000002E /* DocumentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickerView.swift; sourceTree = "<group>"; };
-		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000002F /* LocationLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationLabelView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000030 /* CloudKitSyncViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncViewModel.swift; sourceTree = "<group>"; };
 		8A0000000000000000000031 /* CloudKitSyncViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncViewModelTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000032 /* SiteCycleWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleWatchApp.swift; sourceTree = "<group>"; };
+		8A0000000000000000000033 /* SiteCycleWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWatch.entitlements; sourceTree = "<group>"; };
+		8A0000000000000000000034 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8A0000000000000000000035 /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
+		8A0000000000000000000036 /* WatchSiteSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSiteSelectionView.swift; sourceTree = "<group>"; };
+		8A0000000000000000000037 /* WatchLocationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLocationRow.swift; sourceTree = "<group>"; };
+		8A0000000000000000000038 /* SiteCycleWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiteCycleWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A0000000000000000000039 /* SiteCycleWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleWidgets.swift; sourceTree = "<group>"; };
+		8A000000000000000000003A /* SiteCycleWatchWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWatchWidgets.entitlements; sourceTree = "<group>"; };
+		8A000000000000000000003B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8A000000000000000000003C /* SiteCycleWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiteCycleWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A000000000000000000003D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +185,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A0000000000000000000321 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A0000000000000000000331 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -125,6 +206,8 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000202 /* SiteCycle */,
+				8A0000000000000000000220 /* SiteCycleWatch */,
+				8A0000000000000000000230 /* SiteCycleWatchWidgets */,
 				8A0000000000000000000210 /* SiteCycleTests */,
 				8A0000000000000000000208 /* Products */,
 			);
@@ -207,6 +290,8 @@
 			children = (
 				8A0000000000000000000009 /* SiteCycle.app */,
 				8A0000000000000000000015 /* SiteCycleTests.xctest */,
+				8A0000000000000000000038 /* SiteCycleWatch.app */,
+				8A000000000000000000003C /* SiteCycleWatchWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -233,6 +318,38 @@
 			path = SiteCycleTests;
 			sourceTree = "<group>";
 		};
+		8A0000000000000000000220 /* SiteCycleWatch */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000000000000000000032 /* SiteCycleWatchApp.swift */,
+				8A0000000000000000000221 /* Views */,
+				8A0000000000000000000034 /* Assets.xcassets */,
+				8A0000000000000000000033 /* SiteCycleWatch.entitlements */,
+			);
+			path = SiteCycleWatch;
+			sourceTree = "<group>";
+		};
+		8A0000000000000000000221 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000000000000000000035 /* WatchHomeView.swift */,
+				8A0000000000000000000036 /* WatchSiteSelectionView.swift */,
+				8A0000000000000000000037 /* WatchLocationRow.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		8A0000000000000000000230 /* SiteCycleWatchWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000000000000000000039 /* SiteCycleWidgets.swift */,
+				8A000000000000000000003D /* Info.plist */,
+				8A000000000000000000003B /* Assets.xcassets */,
+				8A000000000000000000003A /* SiteCycleWatchWidgets.entitlements */,
+			);
+			path = SiteCycleWatchWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -243,10 +360,12 @@
 				8A0000000000000000000301 /* Sources */,
 				8A0000000000000000000302 /* Frameworks */,
 				8A0000000000000000000303 /* Resources */,
+				8A0000000000000000000304 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8A0000000000000000000822 /* PBXTargetDependency */,
 			);
 			name = SiteCycle;
 			productName = SiteCycle;
@@ -271,6 +390,42 @@
 			productReference = 8A0000000000000000000015 /* SiteCycleTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		8A0000000000000000000420 /* SiteCycleWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A0000000000000000000620 /* Build configuration list for PBXNativeTarget "SiteCycleWatch" */;
+			buildPhases = (
+				8A0000000000000000000320 /* Sources */,
+				8A0000000000000000000321 /* Frameworks */,
+				8A0000000000000000000322 /* Resources */,
+				8A0000000000000000000323 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8A0000000000000000000821 /* PBXTargetDependency */,
+			);
+			name = SiteCycleWatch;
+			productName = SiteCycleWatch;
+			productReference = 8A0000000000000000000038 /* SiteCycleWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8A0000000000000000000430 /* SiteCycleWatchWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A0000000000000000000630 /* Build configuration list for PBXNativeTarget "SiteCycleWatchWidgets" */;
+			buildPhases = (
+				8A0000000000000000000330 /* Sources */,
+				8A0000000000000000000331 /* Frameworks */,
+				8A0000000000000000000332 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SiteCycleWatchWidgets;
+			productName = SiteCycleWatchWidgets;
+			productReference = 8A000000000000000000003C /* SiteCycleWatchWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -287,6 +442,12 @@
 					8A0000000000000000000410 = {
 						CreatedOnToolsVersion = 26.0;
 						TestTargetID = 8A0000000000000000000401;
+					};
+					8A0000000000000000000420 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					8A0000000000000000000430 = {
+						CreatedOnToolsVersion = 26.0;
 					};
 				};
 			};
@@ -305,6 +466,8 @@
 			targets = (
 				8A0000000000000000000401 /* SiteCycle */,
 				8A0000000000000000000410 /* SiteCycleTests */,
+				8A0000000000000000000420 /* SiteCycleWatch */,
+				8A0000000000000000000430 /* SiteCycleWatchWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -323,6 +486,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A0000000000000000000322 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A0000000000000000000149 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A0000000000000000000332 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A0000000000000000000153 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,7 +530,7 @@
 				8A000000000000000000012A /* StatisticsViewModel.swift in Sources */,
 				8A000000000000000000012B /* StatisticsView.swift in Sources */,
 				8A000000000000000000012C /* CSVExporter.swift in Sources */,
-			8A000000000000000000012D /* CSVImporter.swift in Sources */,
+				8A000000000000000000012D /* CSVImporter.swift in Sources */,
 				8A000000000000000000012E /* DocumentPickerView.swift in Sources */,
 				8A000000000000000000012F /* LocationLabelView.swift in Sources */,
 				8A0000000000000000000130 /* CloudKitSyncViewModel.swift in Sources */,
@@ -380,6 +559,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A0000000000000000000320 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A0000000000000000000140 /* SiteCycleWatchApp.swift in Sources */,
+				8A0000000000000000000141 /* Location.swift in Sources */,
+				8A0000000000000000000142 /* SiteChangeEntry.swift in Sources */,
+				8A0000000000000000000143 /* DefaultLocations.swift in Sources */,
+				8A0000000000000000000144 /* HomeViewModel.swift in Sources */,
+				8A0000000000000000000145 /* SiteChangeViewModel.swift in Sources */,
+				8A0000000000000000000146 /* WatchHomeView.swift in Sources */,
+				8A0000000000000000000147 /* WatchSiteSelectionView.swift in Sources */,
+				8A0000000000000000000148 /* WatchLocationRow.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A0000000000000000000330 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A0000000000000000000150 /* SiteCycleWidgets.swift in Sources */,
+				8A0000000000000000000151 /* Location.swift in Sources */,
+				8A0000000000000000000152 /* SiteChangeEntry.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -387,6 +592,16 @@
 			isa = PBXTargetDependency;
 			target = 8A0000000000000000000401 /* SiteCycle */;
 			targetProxy = 8A0000000000000000000810 /* PBXContainerItemProxy */;
+		};
+		8A0000000000000000000821 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8A0000000000000000000430 /* SiteCycleWatchWidgets */;
+			targetProxy = 8A0000000000000000000811 /* PBXContainerItemProxy */;
+		};
+		8A0000000000000000000822 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8A0000000000000000000420 /* SiteCycleWatch */;
+			targetProxy = 8A0000000000000000000812 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -522,11 +737,11 @@
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -566,6 +781,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "SiteCycle App Store Profile";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -608,6 +824,128 @@
 			};
 			name = Release;
 		};
+		8A0000000000000000000720 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SiteCycleWatch/SiteCycleWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G58SM6WLX7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = SiteCycle;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.sitecycle.app;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		8A0000000000000000000721 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SiteCycleWatch/SiteCycleWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G58SM6WLX7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = SiteCycle;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.sitecycle.app;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "SiteCycle Watch App Store Profile";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+		8A0000000000000000000730 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = SiteCycleWatchWidgets/SiteCycleWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G58SM6WLX7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycleWatchWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SiteCycleWatchWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		8A0000000000000000000731 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = SiteCycleWatchWidgets/SiteCycleWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G58SM6WLX7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycleWatchWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SiteCycleWatchWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "SiteCycle Watch Widget App Store Profile";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -634,6 +972,24 @@
 			buildConfigurations = (
 				8A0000000000000000000710 /* Debug */,
 				8A0000000000000000000711 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A0000000000000000000620 /* Build configuration list for PBXNativeTarget "SiteCycleWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A0000000000000000000720 /* Debug */,
+				8A0000000000000000000721 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A0000000000000000000630 /* Build configuration list for PBXNativeTarget "SiteCycleWatchWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A0000000000000000000730 /* Debug */,
+				8A0000000000000000000731 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
