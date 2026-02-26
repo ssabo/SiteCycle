@@ -51,11 +51,6 @@ struct SiteCycleWatchApp: App {
     var body: some Scene {
         WindowGroup {
             WatchHomeView()
-                .onAppear {
-                    let context = sharedModelContainer.mainContext
-                    seedDefaultLocations(context: context)
-                    migrateLocationBodyParts(context: context)
-                }
         }
         .modelContainer(sharedModelContainer)
         .onChange(of: scenePhase) {

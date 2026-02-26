@@ -57,6 +57,7 @@ struct SiteCycleApp: App {
                 .onAppear {
                     let context = sharedModelContainer.mainContext
                     seedDefaultLocations(context: context)
+                    deduplicateLocations(context: context)
                     migrateLocationBodyParts(context: context)
                 }
                 .fullScreenCover(isPresented: Binding(

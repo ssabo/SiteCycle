@@ -68,6 +68,60 @@ func seedDefaultLocations(context: ModelContext) {
     try? context.save()
 }
 
+/// Deduplicates non-custom locations that share the same semantic identity
+/// (bodyPart, subArea, side). Keeps the location with the most history,
+/// reassigns entries from duplicates to the keeper, then deletes duplicates.
+@MainActor
+func deduplicateLocations(context: ModelContext) {
+    let descriptor = FetchDescriptor<Location>()
+    guard let allLocations = try? context.fetch(descriptor) else { return }
+
+    let nonCustom = allLocations.filter { !$0.isCustom }
+
+    struct LocationKey: Hashable {
+        let bodyPart: String
+        let subArea: String?
+        let side: String?
+    }
+
+    var groups: [LocationKey: [Location]] = [:]
+    for location in nonCustom {
+        let key = LocationKey(
+            bodyPart: location.bodyPart,
+            subArea: location.subArea,
+            side: location.side
+        )
+        groups[key, default: []].append(location)
+    }
+
+    var didChange = false
+    for (_, locations) in groups where locations.count > 1 {
+        let sorted = locations.sorted { lhs, rhs in
+            let lhsCount = lhs.safeEntries.count
+            let rhsCount = rhs.safeEntries.count
+            if lhsCount != rhsCount { return lhsCount > rhsCount }
+            return lhs.sortOrder < rhs.sortOrder
+        }
+
+        guard let keeper = sorted.first else { continue }
+
+        for duplicate in sorted.dropFirst() {
+            for entry in duplicate.safeEntries {
+                entry.location = keeper
+            }
+            if duplicate.isEnabled {
+                keeper.isEnabled = true
+            }
+            context.delete(duplicate)
+            didChange = true
+        }
+    }
+
+    if didChange {
+        try? context.save()
+    }
+}
+
 /// Migrates existing locations that have a `zone` but empty `bodyPart`.
 /// Parses zone string: last word → bodyPart, remaining words → subArea.
 @MainActor
