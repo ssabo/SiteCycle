@@ -135,6 +135,15 @@ enum CloudKitSyncState: Equatable {
             return .error("iCloud is busy. Sync will retry shortly.")
         case .notAuthenticated:
             return .noAccount
+        case .partialFailure:
+            if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
+                for (_, innerError) in partialErrors {
+                    if let innerState = classifyCKError(innerError) {
+                        return innerState
+                    }
+                }
+            }
+            return .error("iCloud sync encountered partial errors. Sync will retry automatically.")
         default:
             return nil
         }
@@ -166,6 +175,17 @@ enum CloudKitSyncState: Equatable {
                     return state
                 }
                 if let state = findCKErrorInChain(underlyingError) {
+                    return state
+                }
+            }
+        }
+        // Check CKPartialErrorsByItemIDKey (present on CKError.partialFailure)
+        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
+            for (_, innerError) in partialErrors {
+                if let state = classifyCKError(innerError) {
+                    return state
+                }
+                if let state = findCKErrorInChain(innerError) {
                     return state
                 }
             }
