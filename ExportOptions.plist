@@ -13,7 +13,7 @@
 		<key>com.sitecycle.app.watchkitapp</key>
 		<string>SiteCycle Watch App Store Profile</string>
 		<key>com.sitecycle.app.watchkitapp.widgets</key>
-		<string>SiteCycle Watch Widgets App Store Profile</string>
+		<string>SiteCycle Watch Widget App Store Profile</string>
 	</dict>
 	<key>uploadBitcode</key>
 	<false/>

@@ -20,7 +20,7 @@ Each target needs its own App Store distribution provisioning profile:
 |-------------|-----------|------|
 | SiteCycle App Store Profile | `com.sitecycle.app` | App Store |
 | SiteCycle Watch App Store Profile | `com.sitecycle.app.watchkitapp` | App Store |
-| SiteCycle Watch Widgets App Store Profile | `com.sitecycle.app.watchkitapp.widgets` | App Store |
+| SiteCycle Watch Widget App Store Profile | `com.sitecycle.app.watchkitapp.widgets` | App Store |
 
 ### Creating the Watch provisioning profiles
 
@@ -78,7 +78,7 @@ Go to [Apple Developer > Profiles](https://developer.apple.com/account/resources
 2. Select **App Store Connect** (under Distribution)
 3. Select App ID: `com.sitecycle.app.watchkitapp.widgets`
 4. Select your **Apple Distribution** certificate (same one used for the iOS app)
-5. Name: `SiteCycle Watch Widgets App Store Profile`
+5. Name: `SiteCycle Watch Widget App Store Profile`
 6. Click **Generate** > **Download**
 
 #### 4. Add GitHub Secrets
@@ -136,6 +136,6 @@ The export options file maps bundle IDs to provisioning profile names:
     <key>com.sitecycle.app.watchkitapp</key>
     <string>SiteCycle Watch App Store Profile</string>
     <key>com.sitecycle.app.watchkitapp.widgets</key>
-    <string>SiteCycle Watch Widgets App Store Profile</string>
+    <string>SiteCycle Watch Widget App Store Profile</string>
 </dict>
 ```
