@@ -24,7 +24,6 @@ jobs:
         run: |
           echo "ARCHIVE_PATH=$RUNNER_TEMP/SiteCycle.xcarchive" >> "$GITHUB_ENV"
           echo "EXPORT_PATH=$RUNNER_TEMP/export" >> "$GITHUB_ENV"
-          echo "API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
 
       - name: Select Xcode
         run: |
@@ -85,6 +84,7 @@ jobs:
         run: |
           mkdir -p "$HOME/.private_keys"
           echo "$APPSTORE_CONNECT_API_KEY_BASE64" | base64 --decode > "$HOME/.private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8"
+          echo "API_KEY_PATH=$HOME/.private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8" >> "$GITHUB_ENV"
 
       - name: Verify signing assets
         run: |
@@ -114,23 +114,22 @@ jobs:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             ENABLE_ON_DEMAND_RESOURCES=NO
 
-      - name: Export IPA
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath "$ARCHIVE_PATH" \
-            -exportPath "$EXPORT_PATH" \
-            -exportOptionsPlist ExportOptions.plist
-
-      - name: Upload to TestFlight
+      - name: Export & Upload to TestFlight
         env:
           APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_CONNECT_API_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
         run: |
-          xcrun altool --upload-app \
-            -f "$EXPORT_PATH/SiteCycle.ipa" \
-            --apiKey "$APPSTORE_CONNECT_API_KEY_ID" \
-            --apiIssuer "$APPSTORE_CONNECT_API_ISSUER_ID" \
-            --type ios
+          # Add upload destination to a copy of ExportOptions.plist (keeps original clean for local dev)
+          cp ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Add :destination string upload" "$RUNNER_TEMP/ExportOptions.plist"
+
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "$APPSTORE_CONNECT_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APPSTORE_CONNECT_API_ISSUER_ID"
 
       - name: Cleanup
         if: always()
@@ -147,4 +146,5 @@ jobs:
 
           # Remove certificate and profile temp files
           rm -f "$RUNNER_TEMP/cert.p12"
-          rm -f "$RUNNER_TEMP/profile.mobileprovision"
+          rm -f "$RUNNER_TEMP"/profile_*.mobileprovision
+          rm -f "$RUNNER_TEMP/ExportOptions.plist"
