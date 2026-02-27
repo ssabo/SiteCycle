@@ -201,6 +201,24 @@ struct CloudKitSyncViewModelTests {
         #expect(state == .error(expected))
     }
 
+    @Test func fromSyncErrorPartialFailureWithUnknownInnerErrorsIncludesDetails() {
+        let innerError = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.internalError.rawValue,
+            userInfo: [:]
+        )
+        let error = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.partialFailure.rawValue,
+            userInfo: [CKPartialErrorsByItemIDKey: ["recordID": innerError] as [AnyHashable: NSError]]
+        )
+        let state = CloudKitSyncState.fromSyncError(error)
+        let expected = "iCloud sync encountered partial errors. Sync will retry automatically."
+            + "\n\nError: \(CKError.errorDomain) \(CKError.Code.partialFailure.rawValue)"
+            + "\nDetails: \(CKError.errorDomain) \(CKError.Code.internalError.rawValue)"
+        #expect(state == .error(expected))
+    }
+
     @Test func fromSyncErrorPartialFailureWrappingNotAuthenticatedMapsToNoAccount() {
         let innerError = NSError(
             domain: CKError.errorDomain,

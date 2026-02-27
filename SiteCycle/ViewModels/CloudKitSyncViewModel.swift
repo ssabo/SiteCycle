@@ -149,17 +149,36 @@ enum CloudKitSyncState: Equatable {
     }
 
     private static func classifyPartialFailure(_ nsError: NSError) -> CloudKitSyncState {
-        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
-            for (_, innerError) in partialErrors {
-                if let innerState = classifyCKError(innerError) {
-                    return innerState
-                }
+        guard let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError],
+              !partialErrors.isEmpty else {
+            return .error(
+                "iCloud sync encountered partial errors. Sync will retry automatically."
+                + "\n\nError: \(nsError.domain) \(nsError.code)"
+            )
+        }
+        for (_, innerError) in partialErrors {
+            if let innerState = classifyCKError(innerError) {
+                return innerState
             }
         }
+        let details = summarizePartialErrors(partialErrors)
         return .error(
             "iCloud sync encountered partial errors. Sync will retry automatically."
             + "\n\nError: \(nsError.domain) \(nsError.code)"
+            + "\nDetails: \(details)"
         )
+    }
+
+    private static func summarizePartialErrors(_ errors: [AnyHashable: NSError]) -> String {
+        var counts: [String: Int] = [:]
+        for (_, error) in errors {
+            let key = "\(error.domain) \(error.code)"
+            counts[key, default: 0] += 1
+        }
+        return counts
+            .sorted { $0.key < $1.key }
+            .map { $0.value > 1 ? "\($0.key) (x\($0.value))" : $0.key }
+            .joined(separator: ", ")
     }
 
     private static func classifyCocoaError(_ nsError: NSError) -> CloudKitSyncState? {
