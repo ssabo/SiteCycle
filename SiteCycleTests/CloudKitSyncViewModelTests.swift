@@ -116,13 +116,15 @@ struct CloudKitSyncViewModelTests {
     @Test func fromSyncErrorServiceUnavailableMapsFriendly() {
         let error = CKError(CKError.serviceUnavailable)
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud is temporarily unavailable. Sync will retry automatically. (serviceUnavailable, code \(CKError.serviceUnavailable.rawValue))"))
+        let code = CKError.serviceUnavailable.rawValue
+        #expect(state == .error("iCloud is temporarily unavailable. Sync will retry automatically. (serviceUnavailable, code \(code))"))
     }
 
     @Test func fromSyncErrorRateLimitedMapsFriendly() {
         let error = CKError(CKError.requestRateLimited)
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud is busy. Sync will retry shortly. (requestRateLimited, code \(CKError.requestRateLimited.rawValue))"))
+        let code = CKError.requestRateLimited.rawValue
+        #expect(state == .error("iCloud is busy. Sync will retry shortly. (requestRateLimited, code \(code))"))
     }
 
     @Test func fromSyncErrorNotAuthenticatedMapsToNoAccount() {
@@ -175,7 +177,8 @@ struct CloudKitSyncViewModelTests {
             userInfo: [:]
         )
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud sync encountered partial errors. Sync will retry automatically. (partialFailure, code \(CKError.Code.partialFailure.rawValue))"))
+        let code = CKError.Code.partialFailure.rawValue
+        #expect(state == .error("iCloud sync encountered partial errors. Sync will retry automatically. (partialFailure, code \(code))"))
     }
 
     @Test func fromSyncErrorPartialFailureWrappingServiceUnavailableMapsFriendly() {
