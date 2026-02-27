@@ -1,11 +1,10 @@
 import SwiftUI
-import SwiftData
 import WidgetKit
 
 struct WatchSiteSelectionView: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var viewModel: SiteChangeViewModel?
-    @State private var confirmingLocation: Location?
+    @Environment(WatchConnectivityManager.self) private var connectivityManager
+    @State private var viewModel: WatchSiteChangeViewModel?
+    @State private var confirmingLocation: LocationInfo?
 
     var onComplete: () -> Void
 
@@ -29,7 +28,7 @@ struct WatchSiteSelectionView: View {
             actions: {
                 if let location = confirmingLocation {
                     Button("Log to \(location.fullDisplayName)") {
-                        viewModel?.logSiteChange(location: location, note: nil)
+                        viewModel?.logSiteChange(locationId: location.id)
                         WidgetCenter.shared.reloadAllTimelines()
                         onComplete()
                     }
@@ -43,17 +42,17 @@ struct WatchSiteSelectionView: View {
 
     private func setupViewModel() {
         if viewModel == nil {
-            viewModel = SiteChangeViewModel(modelContext: modelContext)
-        } else {
-            viewModel?.refresh()
+            viewModel = WatchSiteChangeViewModel(
+                connectivityManager: connectivityManager
+            )
         }
     }
 
-    private func siteList(viewModel: SiteChangeViewModel) -> some View {
+    private func siteList(viewModel: WatchSiteChangeViewModel) -> some View {
         List {
-            if !viewModel.recommendations.recommended.isEmpty {
+            if !viewModel.recommendedLocations.isEmpty {
                 Section("Recommended") {
-                    ForEach(viewModel.recommendations.recommended) { location in
+                    ForEach(viewModel.recommendedLocations) { location in
                         Button {
                             confirmingLocation = location
                         } label: {
@@ -67,7 +66,7 @@ struct WatchSiteSelectionView: View {
             }
 
             Section("All Locations") {
-                ForEach(viewModel.recommendations.allSorted) { location in
+                ForEach(viewModel.allLocationsSorted) { location in
                     Button {
                         confirmingLocation = location
                     } label: {

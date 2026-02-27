@@ -1,6 +1,5 @@
 import WidgetKit
 import SwiftUI
-import SwiftData
 
 struct SiteCycleEntry: TimelineEntry {
     let date: Date
@@ -10,30 +9,6 @@ struct SiteCycleEntry: TimelineEntry {
 }
 
 struct SiteCycleTimelineProvider: TimelineProvider {
-    let modelContainer: ModelContainer?
-
-    init() {
-        let schema = Schema([Location.self, SiteChangeEntry.self])
-        let appGroupURL = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "group.com.sitecycle.app"
-        )
-        let storeURL = appGroupURL?.appendingPathComponent("SiteCycle.store")
-
-        if let storeURL {
-            let config = ModelConfiguration(
-                schema: schema,
-                url: storeURL,
-                cloudKitDatabase: .none
-            )
-            modelContainer = try? ModelContainer(
-                for: schema,
-                configurations: [config]
-            )
-        } else {
-            modelContainer = nil
-        }
-    }
-
     func placeholder(in context: Context) -> SiteCycleEntry {
         SiteCycleEntry(
             date: .now,
@@ -69,7 +44,9 @@ struct SiteCycleTimelineProvider: TimelineProvider {
     }
 
     private func fetchCurrentEntry() -> SiteCycleEntry {
-        guard let container = modelContainer else {
+        guard let defaults = UserDefaults(suiteName: "group.com.sitecycle.app"),
+              let data = defaults.data(forKey: "watchAppState"),
+              let state = try? JSONDecoder().decode(WatchAppState.self, from: data) else {
             return SiteCycleEntry(
                 date: .now,
                 locationName: nil,
@@ -77,22 +54,12 @@ struct SiteCycleTimelineProvider: TimelineProvider {
                 targetHours: 72
             )
         }
-        let context = ModelContext(container)
-        var descriptor = FetchDescriptor<SiteChangeEntry>(
-            predicate: #Predicate<SiteChangeEntry> { $0.endTime == nil },
-            sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
-        )
-        descriptor.fetchLimit = 1
-        let active = try? context.fetch(descriptor).first
-        let targetHours = Double(
-            UserDefaults.standard.integer(forKey: "targetDurationHours")
-        )
 
         return SiteCycleEntry(
             date: .now,
-            locationName: active?.location?.fullDisplayName,
-            startTime: active?.startTime,
-            targetHours: targetHours > 0 ? targetHours : 72
+            locationName: state.activeSite?.locationName,
+            startTime: state.activeSite?.startTime,
+            targetHours: state.targetDurationHours
         )
     }
 }

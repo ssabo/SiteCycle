@@ -4,6 +4,7 @@ import SwiftData
 struct SiteSelectionSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @State private var viewModel: SiteChangeViewModel?
     @State private var selectedLocation: Location?
     @State private var note = ""
@@ -37,6 +38,7 @@ struct SiteSelectionSheet: View {
                     guard !isLogging, let location = selectedLocation else { return }
                     isLogging = true
                     viewModel?.logSiteChange(location: location, note: note)
+                    connectivityManager.pushCurrentState()
                     dismiss()
                 }
                 Button("Cancel", role: .cancel) {

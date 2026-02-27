@@ -4,9 +4,11 @@ import SwiftData
 @main
 struct SiteCycleApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @Environment(\.scenePhase) private var scenePhase
 
     let sharedModelContainer: ModelContainer
     let isCloudKitEnabled: Bool
+    @State private var connectivityManager = PhoneConnectivityManager()
 
     init() {
         let result = Self.makeModelContainer()
@@ -59,7 +61,10 @@ struct SiteCycleApp: App {
                     seedDefaultLocations(context: context)
                     deduplicateLocations(context: context)
                     migrateLocationBodyParts(context: context)
+                    connectivityManager.configure(modelContext: context)
+                    connectivityManager.pushCurrentState()
                 }
+                .environment(connectivityManager)
                 .fullScreenCover(isPresented: Binding(
                     get: { !hasCompletedOnboarding },
                     set: { newValue in hasCompletedOnboarding = !newValue }
@@ -68,5 +73,10 @@ struct SiteCycleApp: App {
                 }
         }
         .modelContainer(sharedModelContainer)
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                connectivityManager.pushCurrentState()
+            }
+        }
     }
 }

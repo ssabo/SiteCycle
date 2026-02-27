@@ -8,12 +8,6 @@ struct SiteRecommendations {
     let allSorted: [Location]
 }
 
-enum LocationCategory {
-    case avoid
-    case recommended
-    case neutral
-}
-
 @MainActor
 @Observable
 final class SiteChangeViewModel {

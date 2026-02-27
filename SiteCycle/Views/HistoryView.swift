@@ -3,6 +3,7 @@ import SwiftData
 
 struct HistoryView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @State private var viewModel: HistoryViewModel?
     @State private var selectedEntry: SiteChangeEntry?
     @State private var showingDeleteConfirmation = false
@@ -56,6 +57,7 @@ struct HistoryView: View {
                 Button("Delete", role: .destructive) {
                     if let entry = entryToDelete {
                         viewModel.deleteEntry(entry)
+                        connectivityManager.pushCurrentState()
                         entryToDelete = nil
                     }
                 }

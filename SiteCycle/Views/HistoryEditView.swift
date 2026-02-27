@@ -3,6 +3,7 @@ import SwiftData
 
 struct HistoryEditView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
 
     let entry: SiteChangeEntry
     let viewModel: HistoryViewModel
@@ -64,6 +65,7 @@ struct HistoryEditView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     saveChanges()
+                    connectivityManager.pushCurrentState()
                     dismiss()
                 }
             }

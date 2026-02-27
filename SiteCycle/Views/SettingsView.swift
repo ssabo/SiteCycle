@@ -3,6 +3,7 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
     @AppStorage("absorptionAlertThreshold") private var absorptionAlertThreshold: Int = 20
     @State private var csvFileURL: URL?
@@ -14,6 +15,9 @@ struct SettingsView: View {
     var body: some View {
         Form { formSections }
             .navigationTitle("Settings")
+            .onChange(of: targetDurationHours) {
+                connectivityManager.pushCurrentState()
+            }
             .background(
                 Group {
                     if showingShareSheet, let csvFileURL {
@@ -124,6 +128,7 @@ struct SettingsView: View {
                 let lines = result.skippedRows.map { "• Row \($0.rowNumber): \($0.reason)" }.joined(separator: "\n")
                 message += "\n\n\(result.skippedRows.count) rows were skipped:\n\(lines)"
             }
+            connectivityManager.pushCurrentState()
             importResult = ImportResultAlert(
                 title: "Import Successful",
                 message: message

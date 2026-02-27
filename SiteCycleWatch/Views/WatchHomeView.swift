@@ -1,17 +1,17 @@
 import SwiftUI
-import SwiftData
 
 struct WatchHomeView: View {
-    @Environment(\.modelContext) private var modelContext
-    @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
-    @State private var viewModel: HomeViewModel?
+    @Environment(WatchConnectivityManager.self) private var connectivityManager
+    @State private var viewModel: WatchHomeViewModel?
     @State private var showingSiteSelection = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if let viewModel {
-                    if viewModel.hasActiveSite {
+                    if !viewModel.hasReceivedState {
+                        syncingStateContent
+                    } else if viewModel.hasActiveSite {
                         activeSiteContent(viewModel: viewModel)
                     } else {
                         emptyStateContent
@@ -20,11 +20,26 @@ struct WatchHomeView: View {
                     ProgressView()
                 }
             }
+            .overlay {
+                if connectivityManager.hasPendingCommand {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 6) {
+                            ProgressView()
+                            Text("Sending...")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Capsule())
+                    }
+                    .padding(.bottom, 4)
+                }
+            }
             .onAppear { setupViewModel() }
             .navigationDestination(isPresented: $showingSiteSelection) {
                 WatchSiteSelectionView(onComplete: {
                     showingSiteSelection = false
-                    viewModel?.refreshActiveSite()
                 })
             }
         }
@@ -32,16 +47,13 @@ struct WatchHomeView: View {
 
     private func setupViewModel() {
         if viewModel == nil {
-            viewModel = HomeViewModel(
-                modelContext: modelContext,
-                targetDurationHours: Double(targetDurationHours)
+            viewModel = WatchHomeViewModel(
+                connectivityManager: connectivityManager
             )
-        } else {
-            viewModel?.refreshActiveSite()
         }
     }
 
-    private func activeSiteContent(viewModel: HomeViewModel) -> some View {
+    private func activeSiteContent(viewModel: WatchHomeViewModel) -> some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
             let now = timeline.date
             let elapsed = viewModel.elapsedHours(at: now)
@@ -89,10 +101,10 @@ struct WatchHomeView: View {
         .frame(width: 110, height: 110)
     }
 
-    private func locationLabel(viewModel: HomeViewModel) -> some View {
+    private func locationLabel(viewModel: WatchHomeViewModel) -> some View {
         VStack(spacing: 2) {
-            if let loc = viewModel.currentLocation {
-                Text(loc.fullDisplayName)
+            if let name = viewModel.currentLocationName {
+                Text(name)
                     .font(.footnote.weight(.semibold))
                     .multilineTextAlignment(.center)
             }
@@ -110,6 +122,15 @@ struct WatchHomeView: View {
         } label: {
             Label("Change Site", systemImage: "arrow.triangle.2.circlepath")
                 .font(.footnote)
+        }
+    }
+
+    private var syncingStateContent: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+            Text("Syncing with iPhone...")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 

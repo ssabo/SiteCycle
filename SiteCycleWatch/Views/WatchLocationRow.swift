@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WatchLocationRow: View {
-    let location: Location
+    let location: LocationInfo
     let category: LocationCategory
 
     var body: some View {
