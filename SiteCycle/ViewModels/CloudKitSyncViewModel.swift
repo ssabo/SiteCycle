@@ -309,15 +309,17 @@ enum CloudKitSyncState: Equatable {
         let typeName = Self.eventTypeName(event.type)
         let store = event.storeIdentifier
         if event.endDate == nil {
-            Self.logger.info("CloudKit sync started: type=\(typeName), store=\(store)")
+            Self.logger.info("CloudKit sync started: type=\(typeName, privacy: .public), store=\(store, privacy: .public)")
             state = .syncing
         } else if event.succeeded {
-            Self.logger.info("CloudKit sync succeeded: type=\(typeName), store=\(store)")
+            Self.logger.info("CloudKit sync succeeded: type=\(typeName, privacy: .public), store=\(store, privacy: .public)")
             state = .synced
             lastSyncDate = event.endDate
         } else {
             let message = event.error?.localizedDescription ?? "Unknown error"
-            Self.logger.error("CloudKit sync failed: type=\(typeName), store=\(store), error=\(message)")
+            Self.logger.error(
+                "CloudKit sync failed: type=\(typeName, privacy: .public), store=\(store, privacy: .public), error=\(message, privacy: .public)"
+            )
             state = CloudKitSyncState.fromSyncError(event.error)
         }
     }
