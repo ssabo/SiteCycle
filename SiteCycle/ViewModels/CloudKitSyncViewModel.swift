@@ -135,9 +135,22 @@ enum CloudKitSyncState: Equatable {
             return .error("iCloud is busy. Sync will retry shortly.")
         case .notAuthenticated:
             return .noAccount
+        case .partialFailure:
+            return classifyPartialFailure(nsError)
         default:
             return nil
         }
+    }
+
+    private static func classifyPartialFailure(_ nsError: NSError) -> CloudKitSyncState {
+        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError] {
+            for (_, innerError) in partialErrors {
+                if let innerState = classifyCKError(innerError) {
+                    return innerState
+                }
+            }
+        }
+        return .error("iCloud sync encountered partial errors. Sync will retry automatically.")
     }
 
     private static func classifyCocoaError(_ nsError: NSError) -> CloudKitSyncState? {
@@ -150,25 +163,21 @@ enum CloudKitSyncState: Equatable {
     }
 
     private static func findCKErrorInChain(_ nsError: NSError) -> CloudKitSyncState? {
-        // Check NSUnderlyingErrorKey
         if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
-            if let state = classifyCKError(underlying) {
-                return state
-            }
-            if let state = findCKErrorInChain(underlying) {
-                return state
-            }
+            if let state = classifyCKError(underlying) { return state }
+            if let state = findCKErrorInChain(underlying) { return state }
         }
-        // Check NSMultipleUnderlyingErrorsKey
-        if let errors = nsError.userInfo["NSMultipleUnderlyingErrorsKey"] as? [NSError] {
-            for underlyingError in errors {
-                if let state = classifyCKError(underlyingError) {
-                    return state
-                }
-                if let state = findCKErrorInChain(underlyingError) {
-                    return state
-                }
-            }
+        if let errors = nsError.userInfo["NSMultipleUnderlyingErrorsKey"] as? [NSError],
+           let state = findStateInErrors(errors) { return state }
+        if let partialErrors = nsError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: NSError],
+           let state = findStateInErrors(Array(partialErrors.values)) { return state }
+        return nil
+    }
+
+    private static func findStateInErrors(_ errors: [NSError]) -> CloudKitSyncState? {
+        for error in errors {
+            if let state = classifyCKError(error) { return state }
+            if let state = findCKErrorInChain(error) { return state }
         }
         return nil
     }

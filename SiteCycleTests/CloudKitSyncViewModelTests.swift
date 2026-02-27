@@ -167,4 +167,43 @@ struct CloudKitSyncViewModelTests {
         let state = CloudKitSyncState.fromSyncError(nil)
         #expect(state == .error("Sync failed with an unknown error."))
     }
+
+    @Test func fromSyncErrorPartialFailureNoInnerErrorMapsFriendly() {
+        let error = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.partialFailure.rawValue,
+            userInfo: [:]
+        )
+        let state = CloudKitSyncState.fromSyncError(error)
+        #expect(state == .error("iCloud sync encountered partial errors. Sync will retry automatically."))
+    }
+
+    @Test func fromSyncErrorPartialFailureWrappingServiceUnavailableMapsFriendly() {
+        let innerError = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.serviceUnavailable.rawValue,
+            userInfo: [:]
+        )
+        let error = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.partialFailure.rawValue,
+            userInfo: [CKPartialErrorsByItemIDKey: ["recordID": innerError] as [AnyHashable: NSError]]
+        )
+        let state = CloudKitSyncState.fromSyncError(error)
+        #expect(state == .error("iCloud is temporarily unavailable. Sync will retry automatically."))
+    }
+
+    @Test func fromSyncErrorPartialFailureWrappingNotAuthenticatedMapsToNoAccount() {
+        let innerError = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.notAuthenticated.rawValue,
+            userInfo: [:]
+        )
+        let error = NSError(
+            domain: CKError.errorDomain,
+            code: CKError.Code.partialFailure.rawValue,
+            userInfo: [CKPartialErrorsByItemIDKey: ["recordID": innerError] as [AnyHashable: NSError]]
+        )
+        #expect(CloudKitSyncState.fromSyncError(error) == .noAccount)
+    }
 }
