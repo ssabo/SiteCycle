@@ -130,9 +130,9 @@ enum CloudKitSyncState: Equatable {
         case .networkUnavailable, .networkFailure:
             return .offline
         case .serviceUnavailable:
-            return .error("iCloud is temporarily unavailable. Sync will retry automatically.")
+            return .error("iCloud is temporarily unavailable. Sync will retry automatically. (code \(nsError.code))")
         case .requestRateLimited, .zoneBusy:
-            return .error("iCloud is busy. Sync will retry shortly.")
+            return .error("iCloud is busy. Sync will retry shortly. (code \(nsError.code))")
         case .notAuthenticated:
             return .noAccount
         case .partialFailure:
@@ -150,7 +150,7 @@ enum CloudKitSyncState: Equatable {
                 }
             }
         }
-        return .error("iCloud sync encountered partial errors. Sync will retry automatically.")
+        return .error("iCloud sync encountered partial errors. Sync will retry automatically. (code \(nsError.code))")
     }
 
     private static func classifyCocoaError(_ nsError: NSError) -> CloudKitSyncState? {

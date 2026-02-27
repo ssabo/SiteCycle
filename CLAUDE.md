@@ -175,4 +175,5 @@ Timeline refreshes every 15 minutes with entries for the next 2 hours.
 - Logging a new site change automatically closes the previous active entry by setting its `endTime`.
 - Soft-delete for locations with history (set `isEnabled = false`); hard-delete only if no history exists.
 - CloudKit sync is transparent — no account creation, works offline, syncs when connectivity returns.
+- Error messages shown in the sync status indicator **must include the raw CKError/NSError code** (e.g., `(code 2)`) so users can report actionable diagnostic info. Always append `(code \(nsError.code))` when constructing `.error(...)` states in `CloudKitSyncViewModel`.
 - Watch app has no onboarding flow, settings management, or history editing — these remain iPhone-only.
