@@ -10,6 +10,7 @@ private struct ZoneGroup: Identifiable {
 
 struct LocationConfigView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @Query(sort: \Location.sortOrder) private var allLocations: [Location]
     @State private var showingAddSheet = false
 
@@ -93,6 +94,7 @@ struct LocationConfigView: View {
             modelContext.insert(location)
         }
         try? modelContext.save()
+        connectivityManager.pushCurrentState()
     }
 
     private func deleteZones(at offsets: IndexSet) {
@@ -111,6 +113,7 @@ struct LocationConfigView: View {
             }
         }
         try? modelContext.save()
+        connectivityManager.pushCurrentState()
     }
 
     private func moveZones(from source: IndexSet, to destination: Int) {
@@ -125,6 +128,7 @@ struct LocationConfigView: View {
             }
         }
         try? modelContext.save()
+        connectivityManager.pushCurrentState()
     }
 }
 

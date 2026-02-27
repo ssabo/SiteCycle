@@ -141,24 +141,35 @@ The project uses Swift 6 language mode with strict concurrency checking:
 | `SiteCycleWatch` | `com.sitecycle.app.watchkitapp` | watchOS 11+ |
 | `SiteCycleWatchWidgets` | `com.sitecycle.app.watchkitapp.widgets` | watchOS 11+ |
 
-### Shared Files (dual target membership — iOS + Watch)
+### Shared Files (dual target membership)
 
-These files are compiled into both the iOS and Watch targets via target membership in the Xcode project:
-- `SiteCycle/Models/Location.swift`
-- `SiteCycle/Models/SiteChangeEntry.swift`
-- `SiteCycle/Utilities/DefaultLocations.swift`
-- `SiteCycle/ViewModels/HomeViewModel.swift`
-- `SiteCycle/ViewModels/SiteChangeViewModel.swift`
+Only one source file is compiled into multiple targets:
+- `SiteCycle/Connectivity/WatchAppState.swift` — shared `Codable` types (`WatchAppState`, `WatchSiteChangeCommand`, `LocationInfo`, `LocationCategory`) and app group constants. Compiled into iOS, watchOS, and widget extension targets.
 
-### Data Sync
+The watch app does **not** include `Location.swift`, `SiteChangeEntry.swift`, `DefaultLocations.swift`, `HomeViewModel.swift`, or `SiteChangeViewModel.swift` — it operates as a thin client.
 
-Both iOS and Watch apps use the same CloudKit container (`iCloud.com.sitecycle.app`). The Watch app and its widget extension share a SwiftData store via an App Group (`group.com.sitecycle.app`) so complications can read the current site.
+### Data Sync — Thin Client Architecture
+
+The watch is a **thin client**: the iPhone is the single source of truth. The watch has no `ModelContainer`, no SwiftData, and no CloudKit.
+
+- **Watch → Phone:** `WCSession.transferUserInfo` — guaranteed delivery, queued when phone is unreachable. Sends `WatchSiteChangeCommand`.
+- **Phone → Watch:** `WCSession.updateApplicationContext` — latest-wins dictionary. Sends `WatchAppState` (active site, recommendations, all locations, target duration).
+- **Complications:** Watch writes received state to app group `UserDefaults` for the widget extension.
+
+Key classes: `PhoneConnectivityManager` (iOS), `WatchConnectivityManager` (watchOS) — both `@MainActor @Observable`, delegate methods dispatch to main actor.
+
+`pushCurrentState()` is called: on session activation, app launch, scene `.active`, after site changes/history edits/location config changes/settings changes/CSV import.
 
 ### Watch Views
 
-- **WatchHomeView** — current site status with progress ring, elapsed time (updates via `TimelineView`), "Change Site" navigation
-- **WatchSiteSelectionView** — recommended-first location list, tap to log with confirmation dialog
-- **WatchLocationRow** — compact location row with L/R badge and category indicator
+- **WatchHomeView** — current site status with progress ring, elapsed time, "Syncing with iPhone..." empty state when no data received
+- **WatchSiteSelectionView** — recommended-first location list, tap to send command via connectivity manager
+- **WatchLocationRow** — compact row using `LocationInfo` (not `Location` model)
+
+### Watch ViewModels
+
+- **WatchHomeViewModel** — reads from `WatchAppState` via `WatchConnectivityManager`. Provides `currentLocationName`, `elapsedHours()`, `progressFraction()`
+- **WatchSiteChangeViewModel** — reads recommendations from `WatchAppState`. `logSiteChange()` sends command via connectivity manager
 
 ### Complications (WidgetKit)
 
@@ -175,5 +186,5 @@ Timeline refreshes every 15 minutes with entries for the next 2 hours.
 - Logging a new site change automatically closes the previous active entry by setting its `endTime`.
 - Soft-delete for locations with history (set `isEnabled = false`); hard-delete only if no history exists.
 - CloudKit sync is transparent — no account creation, works offline, syncs when connectivity returns.
-- Watch app has no onboarding flow, settings management, or history editing — these remain iPhone-only.
+- Watch app is a thin client — no SwiftData, no CloudKit, no onboarding, no settings, no history editing. Communicates with iPhone via WatchConnectivity.
 - Error indicators must always include the technical error details (domain and code) alongside any user-friendly message. Format: append `"\n\nError: <domain> <code>"` to every `.error(...)` state string. This ensures sync failures are diagnosable from screenshots or user reports.

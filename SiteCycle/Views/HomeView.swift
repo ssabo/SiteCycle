@@ -3,6 +3,7 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
     @State private var viewModel: HomeViewModel?
     @State private var siteChangeViewModel: SiteChangeViewModel?
@@ -45,6 +46,7 @@ struct HomeView: View {
                 guard !isQuickLogging, let location = quickLogLocation else { return }
                 isQuickLogging = true
                 siteChangeViewModel?.logSiteChange(location: location, note: quickLogNote)
+                connectivityManager.pushCurrentState()
                 viewModel?.refreshActiveSite()
                 siteChangeViewModel?.refresh()
                 isQuickLogging = false

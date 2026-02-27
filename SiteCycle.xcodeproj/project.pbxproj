@@ -47,21 +47,23 @@
 		8A0000000000000000000130 /* CloudKitSyncViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000030 /* CloudKitSyncViewModel.swift */; };
 		8A0000000000000000000131 /* CloudKitSyncViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000031 /* CloudKitSyncViewModelTests.swift */; };
 		8A0000000000000000000140 /* SiteCycleWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000032 /* SiteCycleWatchApp.swift */; };
-		8A0000000000000000000141 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
-		8A0000000000000000000142 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
-		8A0000000000000000000143 /* DefaultLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000005 /* DefaultLocations.swift */; };
-		8A0000000000000000000144 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000023 /* HomeViewModel.swift */; };
-		8A0000000000000000000145 /* SiteChangeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000024 /* SiteChangeViewModel.swift */; };
 		8A0000000000000000000146 /* WatchHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000035 /* WatchHomeView.swift */; };
 		8A0000000000000000000147 /* WatchSiteSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000036 /* WatchSiteSelectionView.swift */; };
 		8A0000000000000000000148 /* WatchLocationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000037 /* WatchLocationRow.swift */; };
 		8A0000000000000000000149 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000034 /* Assets.xcassets */; };
 		8A000000000000000000014A /* SiteCycleWatchWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003C /* SiteCycleWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8A0000000000000000000150 /* SiteCycleWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000039 /* SiteCycleWidgets.swift */; };
-		8A0000000000000000000151 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
-		8A0000000000000000000152 /* SiteChangeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000003 /* SiteChangeEntry.swift */; };
 		8A0000000000000000000153 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003B /* Assets.xcassets */; };
 		8A0000000000000000000160 /* SiteCycleWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000038 /* SiteCycleWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8A0000000000000000000132 /* WatchAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003E /* WatchAppState.swift */; };
+		8A0000000000000000000133 /* PhoneConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003F /* PhoneConnectivityManager.swift */; };
+		8A000000000000000000014B /* WatchAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003E /* WatchAppState.swift */; };
+		8A000000000000000000014C /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000040 /* WatchConnectivityManager.swift */; };
+		8A000000000000000000014D /* WatchHomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000041 /* WatchHomeViewModel.swift */; };
+		8A000000000000000000014E /* WatchSiteChangeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000042 /* WatchSiteChangeViewModel.swift */; };
+		8A0000000000000000000154 /* WatchAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003E /* WatchAppState.swift */; };
+		8A0000000000000000000135 /* WatchAppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000043 /* WatchAppStateTests.swift */; };
+		8A0000000000000000000136 /* PhoneConnectivityManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +170,13 @@
 		8A000000000000000000003B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8A000000000000000000003C /* SiteCycleWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiteCycleWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A000000000000000000003D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8A000000000000000000003E /* WatchAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAppState.swift; sourceTree = "<group>"; };
+		8A000000000000000000003F /* PhoneConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnectivityManager.swift; sourceTree = "<group>"; };
+		8A0000000000000000000040 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		8A0000000000000000000041 /* WatchHomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeViewModel.swift; sourceTree = "<group>"; };
+		8A0000000000000000000042 /* WatchSiteChangeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSiteChangeViewModel.swift; sourceTree = "<group>"; };
+		8A0000000000000000000043 /* WatchAppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAppStateTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnectivityManagerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -217,6 +226,7 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000001 /* SiteCycleApp.swift */,
+				8A0000000000000000000209 /* Connectivity */,
 				8A0000000000000000000203 /* Models */,
 				8A0000000000000000000204 /* Views */,
 				8A0000000000000000000205 /* ViewModels */,
@@ -314,19 +324,49 @@
 				8A000000000000000000001A /* StatisticsViewModelAggregateTests.swift */,
 				8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */,
 				8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */,
+				8A0000000000000000000043 /* WatchAppStateTests.swift */,
+				8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */,
 			);
 			path = SiteCycleTests;
+			sourceTree = "<group>";
+		};
+		8A0000000000000000000209 /* Connectivity */ = {
+			isa = PBXGroup;
+			children = (
+				8A000000000000000000003F /* PhoneConnectivityManager.swift */,
+				8A000000000000000000003E /* WatchAppState.swift */,
+			);
+			path = Connectivity;
 			sourceTree = "<group>";
 		};
 		8A0000000000000000000220 /* SiteCycleWatch */ = {
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000032 /* SiteCycleWatchApp.swift */,
+				8A0000000000000000000222 /* Connectivity */,
+				8A0000000000000000000223 /* ViewModels */,
 				8A0000000000000000000221 /* Views */,
 				8A0000000000000000000034 /* Assets.xcassets */,
 				8A0000000000000000000033 /* SiteCycleWatch.entitlements */,
 			);
 			path = SiteCycleWatch;
+			sourceTree = "<group>";
+		};
+		8A0000000000000000000222 /* Connectivity */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000000000000000000040 /* WatchConnectivityManager.swift */,
+			);
+			path = Connectivity;
+			sourceTree = "<group>";
+		};
+		8A0000000000000000000223 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000000000000000000041 /* WatchHomeViewModel.swift */,
+				8A0000000000000000000042 /* WatchSiteChangeViewModel.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		8A0000000000000000000221 /* Views */ = {
@@ -534,6 +574,8 @@
 				8A000000000000000000012E /* DocumentPickerView.swift in Sources */,
 				8A000000000000000000012F /* LocationLabelView.swift in Sources */,
 				8A0000000000000000000130 /* CloudKitSyncViewModel.swift in Sources */,
+				8A0000000000000000000132 /* WatchAppState.swift in Sources */,
+				8A0000000000000000000133 /* PhoneConnectivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -556,6 +598,8 @@
 				8A000000000000000000011D /* CSVExporterTests.swift in Sources */,
 				8A000000000000000000011E /* CSVImporterTests.swift in Sources */,
 				8A0000000000000000000131 /* CloudKitSyncViewModelTests.swift in Sources */,
+				8A0000000000000000000135 /* WatchAppStateTests.swift in Sources */,
+				8A0000000000000000000136 /* PhoneConnectivityManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -564,14 +608,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A0000000000000000000140 /* SiteCycleWatchApp.swift in Sources */,
-				8A0000000000000000000141 /* Location.swift in Sources */,
-				8A0000000000000000000142 /* SiteChangeEntry.swift in Sources */,
-				8A0000000000000000000143 /* DefaultLocations.swift in Sources */,
-				8A0000000000000000000144 /* HomeViewModel.swift in Sources */,
-				8A0000000000000000000145 /* SiteChangeViewModel.swift in Sources */,
 				8A0000000000000000000146 /* WatchHomeView.swift in Sources */,
 				8A0000000000000000000147 /* WatchSiteSelectionView.swift in Sources */,
 				8A0000000000000000000148 /* WatchLocationRow.swift in Sources */,
+				8A000000000000000000014B /* WatchAppState.swift in Sources */,
+				8A000000000000000000014C /* WatchConnectivityManager.swift in Sources */,
+				8A000000000000000000014D /* WatchHomeViewModel.swift in Sources */,
+				8A000000000000000000014E /* WatchSiteChangeViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -580,8 +623,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A0000000000000000000150 /* SiteCycleWidgets.swift in Sources */,
-				8A0000000000000000000151 /* Location.swift in Sources */,
-				8A0000000000000000000152 /* SiteChangeEntry.swift in Sources */,
+				8A0000000000000000000154 /* WatchAppState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
