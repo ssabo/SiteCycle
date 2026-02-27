@@ -67,12 +67,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
         activationDidCompleteWith activationState: WCSessionActivationState,
         error: (any Error)?
     ) {
+        let stateData = session.receivedApplicationContext[WatchConnectivityConstants.stateKey] as? Data
         Task { @MainActor in
             self.loadStateFromAppGroup()
 
-            if let context = session.receivedApplicationContext,
-               let data = context[WatchConnectivityConstants.stateKey] as? Data {
-                self.handleReceivedState(data)
+            if let stateData {
+                self.handleReceivedState(stateData)
             }
         }
     }

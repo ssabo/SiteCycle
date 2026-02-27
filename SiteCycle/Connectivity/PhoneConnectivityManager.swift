@@ -121,8 +121,9 @@ extension PhoneConnectivityManager: WCSessionDelegate {
         activationDidCompleteWith activationState: WCSessionActivationState,
         error: (any Error)?
     ) {
+        let reachable = session.isReachable
         Task { @MainActor in
-            self.isReachable = session.isReachable
+            self.isReachable = reachable
             self.pushCurrentState()
         }
     }
@@ -133,8 +134,9 @@ extension PhoneConnectivityManager: WCSessionDelegate {
     }
 
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        let reachable = session.isReachable
         Task { @MainActor in
-            self.isReachable = session.isReachable
+            self.isReachable = reachable
         }
     }
 
