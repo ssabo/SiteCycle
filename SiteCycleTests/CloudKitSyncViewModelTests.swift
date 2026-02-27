@@ -116,13 +116,17 @@ struct CloudKitSyncViewModelTests {
     @Test func fromSyncErrorServiceUnavailableMapsFriendly() {
         let error = CKError(CKError.serviceUnavailable)
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud is temporarily unavailable. Sync will retry automatically."))
+        let expected = "iCloud is temporarily unavailable. Sync will retry automatically."
+            + "\n\nError: \(CKError.errorDomain) \(CKError.Code.serviceUnavailable.rawValue)"
+        #expect(state == .error(expected))
     }
 
     @Test func fromSyncErrorRateLimitedMapsFriendly() {
         let error = CKError(CKError.requestRateLimited)
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud is busy. Sync will retry shortly."))
+        let expected = "iCloud is busy. Sync will retry shortly."
+            + "\n\nError: \(CKError.errorDomain) \(CKError.Code.requestRateLimited.rawValue)"
+        #expect(state == .error(expected))
     }
 
     @Test func fromSyncErrorNotAuthenticatedMapsToNoAccount() {
@@ -137,7 +141,7 @@ struct CloudKitSyncViewModelTests {
             userInfo: [NSLocalizedDescriptionKey: "Something specific went wrong"]
         )
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("Something specific went wrong"))
+        #expect(state == .error("Something specific went wrong\n\nError: TestDomain 999"))
     }
 
     @Test func fromSyncErrorCocoaDomain134400MapsToNoAccount() {
@@ -175,7 +179,9 @@ struct CloudKitSyncViewModelTests {
             userInfo: [:]
         )
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud sync encountered partial errors. Sync will retry automatically."))
+        let expected = "iCloud sync encountered partial errors. Sync will retry automatically."
+            + "\n\nError: \(CKError.errorDomain) \(CKError.Code.partialFailure.rawValue)"
+        #expect(state == .error(expected))
     }
 
     @Test func fromSyncErrorPartialFailureWrappingServiceUnavailableMapsFriendly() {
@@ -190,7 +196,9 @@ struct CloudKitSyncViewModelTests {
             userInfo: [CKPartialErrorsByItemIDKey: ["recordID": innerError] as [AnyHashable: NSError]]
         )
         let state = CloudKitSyncState.fromSyncError(error)
-        #expect(state == .error("iCloud is temporarily unavailable. Sync will retry automatically."))
+        let expected = "iCloud is temporarily unavailable. Sync will retry automatically."
+            + "\n\nError: \(CKError.errorDomain) \(CKError.Code.serviceUnavailable.rawValue)"
+        #expect(state == .error(expected))
     }
 
     @Test func fromSyncErrorPartialFailureWrappingNotAuthenticatedMapsToNoAccount() {
