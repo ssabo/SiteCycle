@@ -44,9 +44,9 @@ struct SiteCycleTimelineProvider: TimelineProvider {
     }
 
     private func fetchCurrentEntry() -> SiteCycleEntry {
-        guard let defaults = UserDefaults(suiteName: "group.com.sitecycle.app"),
-              let data = defaults.data(forKey: "watchAppState"),
-              let state = try? JSONDecoder().decode(WatchAppState.self, from: data) else {
+        guard let defaults = UserDefaults(suiteName: WatchConnectivityConstants.appGroupIdentifier),
+              let data = defaults.data(forKey: WatchConnectivityConstants.stateKey),
+              let state = WatchAppState.decode(from: data) else {
             return SiteCycleEntry(
                 date: .now,
                 locationName: nil,

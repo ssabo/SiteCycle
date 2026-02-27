@@ -17,6 +17,7 @@ enum LocationCategory: String, Codable, Sendable {
 }
 
 // MARK: - Location Info (lightweight mirror of Location for watch)
+// Display name logic (displayName, fullDisplayName, sideLabel) must match Location.swift
 
 struct LocationInfo: Codable, Identifiable, Sendable, Hashable {
     let id: UUID
