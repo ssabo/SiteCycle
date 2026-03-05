@@ -34,6 +34,10 @@ struct HomeView: View {
         .onChange(of: targetDurationHours) { _, newValue in
             viewModel?.targetDurationHours = Double(newValue)
         }
+        .onChange(of: connectivityManager.lastWatchCommandDate) {
+            viewModel?.refreshActiveSite()
+            siteChangeViewModel?.refresh()
+        }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {
             viewModel?.refreshActiveSite()
             siteChangeViewModel?.refresh()

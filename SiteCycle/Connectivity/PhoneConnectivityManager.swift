@@ -10,6 +10,7 @@ final class PhoneConnectivityManager: NSObject {
     private var modelContext: ModelContext?
 
     var isReachable = false
+    var lastWatchCommandDate: Date?
 
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -85,6 +86,7 @@ final class PhoneConnectivityManager: NSObject {
         viewModel.logSiteChange(location: location, note: nil)
 
         pushCurrentState()
+        lastWatchCommandDate = Date()
     }
 
     // MARK: - Private Helpers
@@ -139,6 +141,22 @@ extension PhoneConnectivityManager: WCSessionDelegate {
         Task { @MainActor in
             self.isReachable = reachable
         }
+    }
+
+    nonisolated func session(
+        _ session: WCSession,
+        didReceiveMessage message: [String: Any],
+        replyHandler: @escaping ([String: Any]) -> Void
+    ) {
+        guard let data = message[WatchConnectivityConstants.commandKey] as? Data,
+              let command = WatchSiteChangeCommand.decode(from: data) else {
+            replyHandler([:])
+            return
+        }
+        Task { @MainActor in
+            self.processCommand(command)
+        }
+        replyHandler([:])
     }
 
     nonisolated func session(
