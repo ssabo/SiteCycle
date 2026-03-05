@@ -28,8 +28,33 @@ final class WatchConnectivityManager: NSObject {
         )
         guard let data = command.encode() else { return }
         let payload: [String: Any] = [WatchConnectivityConstants.commandKey: data]
-        session.transferUserInfo(payload)
         hasPendingCommand = true
+
+        if session.isReachable {
+            session.sendMessage(payload, replyHandler: { [weak self] _ in
+                Task { @MainActor in
+                    self?.hasPendingCommand = false
+                }
+            }, errorHandler: { [weak self] _ in
+                // sendMessage failed — fall back to transferUserInfo
+                session.transferUserInfo(payload)
+                Task { @MainActor in
+                    self?.schedulePendingTimeout()
+                }
+            })
+        } else {
+            session.transferUserInfo(payload)
+            schedulePendingTimeout()
+        }
+    }
+
+    private func schedulePendingTimeout() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(10))
+            if hasPendingCommand {
+                hasPendingCommand = false
+            }
+        }
     }
 
     // MARK: - Private
