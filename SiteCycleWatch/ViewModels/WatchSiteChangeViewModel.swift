@@ -14,7 +14,8 @@ final class WatchSiteChangeViewModel {
 
     var recommendedLocations: [LocationInfo] {
         let state = connectivityManager.appState
-        return state.allLocations.filter { state.recommendedIds.contains($0.id) }
+        let locationById = Dictionary(uniqueKeysWithValues: state.allLocations.map { ($0.id, $0) })
+        return state.recommendedIds.compactMap { locationById[$0] }
     }
 
     var allLocationsSorted: [LocationInfo] {

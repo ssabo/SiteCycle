@@ -11,7 +11,8 @@ struct WatchAppStateTests {
             bodyPart: "Abdomen",
             subArea: "Front",
             side: "left",
-            sortOrder: 0
+            sortOrder: 0,
+            lastUsedDate: nil
         )
         #expect(info.displayName == "Abdomen (Front)")
         #expect(info.fullDisplayName == "L Abdomen (Front)")
@@ -24,7 +25,8 @@ struct WatchAppStateTests {
             bodyPart: "Upper Arm",
             subArea: nil,
             side: "right",
-            sortOrder: 1
+            sortOrder: 1,
+            lastUsedDate: nil
         )
         #expect(info.displayName == "Upper Arm")
         #expect(info.fullDisplayName == "R Upper Arm")
@@ -37,7 +39,8 @@ struct WatchAppStateTests {
             bodyPart: "Back",
             subArea: nil,
             side: nil,
-            sortOrder: 2
+            sortOrder: 2,
+            lastUsedDate: nil
         )
         #expect(info.displayName == "Back")
         #expect(info.fullDisplayName == "Back")
@@ -60,7 +63,8 @@ struct WatchAppStateTests {
                     bodyPart: "Abdomen",
                     subArea: "Front",
                     side: "left",
-                    sortOrder: 0
+                    sortOrder: 0,
+                    lastUsedDate: nil
                 ),
             ],
             targetDurationHours: 72,

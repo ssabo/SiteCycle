@@ -61,7 +61,8 @@ final class PhoneConnectivityManager: NSObject {
                     bodyPart: loc.bodyPart,
                     subArea: loc.subArea,
                     side: loc.side,
-                    sortOrder: loc.sortOrder
+                    sortOrder: loc.sortOrder,
+                    lastUsedDate: loc.safeEntries.map(\.startTime).max()
                 )
             },
             targetDurationHours: targetHours > 0 ? targetHours : 72,
