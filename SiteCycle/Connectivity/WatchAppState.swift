@@ -25,6 +25,7 @@ struct LocationInfo: Codable, Identifiable, Sendable, Hashable {
     let subArea: String?
     let side: String?
     let sortOrder: Int
+    let lastUsedDate: Date?
 
     var sideLabel: String? {
         guard let side else { return nil }
