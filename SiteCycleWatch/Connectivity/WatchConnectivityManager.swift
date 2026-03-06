@@ -31,21 +31,15 @@ final class WatchConnectivityManager: NSObject {
         hasPendingCommand = true
 
         if session.isReachable {
-            session.sendMessage(payload, replyHandler: { [weak self] _ in
-                Task { @MainActor in
-                    self?.hasPendingCommand = false
-                }
-            }, errorHandler: { [weak self] _ in
-                // sendMessage failed — fall back to transferUserInfo
+            // replyHandler must be nil to avoid a watchOS XPC dispatch queue
+            // assertion crash in WCSession's internal reply handling.
+            session.sendMessage(payload, replyHandler: nil, errorHandler: { _ in
                 session.transferUserInfo(payload)
-                Task { @MainActor in
-                    self?.schedulePendingTimeout()
-                }
             })
         } else {
             session.transferUserInfo(payload)
-            schedulePendingTimeout()
         }
+        schedulePendingTimeout()
     }
 
     private func schedulePendingTimeout() {
@@ -63,8 +57,13 @@ final class WatchConnectivityManager: NSObject {
         guard let state = WatchAppState.decode(from: data) else { return }
         appState = state
         hasPendingCommand = false
-        writeStateToAppGroup(state)
-        WidgetCenter.shared.reloadAllTimelines()
+        // Defer app group write and widget reload to a separate run loop
+        // iteration so they don't execute within the WCSession XPC callback
+        // chain, which causes _dispatch_assert_queue_fail on watchOS.
+        Task { [weak self] in
+            self?.writeStateToAppGroup(state)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     private func writeStateToAppGroup(_ state: WatchAppState) {

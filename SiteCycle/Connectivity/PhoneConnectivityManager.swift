@@ -145,18 +145,13 @@ extension PhoneConnectivityManager: WCSessionDelegate {
 
     nonisolated func session(
         _ session: WCSession,
-        didReceiveMessage message: [String: Any],
-        replyHandler: @escaping ([String: Any]) -> Void
+        didReceiveMessage message: [String: Any]
     ) {
         guard let data = message[WatchConnectivityConstants.commandKey] as? Data,
-              let command = WatchSiteChangeCommand.decode(from: data) else {
-            replyHandler([:])
-            return
-        }
+              let command = WatchSiteChangeCommand.decode(from: data) else { return }
         Task { @MainActor in
             self.processCommand(command)
         }
-        replyHandler([:])
     }
 
     nonisolated func session(
