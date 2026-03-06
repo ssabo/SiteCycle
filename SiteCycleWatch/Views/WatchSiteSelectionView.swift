@@ -2,20 +2,23 @@ import SwiftUI
 
 struct WatchSiteSelectionView: View {
     @Environment(WatchConnectivityManager.self) private var connectivityManager
-    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: WatchSiteChangeViewModel?
     @State private var confirmingLocation: LocationInfo?
     @State private var didLogSiteChange = false
 
+    var onSiteChanged: () -> Void
+
     var body: some View {
-        Group {
-            if let viewModel {
-                siteList(viewModel: viewModel)
-            } else {
-                ProgressView()
+        NavigationStack {
+            Group {
+                if let viewModel {
+                    siteList(viewModel: viewModel)
+                } else {
+                    ProgressView()
+                }
             }
+            .navigationTitle("Change Site")
         }
-        .navigationTitle("Change Site")
         .onAppear { setupViewModel() }
         .confirmationDialog(
             "Log site change?",
@@ -39,7 +42,7 @@ struct WatchSiteSelectionView: View {
             if let location = oldValue, newValue == nil, didLogSiteChange {
                 didLogSiteChange = false
                 viewModel?.logSiteChange(locationId: location.id)
-                dismiss()
+                onSiteChanged()
             }
         }
     }

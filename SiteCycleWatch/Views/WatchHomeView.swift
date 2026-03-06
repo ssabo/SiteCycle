@@ -3,44 +3,22 @@ import SwiftUI
 struct WatchHomeView: View {
     @Environment(WatchConnectivityManager.self) private var connectivityManager
     @State private var viewModel: WatchHomeViewModel?
-    @State private var showingSiteSelection = false
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let viewModel {
-                    if !viewModel.hasReceivedState {
-                        syncingStateContent
-                    } else if viewModel.hasActiveSite {
-                        activeSiteContent(viewModel: viewModel)
-                    } else {
-                        emptyStateContent
-                    }
+        Group {
+            if let viewModel {
+                if !viewModel.hasReceivedState {
+                    syncingStateContent
+                } else if viewModel.hasActiveSite {
+                    activeSiteContent(viewModel: viewModel)
                 } else {
-                    ProgressView()
+                    emptyStateContent
                 }
-            }
-            .overlay {
-                if connectivityManager.hasPendingCommand {
-                    VStack {
-                        Spacer()
-                        HStack(spacing: 6) {
-                            ProgressView()
-                            Text("Sending...")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(8)
-                        .background(.ultraThinMaterial, in: Capsule())
-                    }
-                    .padding(.bottom, 4)
-                }
-            }
-            .onAppear { setupViewModel() }
-            .navigationDestination(isPresented: $showingSiteSelection) {
-                WatchSiteSelectionView()
+            } else {
+                ProgressView()
             }
         }
+        .onAppear { setupViewModel() }
     }
 
     private func setupViewModel() {
@@ -66,8 +44,6 @@ struct WatchHomeView: View {
                     )
 
                     locationLabel(viewModel: viewModel)
-
-                    changeSiteButton
                 }
             }
         }
@@ -114,15 +90,6 @@ struct WatchHomeView: View {
         }
     }
 
-    private var changeSiteButton: some View {
-        Button {
-            showingSiteSelection = true
-        } label: {
-            Label("Change Site", systemImage: "arrow.triangle.2.circlepath")
-                .font(.footnote)
-        }
-    }
-
     private var syncingStateContent: some View {
         VStack(spacing: 12) {
             ProgressView()
@@ -140,13 +107,6 @@ struct WatchHomeView: View {
 
             Text("No Active Site")
                 .font(.headline)
-
-            Button {
-                showingSiteSelection = true
-            } label: {
-                Label("Log Site Change", systemImage: "plus.circle.fill")
-                    .font(.footnote)
-            }
         }
     }
 
