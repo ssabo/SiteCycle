@@ -1,12 +1,11 @@
 import SwiftUI
-import WidgetKit
 
 struct WatchSiteSelectionView: View {
     @Environment(WatchConnectivityManager.self) private var connectivityManager
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: WatchSiteChangeViewModel?
     @State private var confirmingLocation: LocationInfo?
-
-    var onComplete: () -> Void
+    @State private var didLogSiteChange = false
 
     var body: some View {
         Group {
@@ -28,11 +27,7 @@ struct WatchSiteSelectionView: View {
             actions: {
                 if let location = confirmingLocation {
                     Button("Log to \(location.fullDisplayName)") {
-                        viewModel?.logSiteChange(locationId: location.id)
-                        WidgetCenter.shared.reloadAllTimelines()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            onComplete()
-                        }
+                        didLogSiteChange = true
                     }
                     Button("Cancel", role: .cancel) {
                         confirmingLocation = nil
@@ -40,6 +35,13 @@ struct WatchSiteSelectionView: View {
                 }
             }
         )
+        .onChange(of: confirmingLocation) { oldValue, newValue in
+            if let location = oldValue, newValue == nil, didLogSiteChange {
+                didLogSiteChange = false
+                viewModel?.logSiteChange(locationId: location.id)
+                dismiss()
+            }
+        }
     }
 
     private func setupViewModel() {

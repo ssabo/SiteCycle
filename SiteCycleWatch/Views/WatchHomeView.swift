@@ -38,9 +38,7 @@ struct WatchHomeView: View {
             }
             .onAppear { setupViewModel() }
             .navigationDestination(isPresented: $showingSiteSelection) {
-                WatchSiteSelectionView(onComplete: {
-                    showingSiteSelection = false
-                })
+                WatchSiteSelectionView()
             }
         }
     }
