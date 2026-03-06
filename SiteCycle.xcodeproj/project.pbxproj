@@ -64,6 +64,7 @@
 		8A0000000000000000000154 /* WatchAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003E /* WatchAppState.swift */; };
 		8A0000000000000000000135 /* WatchAppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000043 /* WatchAppStateTests.swift */; };
 		8A0000000000000000000136 /* PhoneConnectivityManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */; };
+		8A0000000000000000000155 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000045 /* WatchContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -177,6 +178,7 @@
 		8A0000000000000000000042 /* WatchSiteChangeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSiteChangeViewModel.swift; sourceTree = "<group>"; };
 		8A0000000000000000000043 /* WatchAppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAppStateTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnectivityManagerTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000045 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -372,6 +374,7 @@
 		8A0000000000000000000221 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				8A0000000000000000000045 /* WatchContentView.swift */,
 				8A0000000000000000000035 /* WatchHomeView.swift */,
 				8A0000000000000000000036 /* WatchSiteSelectionView.swift */,
 				8A0000000000000000000037 /* WatchLocationRow.swift */,
@@ -608,6 +611,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A0000000000000000000140 /* SiteCycleWatchApp.swift in Sources */,
+				8A0000000000000000000155 /* WatchContentView.swift in Sources */,
 				8A0000000000000000000146 /* WatchHomeView.swift in Sources */,
 				8A0000000000000000000147 /* WatchSiteSelectionView.swift in Sources */,
 				8A0000000000000000000148 /* WatchLocationRow.swift in Sources */,

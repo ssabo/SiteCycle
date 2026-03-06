@@ -8,7 +8,7 @@ struct SiteCycleWatchApp: App {
 
     var body: some Scene {
         WindowGroup {
-            WatchHomeView()
+            WatchContentView()
                 .environment(connectivityManager)
                 .onAppear {
                     connectivityManager.activate()
