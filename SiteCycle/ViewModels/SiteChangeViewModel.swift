@@ -56,10 +56,23 @@ final class SiteChangeViewModel {
         let candidates = sorted.filter { !avoidIds.contains($0.id) }
         let recommended = Array(candidates.suffix(3).reversed())
 
-        // All locations sorted by sortOrder
-        let allSorted = locations.sorted { $0.sortOrder < $1.sortOrder }
+        // All locations sorted by sortOrder, with left before right within same zone
+        let allSorted = locations.sorted { loc1, loc2 in
+            if loc1.displayName == loc2.displayName {
+                return Self.sideOrder(loc1.side) < Self.sideOrder(loc2.side)
+            }
+            return loc1.sortOrder < loc2.sortOrder
+        }
 
         return SiteRecommendations(avoid: avoid, recommended: recommended, allSorted: allSorted)
+    }
+
+    private static func sideOrder(_ side: String?) -> Int {
+        switch side {
+        case "left": return 0
+        case "right": return 1
+        default: return 2
+        }
     }
 
     func category(for location: Location) -> LocationCategory {

@@ -19,7 +19,20 @@ final class WatchSiteChangeViewModel {
     }
 
     var allLocationsSorted: [LocationInfo] {
-        connectivityManager.appState.allLocations.sorted { $0.sortOrder < $1.sortOrder }
+        connectivityManager.appState.allLocations.sorted { loc1, loc2 in
+            if loc1.displayName == loc2.displayName {
+                return Self.sideOrder(loc1.side) < Self.sideOrder(loc2.side)
+            }
+            return loc1.sortOrder < loc2.sortOrder
+        }
+    }
+
+    private static func sideOrder(_ side: String?) -> Int {
+        switch side {
+        case "left": return 0
+        case "right": return 1
+        default: return 2
+        }
     }
 
     func category(for location: LocationInfo) -> LocationCategory {

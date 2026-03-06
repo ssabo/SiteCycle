@@ -190,6 +190,28 @@ struct SiteChangeViewModelTests {
         #expect(recs.allSorted[2].zone == "Bravo")
     }
 
+    @Test func allLocationsSortedLeftBeforeRightWithinSameZone() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        // Right has lower sortOrder than left — but left should still come first
+        let rightAbdomen = Location(bodyPart: "Abdomen", subArea: "Front", side: "right", sortOrder: 0)
+        let leftAbdomen = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 1)
+        let upperArm = Location(bodyPart: "Upper Arm", sortOrder: 2)
+        context.insert(rightAbdomen)
+        context.insert(leftAbdomen)
+        context.insert(upperArm)
+        try context.save()
+
+        let recs = SiteChangeViewModel.computeRecommendations(
+            locations: [rightAbdomen, leftAbdomen, upperArm]
+        )
+
+        #expect(recs.allSorted[0].side == "left")
+        #expect(recs.allSorted[1].side == "right")
+        #expect(recs.allSorted[2].zone == "Upper Arm")
+    }
+
     @Test func emptyLocationsProducesEmptyRecommendations() {
         let recs = SiteChangeViewModel.computeRecommendations(locations: [])
 
