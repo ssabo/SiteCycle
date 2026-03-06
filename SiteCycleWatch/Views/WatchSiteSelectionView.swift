@@ -30,7 +30,9 @@ struct WatchSiteSelectionView: View {
                     Button("Log to \(location.fullDisplayName)") {
                         viewModel?.logSiteChange(locationId: location.id)
                         WidgetCenter.shared.reloadAllTimelines()
-                        onComplete()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            onComplete()
+                        }
                     }
                     Button("Cancel", role: .cancel) {
                         confirmingLocation = nil
