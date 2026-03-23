@@ -122,6 +122,45 @@ func deduplicateLocations(context: ModelContext) {
     }
 }
 
+/// Deduplicates SiteChangeEntry records that share the same startTime,
+/// endTime, location, and note. Keeps one entry and deletes the rest.
+@MainActor
+func deduplicateSiteChangeEntries(context: ModelContext) {
+    let descriptor = FetchDescriptor<SiteChangeEntry>()
+    guard let allEntries = try? context.fetch(descriptor) else { return }
+    guard allEntries.count > 1 else { return }
+
+    struct EntryKey: Hashable {
+        let startTime: Date
+        let endTime: Date?
+        let locationID: PersistentIdentifier?
+        let note: String?
+    }
+
+    var groups: [EntryKey: [SiteChangeEntry]] = [:]
+    for entry in allEntries {
+        let key = EntryKey(
+            startTime: entry.startTime,
+            endTime: entry.endTime,
+            locationID: entry.location?.persistentModelID,
+            note: entry.note
+        )
+        groups[key, default: []].append(entry)
+    }
+
+    var didChange = false
+    for (_, entries) in groups where entries.count > 1 {
+        for duplicate in entries.dropFirst() {
+            context.delete(duplicate)
+            didChange = true
+        }
+    }
+
+    if didChange {
+        try? context.save()
+    }
+}
+
 /// Migrates existing locations that have a `zone` but empty `bodyPart`.
 /// Parses zone string: last word → bodyPart, remaining words → subArea.
 @MainActor

@@ -60,6 +60,7 @@ struct SiteCycleApp: App {
                     let context = sharedModelContainer.mainContext
                     seedDefaultLocations(context: context)
                     deduplicateLocations(context: context)
+                    deduplicateSiteChangeEntries(context: context)
                     migrateLocationBodyParts(context: context)
                     connectivityManager.configure(modelContext: context)
                     connectivityManager.pushCurrentState()

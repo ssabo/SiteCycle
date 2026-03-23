@@ -220,4 +220,156 @@ struct DefaultLocationsTests {
         let keeper = try #require(locations.first)
         #expect(keeper.safeEntries.count == 2)
     }
+
+    // MARK: - SiteChangeEntry Deduplication Tests
+
+    @Test func deduplicateEntriesRemovesDuplicates() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        context.insert(location)
+
+        let date = Date()
+        let endDate = date.addingTimeInterval(3600)
+        for _ in 0..<3 {
+            let entry = SiteChangeEntry(startTime: date, endTime: endDate, note: "test")
+            entry.location = location
+            context.insert(entry)
+        }
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 1)
+    }
+
+    @Test func deduplicateEntriesPreservesDifferentStartTimes() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        context.insert(location)
+
+        for offset in 0..<3 {
+            let entry = SiteChangeEntry(startTime: Date().addingTimeInterval(Double(offset) * 100))
+            entry.location = location
+            context.insert(entry)
+        }
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 3)
+    }
+
+    @Test func deduplicateEntriesPreservesDifferentLocations() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Thigh", subArea: "Front", side: "left", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let date = Date()
+        let entry1 = SiteChangeEntry(startTime: date)
+        entry1.location = loc1
+        context.insert(entry1)
+
+        let entry2 = SiteChangeEntry(startTime: date)
+        entry2.location = loc2
+        context.insert(entry2)
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 2)
+    }
+
+    @Test func deduplicateEntriesPreservesDifferentEndTimes() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        context.insert(location)
+
+        let date = Date()
+        let entry1 = SiteChangeEntry(startTime: date)
+        entry1.location = location
+        context.insert(entry1)
+
+        let entry2 = SiteChangeEntry(startTime: date, endTime: date.addingTimeInterval(3600))
+        entry2.location = location
+        context.insert(entry2)
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 2)
+    }
+
+    @Test func deduplicateEntriesPreservesDifferentNotes() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        context.insert(location)
+
+        let date = Date()
+        let entry1 = SiteChangeEntry(startTime: date, note: "note A")
+        entry1.location = location
+        context.insert(entry1)
+
+        let entry2 = SiteChangeEntry(startTime: date, note: "note B")
+        entry2.location = location
+        context.insert(entry2)
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 2)
+    }
+
+    @Test func deduplicateEntriesHandlesNilLocation() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let date = Date()
+        for _ in 0..<2 {
+            let entry = SiteChangeEntry(startTime: date)
+            context.insert(entry)
+        }
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 1)
+    }
+
+    @Test func deduplicateEntriesNoOpWhenNoDuplicates() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        context.insert(location)
+
+        for offset in 0..<5 {
+            let entry = SiteChangeEntry(startTime: Date().addingTimeInterval(Double(offset) * 3600))
+            entry.location = location
+            context.insert(entry)
+        }
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 5)
+    }
 }
