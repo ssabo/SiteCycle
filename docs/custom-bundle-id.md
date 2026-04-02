@@ -8,11 +8,11 @@ The bundle IDs in this project (`com.sitecycle.app`, etc.) are registered to the
 
 | Identifier | Value |
 |------------|-------|
-| iOS app | `$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app` |
-| Watch app | `$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app.watchkitapp` |
-| Widget extension | `$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app.watchkitapp.widgets` |
-| iCloud container | `iCloud.$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app` |
-| App group | `group.$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app` |
+| iOS app | `$(SITECYCLE_BUNDLE_PREFIX).app` |
+| Watch app | `$(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp` |
+| Widget extension | `$(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp.widgets` |
+| iCloud container | `iCloud.$(SITECYCLE_BUNDLE_PREFIX).app` |
+| App group | `group.$(SITECYCLE_BUNDLE_PREFIX).app` |
 
 You override the prefix in a local file that is gitignored, so your personal setting never enters version control.
 
@@ -27,16 +27,16 @@ cp SiteCycleConfigOverride.xcconfig.template SiteCycleConfigOverride.xcconfig
 Open `SiteCycleConfigOverride.xcconfig` and change the prefix to something unique to you:
 
 ```
-SITECYCLE_BUNDLE_PREFIX = com.johndoe
+SITECYCLE_BUNDLE_PREFIX = com.johndoe.sitecycle
 ```
 
-Use a reverse-DNS string based on a domain or identifier you own (or just your Apple Developer email username). It only needs to be globally unique within Apple's system.
+Use a reverse-DNS string based on a domain or identifier you own (or just your Apple Developer email username) with `.sitecycle` appended. It only needs to be globally unique within Apple's system.
 
 ### 2. Register App IDs in the Apple Developer portal
 
 Go to [developer.apple.com](https://developer.apple.com) → Certificates, Identifiers & Profiles → Identifiers.
 
-Register these three App IDs (replacing `com.johndoe` with your prefix):
+Register these three App IDs (replacing `com.johndoe.sitecycle` with your prefix):
 
 | Name | Bundle ID | Capabilities |
 |------|-----------|--------------|

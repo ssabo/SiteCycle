@@ -97,7 +97,7 @@ The app's bundle IDs (`com.sitecycle.app`, etc.) are registered to the original 
    ```bash
    cp SiteCycleConfigOverride.xcconfig.template SiteCycleConfigOverride.xcconfig
    ```
-2. Open `SiteCycleConfigOverride.xcconfig` and replace `com.yourdomain` with a prefix tied to your Apple Developer account — e.g. `com.johndoe`.
+2. Open `SiteCycleConfigOverride.xcconfig` and replace `com.yourdomain.sitecycle` with a prefix tied to your Apple Developer account — e.g. `com.johndoe.sitecycle`.
 3. In Xcode → Signing & Capabilities, set your team on all three targets (SiteCycle, SiteCycleWatch, SiteCycleWatchWidgets).
 4. Add the matching iCloud container and app group for your prefix. See [docs/custom-bundle-id.md](docs/custom-bundle-id.md) for step-by-step instructions.
 

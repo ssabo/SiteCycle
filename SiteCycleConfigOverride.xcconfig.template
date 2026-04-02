@@ -1,8 +1,9 @@
 // SiteCycleConfigOverride.xcconfig
 //
 // Copy this file to SiteCycleConfigOverride.xcconfig (same directory) and
-// replace "com.yourdomain" with a prefix unique to your Apple Developer account.
+// replace "com.yourdomain.sitecycle" with a prefix unique to your Apple
+// Developer account.
 //
 // This file is gitignored — it will not be committed to version control.
 
-SITECYCLE_BUNDLE_PREFIX = com.yourdomain
+SITECYCLE_BUNDLE_PREFIX = com.yourdomain.sitecycle

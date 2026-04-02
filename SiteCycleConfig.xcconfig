@@ -5,14 +5,14 @@
 // SiteCycleConfigOverride.xcconfig and set your own unique prefix.
 //
 // The prefix must be unique to your Apple Developer account.
-// Example: com.johndoe
+// Example: com.johndoe.sitecycle
 //
 // The resulting bundle IDs will be:
-//   iOS app:     $(SITECYCLE_BUNDLE_PREFIX).sitecycle.app
-//   Watch app:   $(SITECYCLE_BUNDLE_PREFIX).sitecycle.app.watchkitapp
-//   Widget ext:  $(SITECYCLE_BUNDLE_PREFIX).sitecycle.app.watchkitapp.widgets
-//   iCloud:      iCloud.$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app
-//   App group:   group.$(SITECYCLE_BUNDLE_PREFIX).sitecycle.app
+//   iOS app:     $(SITECYCLE_BUNDLE_PREFIX).app
+//   Watch app:   $(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp
+//   Widget ext:  $(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp.widgets
+//   iCloud:      iCloud.$(SITECYCLE_BUNDLE_PREFIX).app
+//   App group:   group.$(SITECYCLE_BUNDLE_PREFIX).app
 
 SITECYCLE_BUNDLE_PREFIX = com.sitecycle
 
