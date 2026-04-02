@@ -26,7 +26,7 @@ struct CSVImporter {
         }
     }
 
-    private static let logger = Logger(subsystem: "com.sitecycle.app", category: "CSVImporter")
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.sitecycle.app", category: "CSVImporter")
 
     @MainActor
     static func importCSV(from url: URL, context: ModelContext) throws -> ImportResult {

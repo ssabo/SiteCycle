@@ -1,3 +1,7 @@
+# Personal bundle ID override — copy SiteCycleConfigOverride.xcconfig.template
+# to this filename and set your own SITECYCLE_BUNDLE_PREFIX.
+SiteCycleConfigOverride.xcconfig
+
 # Xcode
 build/
 DerivedData/
