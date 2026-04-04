@@ -8,7 +8,7 @@ on:
       dry_run:
         description: 'Dry run — report what would be deleted without actually deleting'
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write
