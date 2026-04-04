@@ -1,0 +1,251 @@
+name: Stale Branch Cleanup
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — report what would be deleted without actually deleting'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    name: Clean up stale and merged branches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run cleanup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // ─── Configuration ────────────────────────────────────────────────
+            // Days of inactivity before a branch is considered stale.
+            const STALE_DAYS = 30;
+            // Days after a branch is first identified as stale (or merged) before
+            // it is actually deleted. Push a new commit or add the `keep-branch`
+            // label on an open PR to rescue a branch during this window.
+            const COOLING_DAYS = 14;
+            // Branches that are never touched regardless of age.
+            const PROTECTED = new Set(['main']);
+            // Label name on an open PR that permanently exempts a branch from deletion.
+            const KEEP_LABEL = 'keep-branch';
+            // Label used to find/update the single tracking issue.
+            const ISSUE_LABEL = 'stale-branch-cleanup';
+            const ISSUE_TITLE = 'Stale Branch Cleanup Report';
+
+            const isDryRun = context.eventName === 'workflow_dispatch'
+              ? (context.payload.inputs?.dry_run === 'true')
+              : false;
+
+            const now = new Date();
+            const MS_PER_DAY = 86_400_000;
+            const staleThresholdMs = STALE_DAYS * MS_PER_DAY;
+            const coolingThresholdMs = COOLING_DAYS * MS_PER_DAY;
+
+            // ─── Collect all branches (paginated) ─────────────────────────────
+            const branches = await github.paginate(
+              github.rest.repos.listBranches,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+
+            const deleted = [];  // { name, reason }
+            const warned  = [];  // { name, ageDays, deletionDate, reason }
+            const skipped = [];  // { name, reason }
+
+            for (const branch of branches) {
+              const name = branch.name;
+
+              // Never touch protected branches.
+              if (PROTECTED.has(name)) {
+                skipped.push({ name, reason: 'protected' });
+                continue;
+              }
+
+              // Resolve last commit date.
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: branch.commit.sha,
+              });
+              const lastCommit = new Date(commit.commit.committer.date);
+              const ageMs   = now - lastCommit;
+              const ageDays = Math.floor(ageMs / MS_PER_DAY);
+
+              // Check whether an open PR carries the keep-branch exemption label.
+              const { data: openPRs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${name}`,
+                per_page: 1,
+              });
+              const isExempt = openPRs.some(pr =>
+                pr.labels.some(l => l.name === KEEP_LABEL)
+              );
+              if (isExempt) {
+                skipped.push({ name, reason: `exempt via \`${KEEP_LABEL}\` label` });
+                continue;
+              }
+
+              // Check for a merged PR for this branch.
+              const { data: closedPRs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'closed',
+                head: `${context.repo.owner}:${name}`,
+                per_page: 5,
+              });
+              const mergedPR = closedPRs.find(pr => pr.merged_at);
+
+              if (mergedPR) {
+                const mergedAt      = new Date(mergedPR.merged_at);
+                const mergedAgeMs   = now - mergedAt;
+                const mergedAgeDays = Math.floor(mergedAgeMs / MS_PER_DAY);
+
+                if (mergedAgeMs >= coolingThresholdMs) {
+                  // Past cooling period — delete.
+                  if (!isDryRun) {
+                    await github.rest.git.deleteRef({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      ref: `heads/${name}`,
+                    });
+                  }
+                  deleted.push({ name, reason: `merged via PR #${mergedPR.number} ${mergedAgeDays}d ago` });
+                } else {
+                  // Still within cooling period — warn.
+                  const deletionDate = new Date(mergedAt.getTime() + coolingThresholdMs);
+                  warned.push({
+                    name,
+                    ageDays: mergedAgeDays,
+                    deletionDate: deletionDate.toISOString().split('T')[0],
+                    reason: `merged PR #${mergedPR.number}, in cooling period`,
+                  });
+                }
+              } else if (ageMs >= staleThresholdMs + coolingThresholdMs) {
+                // Stale and past cooling period — delete.
+                if (!isDryRun) {
+                  await github.rest.git.deleteRef({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: `heads/${name}`,
+                  });
+                }
+                deleted.push({ name, reason: `stale for ${ageDays} days (no activity)` });
+              } else if (ageMs >= staleThresholdMs) {
+                // Stale but still within cooling period — warn.
+                const deletionDate = new Date(lastCommit.getTime() + staleThresholdMs + coolingThresholdMs);
+                warned.push({
+                  name,
+                  ageDays,
+                  deletionDate: deletionDate.toISOString().split('T')[0],
+                  reason: 'stale, no merged PR',
+                });
+              } else {
+                skipped.push({ name, reason: `active (last commit ${ageDays}d ago)` });
+              }
+            }
+
+            // ─── Build tracking issue body ─────────────────────────────────────
+            const today = now.toISOString().split('T')[0];
+            const lines = [
+              `> Last updated: ${today}  ·  Stale threshold: **${STALE_DAYS} days**  ·  Cooling period: **${COOLING_DAYS} days**`,
+              `>`,
+              `> **How to rescue a branch:** push a new commit (resets the staleness clock) or add the \`${KEEP_LABEL}\` label to an open PR for that branch.`,
+              '',
+            ];
+
+            if (warned.length) {
+              lines.push('## Branches scheduled for deletion');
+              lines.push('');
+              lines.push('These branches are stale or merged and will be deleted on the date shown unless rescued.');
+              lines.push('');
+              lines.push('| Branch | Days inactive / since merge | Scheduled deletion |');
+              lines.push('|--------|-----------------------------|--------------------|');
+              for (const b of warned) {
+                lines.push(`| \`${b.name}\` | ${b.ageDays} days | ${b.deletionDate} |`);
+              }
+              lines.push('');
+            }
+
+            if (deleted.length) {
+              const heading = isDryRun
+                ? '## Branches that would be deleted (dry run)'
+                : '## Branches deleted this run';
+              lines.push(heading);
+              lines.push('');
+              for (const b of deleted) {
+                lines.push(`- \`${b.name}\` — ${b.reason}`);
+              }
+              lines.push('');
+            }
+
+            if (!warned.length && !deleted.length) {
+              lines.push('## No stale or merged branches found');
+              lines.push('');
+              lines.push('All branches are active, protected, or exempt.');
+              lines.push('');
+            }
+
+            const body = lines.join('\n');
+
+            // ─── Ensure the tracking label exists ─────────────────────────────
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: ISSUE_LABEL,
+                color: 'e4e669',
+                description: 'Tracks weekly stale branch cleanup',
+              });
+            } catch (_) {
+              // Label already exists — ignore.
+            }
+
+            // ─── Update or create the tracking issue ──────────────────────────
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ISSUE_LABEL,
+              state: 'open',
+              per_page: 1,
+            });
+
+            if (openIssues.length) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: openIssues[0].number,
+                body,
+              });
+              core.notice(`Updated tracking issue #${openIssues[0].number}`);
+            } else {
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: ISSUE_TITLE,
+                body,
+                labels: [ISSUE_LABEL],
+              });
+              core.notice(`Created tracking issue #${newIssue.number}`);
+            }
+
+            // ─── Job summary ───────────────────────────────────────────────────
+            await core.summary
+              .addHeading('Stale Branch Cleanup' + (isDryRun ? ' (dry run)' : ''))
+              .addTable([
+                [
+                  { data: 'Status',  header: true },
+                  { data: 'Count',   header: true },
+                ],
+                ['Deleted' + (isDryRun ? ' (would be)' : ''), String(deleted.length)],
+                ['In cooling period (scheduled)', String(warned.length)],
+                ['Skipped (active / protected / exempt)', String(skipped.length)],
+              ])
+              .write();
