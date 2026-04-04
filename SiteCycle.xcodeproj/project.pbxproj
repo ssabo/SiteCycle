@@ -181,6 +181,7 @@
 		8A0000000000000000000043 /* WatchAppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAppStateTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnectivityManagerTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000045 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
+		8A0000000000000000000047 /* SiteCycleConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SiteCycleConfig.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,6 +219,7 @@
 		8A0000000000000000000201 = {
 			isa = PBXGroup;
 			children = (
+				8A0000000000000000000047 /* SiteCycleConfig.xcconfig */,
 				8A0000000000000000000202 /* SiteCycle */,
 				8A0000000000000000000220 /* SiteCycleWatch */,
 				8A0000000000000000000230 /* SiteCycleWatchWidgets */,
@@ -717,6 +719,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
+			baseConfigurationReference = 8A0000000000000000000047 /* SiteCycleConfig.xcconfig */;
 			name = Debug;
 		};
 		8A0000000000000000000702 /* Release */ = {
@@ -773,6 +776,7 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
+			baseConfigurationReference = 8A0000000000000000000047 /* SiteCycleConfig.xcconfig */;
 			name = Release;
 		};
 		8A0000000000000000000703 /* Debug */ = {
@@ -798,7 +802,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -829,7 +833,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "SiteCycle App Store Profile";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -847,7 +851,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
@@ -865,7 +869,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 6.0;
@@ -887,13 +891,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteCycle;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.sitecycle.app;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(SITECYCLE_BUNDLE_PREFIX).app";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -917,13 +921,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteCycle;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.sitecycle.app;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(SITECYCLE_BUNDLE_PREFIX).app";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "SiteCycle Watch App Store Profile";
 				SDKROOT = watchos;
@@ -954,7 +958,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp.widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -984,7 +988,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sitecycle.app.watchkitapp.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.watchkitapp.widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "SiteCycle Watch Widget App Store Profile";
 				SDKROOT = watchos;

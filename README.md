@@ -73,6 +73,8 @@ Select a location, optionally add a note, and confirm. The app handles the rest:
 
 ## Building
 
+### Simulator / local development
+
 ```bash
 # Build for iOS Simulator
 xcodebuild build \
@@ -86,6 +88,20 @@ xcodebuild test \
   -project SiteCycle.xcodeproj \
   -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
+
+### Building for a real device (sideloading / personal TestFlight)
+
+The app's bundle IDs (`com.sitecycle.app`, etc.) are registered to the original developer's Apple account. To build for your own device you need a unique prefix — the same approach Loop uses.
+
+1. Copy the template and edit it:
+   ```bash
+   cp SiteCycleConfigOverride.xcconfig.template SiteCycleConfigOverride.xcconfig
+   ```
+2. Open `SiteCycleConfigOverride.xcconfig` and replace `com.yourdomain.sitecycle` with a prefix tied to your Apple Developer account — e.g. `com.johndoe.sitecycle`.
+3. In Xcode → Signing & Capabilities, set your team on all three targets (SiteCycle, SiteCycleWatch, SiteCycleWatchWidgets).
+4. Add the matching iCloud container and app group for your prefix. See [docs/custom-bundle-id.md](docs/custom-bundle-id.md) for step-by-step instructions.
+
+`SiteCycleConfigOverride.xcconfig` is gitignored — your personal prefix never ends up in version control.
 
 ## Project Structure
 
