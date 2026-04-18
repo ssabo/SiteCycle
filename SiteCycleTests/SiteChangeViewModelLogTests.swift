@@ -99,6 +99,156 @@ struct SiteChangeViewModelLogTests {
         #expect(entries.first?.note == nil)
     }
 
+    // MARK: - Previous Note Update
+
+    @Test func logSiteChangeLeaveUnchangedPreservesExistingPreviousNote() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let activeEntry = SiteChangeEntry(
+            startTime: Date().addingTimeInterval(-3600),
+            note: "old",
+            location: loc1
+        )
+        context.insert(activeEntry)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: loc2, note: nil)
+
+        let descriptor = FetchDescriptor<SiteChangeEntry>()
+        let entries = try context.fetch(descriptor)
+        let closed = try #require(entries.first { $0.location?.zone == "Zone A" })
+        #expect(closed.note == "old")
+        #expect(closed.endTime != nil)
+    }
+
+    @Test func logSiteChangeReplaceUpdatesPreviousNote() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let activeEntry = SiteChangeEntry(
+            startTime: Date().addingTimeInterval(-3600),
+            note: "old",
+            location: loc1
+        )
+        context.insert(activeEntry)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: loc2, note: nil, previousNote: .replace("new"))
+
+        let descriptor = FetchDescriptor<SiteChangeEntry>()
+        let entries = try context.fetch(descriptor)
+        let closed = try #require(entries.first { $0.location?.zone == "Zone A" })
+        #expect(closed.note == "new")
+        #expect(closed.endTime != nil)
+    }
+
+    @Test func logSiteChangeReplaceEmptyStringClearsPreviousNote() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let activeEntry = SiteChangeEntry(
+            startTime: Date().addingTimeInterval(-3600),
+            note: "old",
+            location: loc1
+        )
+        context.insert(activeEntry)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: loc2, note: nil, previousNote: .replace(""))
+
+        let descriptor = FetchDescriptor<SiteChangeEntry>()
+        let entries = try context.fetch(descriptor)
+        let closed = try #require(entries.first { $0.location?.zone == "Zone A" })
+        #expect(closed.note == nil)
+    }
+
+    @Test func logSiteChangeReplaceSetsNoteWhenPreviousHadNone() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let activeEntry = SiteChangeEntry(
+            startTime: Date().addingTimeInterval(-3600),
+            location: loc1
+        )
+        context.insert(activeEntry)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: loc2, note: nil, previousNote: .replace("added"))
+
+        let descriptor = FetchDescriptor<SiteChangeEntry>()
+        let entries = try context.fetch(descriptor)
+        let closed = try #require(entries.first { $0.location?.zone == "Zone A" })
+        #expect(closed.note == "added")
+    }
+
+    @Test func logSiteChangeReplaceWithNoActiveEntryIgnoresPreviousNote() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Zone A", sortOrder: 0)
+        context.insert(location)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: location, note: "new", previousNote: .replace("ignored"))
+
+        let descriptor = FetchDescriptor<SiteChangeEntry>()
+        let entries = try context.fetch(descriptor)
+        #expect(entries.count == 1)
+        #expect(entries.first?.note == "new")
+    }
+
+    @Test func logSiteChangeDefaultArgumentIsLeaveUnchanged() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let activeEntry = SiteChangeEntry(
+            startTime: Date().addingTimeInterval(-3600),
+            note: "kept",
+            location: loc1
+        )
+        context.insert(activeEntry)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: loc2, note: "fresh")
+
+        let descriptor = FetchDescriptor<SiteChangeEntry>()
+        let entries = try context.fetch(descriptor)
+        let closed = try #require(entries.first { $0.location?.zone == "Zone A" })
+        #expect(closed.note == "kept")
+    }
+
     // MARK: - Last Used Date
 
     @Test func lastUsedDateReturnsCorrectDate() throws {

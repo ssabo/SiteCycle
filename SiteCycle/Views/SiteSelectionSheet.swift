@@ -7,9 +7,6 @@ struct SiteSelectionSheet: View {
     @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @State private var viewModel: SiteChangeViewModel?
     @State private var selectedLocation: Location?
-    @State private var note = ""
-    @State private var showingConfirmation = false
-    @State private var isLogging = false
 
     var body: some View {
         NavigationStack {
@@ -32,23 +29,31 @@ struct SiteSelectionSheet: View {
                     viewModel = SiteChangeViewModel(modelContext: modelContext)
                 }
             }
-            .alert("Confirm Site Change", isPresented: $showingConfirmation) {
-                TextField("Add a note (optional)", text: $note)
-                Button("Confirm") {
-                    guard !isLogging, let location = selectedLocation else { return }
-                    isLogging = true
-                    viewModel?.logSiteChange(location: location, note: note)
-                    connectivityManager.pushCurrentState()
-                    dismiss()
-                }
-                Button("Cancel", role: .cancel) {
-                    selectedLocation = nil
-                    note = ""
-                }
-            } message: {
-                Text("Log site change to \(selectedLocation?.fullDisplayName ?? "")?")
+            .sheet(item: $selectedLocation) { location in
+                SiteChangeConfirmationSheet(
+                    targetLocation: location,
+                    previousEntry: activeEntry(),
+                    onConfirm: { newNote, previousNoteUpdate in
+                        viewModel?.logSiteChange(
+                            location: location,
+                            note: newNote,
+                            previousNote: previousNoteUpdate
+                        )
+                        connectivityManager.pushCurrentState()
+                        dismiss()
+                    }
+                )
             }
         }
+    }
+
+    private func activeEntry() -> SiteChangeEntry? {
+        var descriptor = FetchDescriptor<SiteChangeEntry>(
+            predicate: #Predicate<SiteChangeEntry> { $0.endTime == nil },
+            sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return try? modelContext.fetch(descriptor).first
     }
 
     private func locationList(viewModel: SiteChangeViewModel) -> some View {
@@ -84,8 +89,6 @@ struct SiteSelectionSheet: View {
     ) -> some View {
         Button {
             selectedLocation = location
-            note = ""
-            showingConfirmation = true
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {

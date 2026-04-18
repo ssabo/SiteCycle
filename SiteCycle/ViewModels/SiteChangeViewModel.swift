@@ -8,6 +8,11 @@ struct SiteRecommendations {
     let allSorted: [Location]
 }
 
+enum PreviousNoteUpdate {
+    case leaveUnchanged
+    case replace(String?)
+}
+
 @MainActor
 @Observable
 final class SiteChangeViewModel {
@@ -89,7 +94,11 @@ final class SiteChangeViewModel {
         location.safeEntries.map(\.startTime).max()
     }
 
-    func logSiteChange(location: Location, note: String?) {
+    func logSiteChange(
+        location: Location,
+        note: String?,
+        previousNote: PreviousNoteUpdate = .leaveUnchanged
+    ) {
         let now = Date()
 
         // Close the previous active entry
@@ -100,6 +109,9 @@ final class SiteChangeViewModel {
         activeDescriptor.fetchLimit = 1
         if let activeEntry = try? modelContext.fetch(activeDescriptor).first {
             activeEntry.endTime = now
+            if case .replace(let value) = previousNote {
+                activeEntry.note = (value?.isEmpty ?? true) ? nil : value
+            }
         }
 
         // Create the new entry
