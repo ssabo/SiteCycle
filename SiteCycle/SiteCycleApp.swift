@@ -11,9 +11,17 @@ struct SiteCycleApp: App {
     @State private var connectivityManager = PhoneConnectivityManager()
 
     init() {
+        Self.applyUITestLaunchArguments()
         let result = Self.makeModelContainer()
         sharedModelContainer = result.0
         isCloudKitEnabled = result.1
+    }
+
+    static func applyUITestLaunchArguments() {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-resetOnboarding") {
+            UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        }
     }
 
     static func makeModelContainer() -> (ModelContainer, Bool) {
@@ -21,6 +29,21 @@ struct SiteCycleApp: App {
             Location.self,
             SiteChangeEntry.self,
         ])
+
+        if ProcessInfo.processInfo.arguments.contains("-uiTestMode") {
+            let testConfig = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: true,
+                cloudKitDatabase: .none
+            )
+            do {
+                let container = try ModelContainer(for: schema, configurations: [testConfig])
+                return (container, false)
+            } catch {
+                fatalError("Could not create in-memory ModelContainer for UI tests: \(error)")
+            }
+        }
+
         let cloudConfig = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
