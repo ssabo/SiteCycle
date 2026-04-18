@@ -36,6 +36,7 @@
 		8A0000000000000000000124 /* SiteChangeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000024 /* SiteChangeViewModel.swift */; };
 		8A0000000000000000000125 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000025 /* HomeView.swift */; };
 		8A0000000000000000000126 /* SiteSelectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000026 /* SiteSelectionSheet.swift */; };
+		8A0000000000000000000151 /* SiteChangeConfirmationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000048 /* SiteChangeConfirmationSheet.swift */; };
 		8A0000000000000000000127 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000027 /* HistoryViewModel.swift */; };
 		8A0000000000000000000128 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000028 /* HistoryView.swift */; };
 		8A0000000000000000000129 /* HistoryEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000029 /* HistoryEditView.swift */; };
@@ -150,6 +151,7 @@
 		8A0000000000000000000024 /* SiteChangeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeViewModel.swift; sourceTree = "<group>"; };
 		8A0000000000000000000025 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000026 /* SiteSelectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSelectionSheet.swift; sourceTree = "<group>"; };
+		8A0000000000000000000048 /* SiteChangeConfirmationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeConfirmationSheet.swift; sourceTree = "<group>"; };
 		8A0000000000000000000027 /* HistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModel.swift; sourceTree = "<group>"; };
 		8A0000000000000000000028 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000029 /* HistoryEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEditView.swift; sourceTree = "<group>"; };
@@ -265,6 +267,7 @@
 				8A000000000000000000002F /* LocationLabelView.swift */,
 				8A0000000000000000000022 /* OnboardingView.swift */,
 				8A0000000000000000000021 /* SettingsView.swift */,
+				8A0000000000000000000048 /* SiteChangeConfirmationSheet.swift */,
 				8A0000000000000000000026 /* SiteSelectionSheet.swift */,
 				8A000000000000000000002B /* StatisticsView.swift */,
 			);
@@ -572,6 +575,7 @@
 				8A0000000000000000000124 /* SiteChangeViewModel.swift in Sources */,
 				8A0000000000000000000125 /* HomeView.swift in Sources */,
 				8A0000000000000000000126 /* SiteSelectionSheet.swift in Sources */,
+				8A0000000000000000000151 /* SiteChangeConfirmationSheet.swift in Sources */,
 				8A0000000000000000000127 /* HistoryViewModel.swift in Sources */,
 				8A0000000000000000000128 /* HistoryView.swift in Sources */,
 				8A0000000000000000000129 /* HistoryEditView.swift in Sources */,

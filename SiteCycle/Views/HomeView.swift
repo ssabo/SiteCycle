@@ -10,9 +10,6 @@ struct HomeView: View {
     @State private var showingSiteSheet = false
     @State private var now = Date()
     @State private var quickLogLocation: Location?
-    @State private var quickLogNote = ""
-    @State private var showingQuickLogConfirmation = false
-    @State private var isQuickLogging = false
 
     private let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -44,25 +41,22 @@ struct HomeView: View {
         }, content: {
             SiteSelectionSheet()
         })
-        .alert("Confirm Site Change", isPresented: $showingQuickLogConfirmation, actions: {
-            TextField("Add a note (optional)", text: $quickLogNote)
-            Button("Confirm") {
-                guard !isQuickLogging, let location = quickLogLocation else { return }
-                isQuickLogging = true
-                siteChangeViewModel?.logSiteChange(location: location, note: quickLogNote)
-                connectivityManager.pushCurrentState()
-                viewModel?.refreshActiveSite()
-                siteChangeViewModel?.refresh()
-                isQuickLogging = false
-                quickLogLocation = nil
-                quickLogNote = ""
-            }
-            Button("Cancel", role: .cancel) {
-                quickLogLocation = nil
-                quickLogNote = ""
-            }
-        }, message: {
-            Text("Log site change to \(quickLogLocation?.fullDisplayName ?? "")?")
+        .sheet(item: $quickLogLocation, onDismiss: {
+            viewModel?.refreshActiveSite()
+            siteChangeViewModel?.refresh()
+        }, content: { location in
+            SiteChangeConfirmationSheet(
+                targetLocation: location,
+                previousEntry: viewModel?.activeSiteEntry,
+                onConfirm: { newNote, previousNoteUpdate in
+                    siteChangeViewModel?.logSiteChange(
+                        location: location,
+                        note: newNote,
+                        previousNote: previousNoteUpdate
+                    )
+                    connectivityManager.pushCurrentState()
+                }
+            )
         })
     }
 
@@ -125,8 +119,6 @@ struct HomeView: View {
     private func quickLogButton(for location: Location) -> some View {
         Button {
             quickLogLocation = location
-            quickLogNote = ""
-            showingQuickLogConfirmation = true
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
