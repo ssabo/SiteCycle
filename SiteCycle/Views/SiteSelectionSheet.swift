@@ -32,7 +32,7 @@ struct SiteSelectionSheet: View {
             .sheet(item: $selectedLocation) { location in
                 SiteChangeConfirmationSheet(
                     targetLocation: location,
-                    previousEntry: activeEntry(),
+                    previousEntry: viewModel?.activeSiteEntry,
                     onConfirm: { newNote, previousNoteUpdate in
                         viewModel?.logSiteChange(
                             location: location,
@@ -45,15 +45,6 @@ struct SiteSelectionSheet: View {
                 )
             }
         }
-    }
-
-    private func activeEntry() -> SiteChangeEntry? {
-        var descriptor = FetchDescriptor<SiteChangeEntry>(
-            predicate: #Predicate<SiteChangeEntry> { $0.endTime == nil },
-            sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
-        )
-        descriptor.fetchLimit = 1
-        return try? modelContext.fetch(descriptor).first
     }
 
     private func locationList(viewModel: SiteChangeViewModel) -> some View {

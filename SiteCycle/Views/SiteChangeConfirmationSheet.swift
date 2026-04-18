@@ -9,6 +9,7 @@ struct SiteChangeConfirmationSheet: View {
 
     @State private var newNote: String = ""
     @State private var previousNote: String
+    @State private var isSubmitting = false
 
     init(
         targetLocation: Location,
@@ -57,12 +58,15 @@ struct SiteChangeConfirmationSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Confirm") {
+                        guard !isSubmitting else { return }
+                        isSubmitting = true
                         let update: PreviousNoteUpdate = previousEntry == nil
                             ? .leaveUnchanged
                             : .replace(previousNote)
                         onConfirm(newNote, update)
                         dismiss()
                     }
+                    .disabled(isSubmitting)
                 }
             }
         }

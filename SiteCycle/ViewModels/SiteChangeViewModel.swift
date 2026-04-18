@@ -19,6 +19,7 @@ final class SiteChangeViewModel {
     private let modelContext: ModelContext
 
     private(set) var recommendations = SiteRecommendations(avoid: [], recommended: [], allSorted: [])
+    private(set) var activeSiteEntry: SiteChangeEntry?
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -32,6 +33,7 @@ final class SiteChangeViewModel {
         )
         let locations = (try? modelContext.fetch(descriptor)) ?? []
         recommendations = Self.computeRecommendations(locations: locations)
+        activeSiteEntry = SiteChangeEntry.fetchActive(in: modelContext)
     }
 
     /// Sorts locations by most-recent-use descending, then splits into avoid/recommended lists.
@@ -102,12 +104,7 @@ final class SiteChangeViewModel {
         let now = Date()
 
         // Close the previous active entry
-        var activeDescriptor = FetchDescriptor<SiteChangeEntry>(
-            predicate: #Predicate<SiteChangeEntry> { $0.endTime == nil },
-            sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
-        )
-        activeDescriptor.fetchLimit = 1
-        if let activeEntry = try? modelContext.fetch(activeDescriptor).first {
+        if let activeEntry = SiteChangeEntry.fetchActive(in: modelContext) {
             activeEntry.endTime = now
             if case .replace(let value) = previousNote {
                 activeEntry.note = (value?.isEmpty ?? true) ? nil : value

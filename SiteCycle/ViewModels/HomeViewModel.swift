@@ -22,12 +22,7 @@ final class HomeViewModel {
     }
 
     func refreshActiveSite() {
-        var descriptor = FetchDescriptor<SiteChangeEntry>(
-            predicate: #Predicate<SiteChangeEntry> { $0.endTime == nil },
-            sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
-        )
-        descriptor.fetchLimit = 1
-        activeSiteEntry = try? modelContext.fetch(descriptor).first
+        activeSiteEntry = SiteChangeEntry.fetchActive(in: modelContext)
     }
 
     func elapsedHours(at now: Date = Date()) -> Double {
