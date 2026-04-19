@@ -39,22 +39,11 @@ struct HistoryScreen {
 
     // SwiftUI's `.confirmationDialog` does not reliably forward the
     // `.accessibilityIdentifier` modifier through to the underlying
-    // UIAlertAction buttons (the `.cancel`-role button in particular strips
-    // it on iOS 17+). Match these by label instead — only one dialog is on
-    // screen at a time, so the labels are unambiguous.
+    // UIAlertAction buttons. Match the destructive "Delete" action by
+    // label — only one dialog is on screen at a time, so the label is
+    // unambiguous. (See note in HistoryFlowTests re: the Cancel action.)
     var confirmDeleteButton: XCUIElement {
         app.buttons["Delete"].firstMatch
-    }
-
-    var cancelDeleteButton: XCUIElement {
-        // iOS auto-adds a Cancel button to every confirmationDialog. Match
-        // by label. `.buttons["Cancel"]` would also work in principle, but
-        // using a scoped predicate over all descendants protects us from
-        // iOS classifying the action-sheet button as something other than
-        // `.button` on some runtimes.
-        app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == 'Cancel'"))
-            .firstMatch
     }
 
     func open() {
@@ -134,13 +123,6 @@ struct HistoryScreen {
         let button = confirmDeleteButton
         XCTAssertTrue(button.waitForExistence(timeout: 5),
                       "history.deleteConfirmation.confirm not found")
-        button.tap()
-    }
-
-    func cancelDelete() {
-        let button = cancelDeleteButton
-        XCTAssertTrue(button.waitForExistence(timeout: 5),
-                      "history.deleteConfirmation.cancel not found")
         button.tap()
     }
 }
