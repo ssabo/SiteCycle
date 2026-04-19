@@ -88,6 +88,7 @@ struct SiteCycleApp: App {
                     deduplicateLocations(context: context)
                     deduplicateSiteChangeEntries(context: context)
                     migrateLocationBodyParts(context: context)
+                    applySeedHistoryLaunchArgumentIfPresent(context: context)
                     connectivityManager.configure(modelContext: context)
                     connectivityManager.pushCurrentState()
                 }

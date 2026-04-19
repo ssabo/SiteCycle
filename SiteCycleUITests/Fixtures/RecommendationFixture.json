@@ -1,0 +1,44 @@
+{
+  "entries": [
+    {
+      "side": "left",
+      "bodyPart": "Abdomen",
+      "subArea": "Front",
+      "startOffsetHours": -72,
+      "endOffsetHours": -69,
+      "note": null
+    },
+    {
+      "side": "right",
+      "bodyPart": "Abdomen",
+      "subArea": "Front",
+      "startOffsetHours": -60,
+      "endOffsetHours": -57,
+      "note": null
+    },
+    {
+      "side": "left",
+      "bodyPart": "Abdomen",
+      "subArea": "Side",
+      "startOffsetHours": -48,
+      "endOffsetHours": -45,
+      "note": null
+    },
+    {
+      "side": "right",
+      "bodyPart": "Thigh",
+      "subArea": "Front",
+      "startOffsetHours": -36,
+      "endOffsetHours": -33,
+      "note": null
+    },
+    {
+      "side": "left",
+      "bodyPart": "Thigh",
+      "subArea": "Side",
+      "startOffsetHours": -12,
+      "endOffsetHours": -9,
+      "note": null
+    }
+  ]
+}
