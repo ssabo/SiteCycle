@@ -113,6 +113,19 @@ jobs:
               echo "::error::tail: ${line}"
             done
           fi
+          # Emit context around crashes / "Failed to" lines so the actual
+          # failure story shows up in the annotations API without needing
+          # to download the artifact.
+          grep -nE '(crashed|Failed to|application .* is not running|CRASH|Terminating|NSException)' UITestOutput.txt | head -30 | while IFS= read -r line; do
+            lineno=$(printf '%s' "$line" | cut -d: -f1)
+            start=$(( lineno > 10 ? lineno - 10 : 1 ))
+            end=$(( lineno + 10 ))
+            sed -n "${start},${end}p" UITestOutput.txt | while IFS= read -r ctx; do
+              # Skip empty lines so the annotations stay readable.
+              [ -z "$ctx" ] && continue
+              echo "::error::crash-ctx(L${lineno}): ${ctx}"
+            done
+          done
 
       - name: Upload UI test results
         if: always()
