@@ -47,7 +47,14 @@ struct HistoryScreen {
     }
 
     var cancelDeleteButton: XCUIElement {
-        app.buttons["Cancel"].firstMatch
+        // iOS auto-adds a Cancel button to every confirmationDialog. Match
+        // by label. `.buttons["Cancel"]` would also work in principle, but
+        // using a scoped predicate over all descendants protects us from
+        // iOS classifying the action-sheet button as something other than
+        // `.button` on some runtimes.
+        app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == 'Cancel'"))
+            .firstMatch
     }
 
     func open() {
@@ -109,7 +116,9 @@ struct HistoryScreen {
     }
 
     /// Swipes the given row left to reveal the trailing delete action, then
-    /// taps the exposed delete button. Leaves the confirmation dialog open.
+    /// taps the exposed delete button and waits for the confirmation dialog
+    /// to appear. Fails with a precise message if either step is lost so
+    /// downstream asserts aren't left timing out on a phantom dialog.
     func swipeToDelete(row: XCUIElement) {
         XCTAssertTrue(row.waitForExistence(timeout: 5), "row not found for swipe-to-delete")
         row.swipeLeft()
@@ -117,6 +126,8 @@ struct HistoryScreen {
         XCTAssertTrue(button.waitForExistence(timeout: 5),
                       "history.deleteButton not revealed after swipe")
         button.tap()
+        XCTAssertTrue(app.staticTexts["Delete Entry"].waitForExistence(timeout: 5),
+                      "confirmation dialog 'Delete Entry' did not appear after tapping delete")
     }
 
     func confirmDelete() {
