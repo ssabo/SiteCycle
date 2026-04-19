@@ -60,11 +60,21 @@ jobs:
 
       - name: Run UI Tests
         run: |
-          # Write full xcodebuild output to UITestOutput.txt, then format for
-          # the human-readable job log with xcpretty. Using a second pass over
-          # the file (rather than piping through xcpretty) guarantees the
-          # capture survives even if xcpretty exits early.
+          # IMPORTANT: Write full xcodebuild output to UITestOutput.txt FIRST,
+          # then run xcpretty as a second pass over the file. Do NOT replace
+          # this with `xcodebuild ... | tee UITestOutput.txt | xcpretty`:
+          # xcpretty occasionally exits early on large outputs and truncates
+          # the tee'd capture to ~3.6 KB, which hides the failing assertion
+          # and its surrounding context. Keeping the redirect direct means
+          # the capture survives regardless of what xcpretty does.
           set +e
+          # IMPORTANT: `-parallel-testing-enabled NO` and
+          # `-disable-concurrent-destination-testing` together fix a flaky
+          # exit-65 `** TEST EXECUTE FAILED **` that reproduced on
+          # macos-15 + Xcode 26 even when every test passed. Root cause is
+          # xcodebuild's parallel-simulator cloning ("Clone 1", "Clone 2")
+          # cleanup path. Do NOT remove either flag — dropping either one
+          # brings the flake back.
           xcodebuild test-without-building \
             -scheme SiteCycle \
             -project SiteCycle.xcodeproj \
