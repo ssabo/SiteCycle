@@ -30,13 +30,27 @@ struct HistoryEditScreen {
     }
 
     var hasEndTimeToggle: XCUIElement {
-        app.switches.matching(identifier: "historyEdit.hasEndTime").firstMatch
+        // Prefer the UISwitch element so `tap()` hits the toggle directly.
+        // Fall back to any descendant with the identifier because SwiftUI
+        // sometimes attaches the identifier to the Form row container rather
+        // than the switch — tapping the row still toggles the state on iOS.
+        let direct = app.switches.matching(identifier: "historyEdit.hasEndTime").firstMatch
+        if direct.exists { return direct }
+        return app.descendants(matching: .any)
+            .matching(identifier: "historyEdit.hasEndTime")
+            .firstMatch
     }
 
     var noteField: XCUIElement {
-        // `TextField(..., axis: .vertical)` can render as either a textView or
-        // textField depending on iOS version, so we match by identifier only.
-        app.descendants(matching: .any)
+        // `TextField(..., axis: .vertical)` renders as a UITextView on iOS
+        // 17+ but falls back to a UITextField on older runtimes. Prefer the
+        // typed queries so `tap()` hits the editable control rather than a
+        // Section-row container that happens to inherit the identifier.
+        let textView = app.textViews.matching(identifier: "historyEdit.note").firstMatch
+        if textView.exists { return textView }
+        let textField = app.textFields.matching(identifier: "historyEdit.note").firstMatch
+        if textField.exists { return textField }
+        return app.descendants(matching: .any)
             .matching(identifier: "historyEdit.note")
             .firstMatch
     }
@@ -46,13 +60,15 @@ struct HistoryEditScreen {
         saveButton.waitForExistence(timeout: timeout)
     }
 
-    /// Replaces the note field's contents. Taps into the field, clears existing
-    /// text, then types the replacement. Uses `textViews` because SwiftUI renders
-    /// a `TextField(..., axis: .vertical)` as a multi-line text view.
+    /// Replaces the note field's contents. Taps into the field, waits for
+    /// the keyboard, clears existing text, then types the replacement. The
+    /// keyboard wait matters on iOS 17+ where `tap()` returns before the
+    /// field is actually first-responder, causing `typeText` to silently no-op.
     func setNote(_ text: String) {
         let field = noteField
         XCTAssertTrue(field.waitForExistence(timeout: 5), "historyEdit.note not found")
         field.tap()
+        _ = app.keyboards.firstMatch.waitForExistence(timeout: 3)
         if let existing = field.value as? String, !existing.isEmpty {
             let deletion = String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count)
             field.typeText(deletion)
@@ -60,6 +76,9 @@ struct HistoryEditScreen {
         field.typeText(text)
     }
 
+    /// Flips the "Has End Time" toggle. SwiftUI's `.accessibilityIdentifier`
+    /// on a `Toggle` lands on the row container rather than the UISwitch on
+    /// iOS 17+, so the query accepts any element with the identifier.
     func toggleHasEndTime() {
         let toggle = hasEndTimeToggle
         XCTAssertTrue(toggle.waitForExistence(timeout: 5), "historyEdit.hasEndTime not found")
