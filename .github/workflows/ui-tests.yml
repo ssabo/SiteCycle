@@ -60,7 +60,11 @@ jobs:
 
       - name: Run UI Tests
         run: |
-          set -o pipefail
+          # Write full xcodebuild output to UITestOutput.txt, then format for
+          # the human-readable job log with xcpretty. Using a second pass over
+          # the file (rather than piping through xcpretty) guarantees the
+          # capture survives even if xcpretty exits early.
+          set +e
           xcodebuild test-without-building \
             -scheme SiteCycle \
             -project SiteCycle.xcodeproj \
@@ -68,7 +72,10 @@ jobs:
             -only-testing:SiteCycleUITests \
             -resultBundlePath UITestResults.xcresult \
             CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO 2>&1 | tee UITestOutput.txt | xcpretty
+            CODE_SIGNING_REQUIRED=NO > UITestOutput.txt 2>&1
+          TEST_EXIT=$?
+          xcpretty < UITestOutput.txt || true
+          exit $TEST_EXIT
 
       - name: Surface UI test failures
         if: failure()
