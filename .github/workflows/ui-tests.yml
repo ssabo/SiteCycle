@@ -60,6 +60,7 @@ jobs:
 
       - name: Run UI Tests
         run: |
+          set -o pipefail
           xcodebuild test-without-building \
             -scheme SiteCycle \
             -project SiteCycle.xcodeproj \
@@ -67,11 +68,31 @@ jobs:
             -only-testing:SiteCycleUITests \
             -resultBundlePath UITestResults.xcresult \
             CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO | xcpretty && exit ${PIPESTATUS[0]}
+            CODE_SIGNING_REQUIRED=NO 2>&1 | tee UITestOutput.txt | xcpretty
+
+      - name: Surface UI test failures
+        if: failure()
+        run: |
+          if [ ! -f UITestOutput.txt ]; then
+            echo "UITestOutput.txt not found — nothing to summarize"
+            exit 0
+          fi
+          echo "::group::Raw xcodebuild failure lines"
+          grep -nE '(error:|Failing tests:|\*\* TEST [A-Z]+|XCTAssert|Failed to|timed out)' UITestOutput.txt | head -200 || true
+          echo "::endgroup::"
+          # Emit GitHub annotations for each xctest failure line.
+          grep -E '^/[^:]+\.swift:[0-9]+: error: ' UITestOutput.txt | sort -u | while IFS= read -r line; do
+            file=$(printf '%s' "$line" | sed -E 's/^([^:]+):([0-9]+): error:.*/\1/')
+            lineno=$(printf '%s' "$line" | sed -E 's/^([^:]+):([0-9]+): error:.*/\2/')
+            msg=$(printf '%s' "$line" | sed -E 's/^[^:]+:[0-9]+: error: //')
+            printf '::error file=%s,line=%s::%s\n' "$file" "$lineno" "$msg"
+          done
 
       - name: Upload UI test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ui-test-results
-          path: UITestResults.xcresult
+          path: |
+            UITestResults.xcresult
+            UITestOutput.txt

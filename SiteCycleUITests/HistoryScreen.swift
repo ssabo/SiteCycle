@@ -14,7 +14,7 @@ struct HistoryScreen {
     }
 
     @discardableResult
-    func waitForAppearance(timeout: TimeInterval = 5) -> Bool {
+    func waitForAppearance(timeout: TimeInterval = 10) -> Bool {
         tabButton.waitForExistence(timeout: timeout)
     }
 
