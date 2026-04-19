@@ -98,6 +98,7 @@ struct HistoryView: View {
                     } label: {
                         entryRow(entry)
                     }
+                    .accessibilityIdentifier("history.row")
                 }
                 .onDelete { indexSet in
                     if let index = indexSet.first {

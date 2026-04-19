@@ -22,6 +22,7 @@ struct SiteSelectionSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("siteSelection.cancel")
                 }
             }
             .onAppear {
@@ -108,6 +109,7 @@ struct SiteSelectionSheet: View {
                 categoryBadge(category)
             }
         }
+        .accessibilityIdentifier("siteSelection.row.\(location.fullDisplayName)")
     }
 
     @ViewBuilder

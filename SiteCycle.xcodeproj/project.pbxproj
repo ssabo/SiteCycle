@@ -69,6 +69,13 @@
 		8A0000000000000000000155 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000045 /* WatchContentView.swift */; };
 		8A0000000000000000000170 /* SiteCycleUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000070 /* SiteCycleUITestCase.swift */; };
 		8A0000000000000000000171 /* LaunchSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000071 /* LaunchSmokeTests.swift */; };
+		8A0000000000000000000172 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000072 /* OnboardingScreen.swift */; };
+		8A0000000000000000000173 /* HomeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000073 /* HomeScreen.swift */; };
+		8A0000000000000000000174 /* SiteSelectionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000074 /* SiteSelectionScreen.swift */; };
+		8A0000000000000000000175 /* SiteChangeConfirmationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000075 /* SiteChangeConfirmationScreen.swift */; };
+		8A0000000000000000000176 /* HistoryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000076 /* HistoryScreen.swift */; };
+		8A0000000000000000000177 /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000077 /* OnboardingFlowTests.swift */; };
+		8A0000000000000000000178 /* LogSiteChangeFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000078 /* LogSiteChangeFlowTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -196,6 +203,13 @@
 		8A0000000000000000000049 /* SiteCycleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteCycleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A0000000000000000000070 /* SiteCycleUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleUITestCase.swift; sourceTree = "<group>"; };
 		8A0000000000000000000071 /* LaunchSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSmokeTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000072 /* OnboardingScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingScreen.swift; sourceTree = "<group>"; };
+		8A0000000000000000000073 /* HomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreen.swift; sourceTree = "<group>"; };
+		8A0000000000000000000074 /* SiteSelectionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSelectionScreen.swift; sourceTree = "<group>"; };
+		8A0000000000000000000075 /* SiteChangeConfirmationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeConfirmationScreen.swift; sourceTree = "<group>"; };
+		8A0000000000000000000076 /* HistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryScreen.swift; sourceTree = "<group>"; };
+		8A0000000000000000000077 /* OnboardingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000078 /* LogSiteChangeFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogSiteChangeFlowTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -341,6 +355,13 @@
 			children = (
 				8A0000000000000000000070 /* SiteCycleUITestCase.swift */,
 				8A0000000000000000000071 /* LaunchSmokeTests.swift */,
+				8A0000000000000000000072 /* OnboardingScreen.swift */,
+				8A0000000000000000000073 /* HomeScreen.swift */,
+				8A0000000000000000000074 /* SiteSelectionScreen.swift */,
+				8A0000000000000000000075 /* SiteChangeConfirmationScreen.swift */,
+				8A0000000000000000000076 /* HistoryScreen.swift */,
+				8A0000000000000000000077 /* OnboardingFlowTests.swift */,
+				8A0000000000000000000078 /* LogSiteChangeFlowTests.swift */,
 			);
 			path = SiteCycleUITests;
 			sourceTree = "<group>";
@@ -707,6 +728,13 @@
 			files = (
 				8A0000000000000000000170 /* SiteCycleUITestCase.swift in Sources */,
 				8A0000000000000000000171 /* LaunchSmokeTests.swift in Sources */,
+				8A0000000000000000000172 /* OnboardingScreen.swift in Sources */,
+				8A0000000000000000000173 /* HomeScreen.swift in Sources */,
+				8A0000000000000000000174 /* SiteSelectionScreen.swift in Sources */,
+				8A0000000000000000000175 /* SiteChangeConfirmationScreen.swift in Sources */,
+				8A0000000000000000000176 /* HistoryScreen.swift in Sources */,
+				8A0000000000000000000177 /* OnboardingFlowTests.swift in Sources */,
+				8A0000000000000000000178 /* LogSiteChangeFlowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

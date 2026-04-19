@@ -22,6 +22,9 @@ struct SiteCycleApp: App {
         if args.contains("-resetOnboarding") {
             UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
         }
+        if args.contains("-completeOnboarding") {
+            UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        }
     }
 
     static func makeModelContainer() -> (ModelContainer, Bool) {

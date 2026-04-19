@@ -25,6 +25,7 @@ struct OnboardingView: View {
                 completeOnboarding()
             }
             .padding()
+            .accessibilityIdentifier("onboarding.skip")
         }
     }
 
@@ -72,6 +73,7 @@ private struct WelcomePage: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.horizontal, 32)
+            .accessibilityIdentifier("onboarding.welcome.getStarted")
 
             Button {
                 showingImportPicker = true
@@ -80,6 +82,7 @@ private struct WelcomePage: View {
                     .font(.subheadline)
             }
             .padding(.bottom, 48)
+            .accessibilityIdentifier("onboarding.welcome.restoreCSV")
         }
         .background(
             Group {
@@ -146,6 +149,7 @@ private struct ConfigureLocationsPage: View {
             .buttonStyle(.borderedProminent)
             .padding(.horizontal, 32)
             .padding(.bottom, 48)
+            .accessibilityIdentifier("onboarding.configure.next")
         }
     }
 }
@@ -186,6 +190,7 @@ private struct ReadyPage: View {
             .buttonStyle(.borderedProminent)
             .padding(.horizontal, 32)
             .padding(.bottom, 48)
+            .accessibilityIdentifier("onboarding.ready.done")
         }
     }
 }

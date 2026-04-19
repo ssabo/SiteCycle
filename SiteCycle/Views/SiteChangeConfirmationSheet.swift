@@ -55,6 +55,7 @@ struct SiteChangeConfirmationSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("siteChangeConfirmation.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Confirm") {
@@ -67,6 +68,7 @@ struct SiteChangeConfirmationSheet: View {
                         dismiss()
                     }
                     .disabled(isSubmitting)
+                    .accessibilityIdentifier("siteChangeConfirmation.confirm")
                 }
             }
         }
