@@ -1,0 +1,148 @@
+name: UI Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'SiteCycle/**'
+      - 'SiteCycleUITests/**'
+      - 'SiteCycle.xcodeproj/**'
+      - 'SiteCycleConfig.xcconfig'
+      - '.github/workflows/ui-tests.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui-tests:
+    name: UI Tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH="/Applications/Xcode.app"
+          fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+
+      - name: Find iOS Simulator
+        run: |
+          SIMULATOR_NAME=$(xcrun simctl list devices available iPhone -j | \
+            python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          for runtime, devices in data['devices'].items():
+              if 'iOS' in runtime:
+                  for d in devices:
+                      if d['isAvailable']:
+                          print(d['name'])
+                          sys.exit(0)
+          print('iPhone 16')
+          ")
+          echo "SIMULATOR_NAME=$SIMULATOR_NAME" >> "$GITHUB_ENV"
+          echo "Using simulator: $SIMULATOR_NAME"
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild build-for-testing \
+            -scheme SiteCycle \
+            -project SiteCycle.xcodeproj \
+            -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
+            -only-testing:SiteCycleUITests \
+            -skipPackagePluginValidation \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Run UI Tests
+        run: |
+          # IMPORTANT: Write full xcodebuild output to UITestOutput.txt FIRST,
+          # then run xcpretty as a second pass over the file. Do NOT replace
+          # this with `xcodebuild ... | tee UITestOutput.txt | xcpretty`:
+          # xcpretty occasionally exits early on large outputs and truncates
+          # the tee'd capture to ~3.6 KB, which hides the failing assertion
+          # and its surrounding context. Keeping the redirect direct means
+          # the capture survives regardless of what xcpretty does.
+          set +e
+          # IMPORTANT: `-parallel-testing-enabled NO` and
+          # `-disable-concurrent-destination-testing` together fix a flaky
+          # exit-65 `** TEST EXECUTE FAILED **` that reproduced on
+          # macos-15 + Xcode 26 even when every test passed. Root cause is
+          # xcodebuild's parallel-simulator cloning ("Clone 1", "Clone 2")
+          # cleanup path. Do NOT remove either flag — dropping either one
+          # brings the flake back.
+          xcodebuild test-without-building \
+            -scheme SiteCycle \
+            -project SiteCycle.xcodeproj \
+            -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
+            -only-testing:SiteCycleUITests \
+            -resultBundlePath UITestResults.xcresult \
+            -parallel-testing-enabled NO \
+            -disable-concurrent-destination-testing \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO > UITestOutput.txt 2>&1
+          TEST_EXIT=$?
+          xcpretty < UITestOutput.txt || true
+          exit $TEST_EXIT
+
+      - name: Surface UI test failures
+        if: failure()
+        run: |
+          if [ ! -f UITestOutput.txt ]; then
+            echo "::error::UITestOutput.txt not found — xcodebuild pipeline produced no capture"
+            exit 0
+          fi
+          BYTES=$(wc -c < UITestOutput.txt)
+          echo "::notice::UITestOutput.txt size: ${BYTES} bytes"
+          echo "::group::Last 400 lines of raw xcodebuild output"
+          tail -400 UITestOutput.txt || true
+          echo "::endgroup::"
+          echo "::group::Test failure / timeout lines"
+          grep -nE '(error:|Failing tests:|\*\* TEST [A-Z]+|XCTAssert|Failed to|timed out|crashed|Test Case.*failed)' UITestOutput.txt | head -200 || true
+          echo "::endgroup::"
+          # Emit one summary annotation so it shows up in the check annotations API.
+          SUMMARY=$(grep -E '(Failing tests:|\*\* TEST [A-Z]+|Executed [0-9]+ tests)' UITestOutput.txt | tail -10 | tr '\n' '|')
+          if [ -n "$SUMMARY" ]; then
+            echo "::error::UI test summary: ${SUMMARY}"
+          fi
+          # Emit per-failure annotations for xctest assertion lines.
+          grep -E '^/[^:]+\.swift:[0-9]+: error: ' UITestOutput.txt | sort -u | while IFS= read -r line; do
+            file=$(printf '%s' "$line" | sed -E 's/^([^:]+):([0-9]+): error:.*/\1/')
+            lineno=$(printf '%s' "$line" | sed -E 's/^([^:]+):([0-9]+): error:.*/\2/')
+            msg=$(printf '%s' "$line" | sed -E 's/^[^:]+:[0-9]+: error: //')
+            printf '::error file=%s,line=%s::%s\n' "$file" "$lineno" "$msg"
+          done
+          # If no XCTAssert-style lines found, emit the top 5 non-empty tail lines
+          # so something shows up as an annotation.
+          if ! grep -qE '^/[^:]+\.swift:[0-9]+: error: ' UITestOutput.txt; then
+            tail -50 UITestOutput.txt | grep -v '^$' | tail -5 | while IFS= read -r line; do
+              echo "::error::tail: ${line}"
+            done
+          fi
+          # Emit context *before* each XCTest assertion so the actual
+          # reason (crash log, timeout, etc) shows up in the annotations
+          # API without needing to download the artifact.
+          grep -nE '^/[^:]+\.swift:[0-9]+: error: ' UITestOutput.txt | head -5 | while IFS= read -r line; do
+            lineno=$(printf '%s' "$line" | cut -d: -f1)
+            start=$(( lineno > 40 ? lineno - 40 : 1 ))
+            end=$(( lineno + 5 ))
+            sed -n "${start},${end}p" UITestOutput.txt | while IFS= read -r ctx; do
+              [ -z "$ctx" ] && continue
+              # Truncate very long lines so annotations stay readable.
+              trimmed=$(printf '%s' "$ctx" | cut -c1-400)
+              echo "::error::assert-ctx(L${lineno}): ${trimmed}"
+            done
+          done
+
+      - name: Upload UI test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: |
+            UITestResults.xcresult
+            UITestOutput.txt

@@ -180,10 +180,14 @@ struct HomeView: View {
             if let loc = viewModel.currentLocation {
                 LocationLabelView(location: loc, font: .title2)
                     .fontWeight(.semibold)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(loc.fullDisplayName)
+                    .accessibilityIdentifier("home.activeSite.label")
             } else {
                 Text("Unknown Location")
                     .font(.title2)
                     .fontWeight(.semibold)
+                    .accessibilityIdentifier("home.activeSite.label")
             }
 
             if let startTime = viewModel.startTime {
@@ -211,6 +215,7 @@ struct HomeView: View {
                 Text("No Active Site")
                     .font(.title2)
                     .fontWeight(.semibold)
+                    .accessibilityIdentifier("home.emptyState")
 
                 Text("Log your first site change to start tracking your rotation.")
                     .font(.body)
@@ -241,6 +246,7 @@ struct HomeView: View {
         .buttonStyle(.bordered)
         .controlSize(.regular)
         .tint(.secondary)
+        .accessibilityIdentifier("home.allLocations")
     }
 
     // MARK: - Helpers

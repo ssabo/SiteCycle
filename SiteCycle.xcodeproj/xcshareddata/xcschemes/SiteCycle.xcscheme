@@ -41,6 +41,17 @@
                ReferencedContainer = "container:SiteCycle.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8A0000000000000000000440"
+               BuildableName = "SiteCycleUITests.xctest"
+               BlueprintName = "SiteCycleUITests"
+               ReferencedContainer = "container:SiteCycle.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

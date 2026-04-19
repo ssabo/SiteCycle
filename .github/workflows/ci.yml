@@ -64,6 +64,7 @@ jobs:
             -scheme SiteCycle \
             -project SiteCycle.xcodeproj \
             -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
+            -skip-testing:SiteCycleUITests \
             -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO | xcpretty && exit ${PIPESTATUS[0]}
@@ -74,6 +75,7 @@ jobs:
             -scheme SiteCycle \
             -project SiteCycle.xcodeproj \
             -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
+            -only-testing:SiteCycleTests \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO | xcpretty && exit ${PIPESTATUS[0]}
 
