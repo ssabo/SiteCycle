@@ -79,6 +79,8 @@
 		8A0000000000000000000179 /* HistoryFixtureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000079 /* HistoryFixtureLoader.swift */; };
 		8A000000000000000000017A /* BasicHistoryFixture.json in Resources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000007A /* BasicHistoryFixture.json */; };
 		8A000000000000000000017B /* RecommendationFixture.json in Resources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000007B /* RecommendationFixture.json */; };
+		8A000000000000000000017C /* HistoryEditScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000007C /* HistoryEditScreen.swift */; };
+		8A000000000000000000017D /* HistoryFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000007D /* HistoryFlowTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -216,6 +218,8 @@
 		8A0000000000000000000079 /* HistoryFixtureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryFixtureLoader.swift; sourceTree = "<group>"; };
 		8A000000000000000000007A /* BasicHistoryFixture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = BasicHistoryFixture.json; sourceTree = "<group>"; };
 		8A000000000000000000007B /* RecommendationFixture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = RecommendationFixture.json; sourceTree = "<group>"; };
+		8A000000000000000000007C /* HistoryEditScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryEditScreen.swift; sourceTree = "<group>"; };
+		8A000000000000000000007D /* HistoryFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryFlowTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -367,8 +371,10 @@
 				8A0000000000000000000074 /* SiteSelectionScreen.swift */,
 				8A0000000000000000000075 /* SiteChangeConfirmationScreen.swift */,
 				8A0000000000000000000076 /* HistoryScreen.swift */,
+				8A000000000000000000007C /* HistoryEditScreen.swift */,
 				8A0000000000000000000077 /* OnboardingFlowTests.swift */,
 				8A0000000000000000000078 /* LogSiteChangeFlowTests.swift */,
+				8A000000000000000000007D /* HistoryFlowTests.swift */,
 				8A0000000000000000000241 /* Fixtures */,
 			);
 			path = SiteCycleUITests;
@@ -753,8 +759,10 @@
 				8A0000000000000000000174 /* SiteSelectionScreen.swift in Sources */,
 				8A0000000000000000000175 /* SiteChangeConfirmationScreen.swift in Sources */,
 				8A0000000000000000000176 /* HistoryScreen.swift in Sources */,
+				8A000000000000000000017C /* HistoryEditScreen.swift in Sources */,
 				8A0000000000000000000177 /* OnboardingFlowTests.swift in Sources */,
 				8A0000000000000000000178 /* LogSiteChangeFlowTests.swift in Sources */,
+				8A000000000000000000017D /* HistoryFlowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
