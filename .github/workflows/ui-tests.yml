@@ -113,17 +113,18 @@ jobs:
               echo "::error::tail: ${line}"
             done
           fi
-          # Emit context around crashes / "Failed to" lines so the actual
-          # failure story shows up in the annotations API without needing
-          # to download the artifact.
-          grep -nE '(crashed|Failed to|application .* is not running|CRASH|Terminating|NSException)' UITestOutput.txt | head -30 | while IFS= read -r line; do
+          # Emit context *before* each XCTest assertion so the actual
+          # reason (crash log, timeout, etc) shows up in the annotations
+          # API without needing to download the artifact.
+          grep -nE '^/[^:]+\.swift:[0-9]+: error: ' UITestOutput.txt | head -5 | while IFS= read -r line; do
             lineno=$(printf '%s' "$line" | cut -d: -f1)
-            start=$(( lineno > 10 ? lineno - 10 : 1 ))
-            end=$(( lineno + 10 ))
+            start=$(( lineno > 40 ? lineno - 40 : 1 ))
+            end=$(( lineno + 5 ))
             sed -n "${start},${end}p" UITestOutput.txt | while IFS= read -r ctx; do
-              # Skip empty lines so the annotations stay readable.
               [ -z "$ctx" ] && continue
-              echo "::error::crash-ctx(L${lineno}): ${ctx}"
+              # Truncate very long lines so annotations stay readable.
+              trimmed=$(printf '%s' "$ctx" | cut -c1-400)
+              echo "::error::assert-ctx(L${lineno}): ${trimmed}"
             done
           done
 
