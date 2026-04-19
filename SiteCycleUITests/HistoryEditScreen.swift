@@ -60,29 +60,58 @@ struct HistoryEditScreen {
         saveButton.waitForExistence(timeout: timeout)
     }
 
-    /// Replaces the note field's contents. Taps into the field, waits for
-    /// the keyboard, clears existing text, then types the replacement. The
-    /// keyboard wait matters on iOS 17+ where `tap()` returns before the
-    /// field is actually first-responder, causing `typeText` to silently no-op.
+    /// Replaces the note field's contents. Taps to focus, waits for the
+    /// keyboard, clears via Select-All + delete (the only reliable way to
+    /// clear a multi-line SwiftUI TextField from XCUITest), types the new
+    /// text, then verifies the value changed. The explicit verification
+    /// turns a silent typing no-op into an actionable failure at the
+    /// interaction site instead of downstream.
     func setNote(_ text: String) {
         let field = noteField
         XCTAssertTrue(field.waitForExistence(timeout: 5), "historyEdit.note not found")
+        XCTAssertTrue(field.isHittable, "historyEdit.note is not hittable")
         field.tap()
-        _ = app.keyboards.firstMatch.waitForExistence(timeout: 3)
-        if let existing = field.value as? String, !existing.isEmpty {
-            let deletion = String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count)
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5),
+                      "keyboard did not appear after tapping note field (tap missed the editable control)")
+
+        // Select any existing text with a triple-tap, then let typeText replace it.
+        // `doubleTap` selects a word; triple-tap selects the line/paragraph in iOS.
+        if let existing = field.value as? String,
+           !existing.isEmpty,
+           existing != "Add a note..." {
+            // Tap three times via the coordinate to trigger Select-All semantics.
+            let center = field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            center.tap()
+            center.tap()
+            // Select-All via long-press menu as a fallback if triple-tap
+            // doesn't land — simpler to just delete char-by-char with an
+            // upper-bound count.
+            let deletion = String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count + 4)
             field.typeText(deletion)
         }
+
         field.typeText(text)
+
+        let actual = (field.value as? String) ?? ""
+        XCTAssertEqual(actual, text,
+                       "note field expected '\(text)' but reads '\(actual)' — typeText did not land")
     }
 
-    /// Flips the "Has End Time" toggle. SwiftUI's `.accessibilityIdentifier`
-    /// on a `Toggle` lands on the row container rather than the UISwitch on
-    /// iOS 17+, so the query accepts any element with the identifier.
+    /// Flips the "Has End Time" toggle and verifies the switch actually
+    /// changed state. Uses a coordinate tap on the trailing edge because
+    /// SwiftUI's `Toggle` in a `Form` row sometimes exposes its identifier
+    /// on the row container, and a centered `tap()` can land on the label
+    /// area without flipping the switch.
     func toggleHasEndTime() {
         let toggle = hasEndTimeToggle
         XCTAssertTrue(toggle.waitForExistence(timeout: 5), "historyEdit.hasEndTime not found")
-        toggle.tap()
+        let before = toggle.value as? String
+        // Tap the trailing edge of the row where the UISwitch physically sits.
+        let trailing = toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
+        trailing.tap()
+        let after = toggle.value as? String
+        XCTAssertNotEqual(before, after,
+                          "hasEndTime toggle did not flip (before=\(before ?? "nil"), after=\(after ?? "nil"))")
     }
 
     func save() {
