@@ -9,7 +9,8 @@ struct LocationConfigScreen {
 
     @discardableResult
     func waitForAppearance(timeout: TimeInterval = 10) -> Bool {
-        addCustomZoneButton.waitForExistence(timeout: timeout)
+        // Wait for a default zone row — the Add button exists before @Query loads, so it's not a reliable signal
+        zoneRow("Front Abdomen").waitForExistence(timeout: timeout)
     }
 
     func zoneToggle(_ zone: String) -> XCUIElement {

@@ -32,6 +32,7 @@ final class LocationManagementFlowTests: PostOnboardingUITestCase {
         navigateBack(from: "Settings", to: "SiteCycle")
 
         let home = HomeScreen(app: app)
+        XCTAssertTrue(home.waitForAppearance(), "Home screen did not appear after navigating back")
         home.tapAllLocations()
 
         let selection = SiteSelectionScreen(app: app)
@@ -107,7 +108,9 @@ final class LocationManagementFlowTests: PostOnboardingUITestCase {
         XCTAssertTrue(home.waitForAppearance(), "Home screen did not appear after navigating back")
         home.tapAllLocations()
 
-        SiteSelectionScreen(app: app).selectLocation(bodyPart)
+        let selection = SiteSelectionScreen(app: app)
+        XCTAssertTrue(selection.waitForAppearance(), "Site selection sheet did not appear")
+        selection.selectLocation(bodyPart)
         SiteChangeConfirmationScreen(app: app).confirm()
         XCTAssertTrue(home.waitForAppearance(), "Home screen did not appear after logging site change")
     }
