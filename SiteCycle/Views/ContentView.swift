@@ -62,6 +62,7 @@ struct ContentView: View {
             NavigationLink(destination: SettingsView()) {
                 Image(systemName: "gear")
             }
+            .accessibilityIdentifier("home.settingsButton")
         }
     }
 

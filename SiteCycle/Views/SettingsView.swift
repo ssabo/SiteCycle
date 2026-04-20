@@ -53,6 +53,7 @@ struct SettingsView: View {
             } label: {
                 Label("Manage Locations", systemImage: "mappin.and.ellipse")
             }
+            .accessibilityIdentifier("settings.manageLocations")
         }
 
         Section("Preferences") {
@@ -62,8 +63,10 @@ struct SettingsView: View {
                     Text("\(targetDurationHours) hours")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("settings.targetDuration.value")
                 }
             }
+            .accessibilityIdentifier("settings.targetDurationStepper")
 
             Stepper(value: $absorptionAlertThreshold, in: 5...50, step: 5) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -71,8 +74,10 @@ struct SettingsView: View {
                     Text("\(absorptionAlertThreshold)% below average")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("settings.absorptionThreshold.value")
                 }
             }
+            .accessibilityIdentifier("settings.absorptionThresholdStepper")
         }
 
         Section("Data") {

@@ -31,3 +31,11 @@ class PostOnboardingUITestCase: SiteCycleUITestCase {
         ["-uiTestMode", "-completeOnboarding"]
     }
 }
+
+/// Base class for tests that verify @AppStorage-backed settings. Resets both
+/// AppStorage keys before launch so each test starts from known defaults.
+class SettingsUITestCase: SiteCycleUITestCase {
+    override var defaultLaunchArguments: [String] {
+        ["-uiTestMode", "-completeOnboarding", "-resetSettings"]
+    }
+}
