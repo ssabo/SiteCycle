@@ -47,8 +47,9 @@ struct AddCustomZoneScreen {
 
     @discardableResult
     func waitForDismissal(timeout: TimeInterval = 10) -> Bool {
-        let predicate = NSPredicate(format: "exists == false")
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: bodyPartField)
+        let query = app.textFields.matching(identifier: "addCustomZone.bodyPart")
+        let predicate = NSPredicate(format: "count == 0")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: query)
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 }
