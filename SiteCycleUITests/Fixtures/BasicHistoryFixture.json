@@ -1,0 +1,28 @@
+{
+  "entries": [
+    {
+      "side": "left",
+      "bodyPart": "Abdomen",
+      "subArea": "Front",
+      "startOffsetHours": -120,
+      "endOffsetHours": -117,
+      "note": "Day-5 entry"
+    },
+    {
+      "side": "right",
+      "bodyPart": "Thigh",
+      "subArea": "Front",
+      "startOffsetHours": -72,
+      "endOffsetHours": -69,
+      "note": null
+    },
+    {
+      "side": "left",
+      "bodyPart": "Buttock",
+      "subArea": null,
+      "startOffsetHours": -24,
+      "endOffsetHours": null,
+      "note": null
+    }
+  ]
+}

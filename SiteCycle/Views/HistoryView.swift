@@ -61,9 +61,12 @@ struct HistoryView: View {
                         entryToDelete = nil
                     }
                 }
-                Button("Cancel", role: .cancel) {
-                    entryToDelete = nil
-                }
+                .accessibilityIdentifier("history.deleteConfirmation.confirm")
+                // Omit an explicit `.cancel`-role button: iOS automatically
+                // adds a Cancel action to every confirmationDialog. Supplying
+                // our own has been observed to strip the identifier on iOS
+                // 18 and occasionally to make the button unreachable from
+                // XCUITest. Tests match the system Cancel by label.
             },
             message: {
                 Text("Are you sure you want to delete this entry? This cannot be undone.")
@@ -98,12 +101,15 @@ struct HistoryView: View {
                     } label: {
                         entryRow(entry)
                     }
-                    .accessibilityIdentifier("history.row")
-                }
-                .onDelete { indexSet in
-                    if let index = indexSet.first {
-                        entryToDelete = entries[index]
-                        showingDeleteConfirmation = true
+                    .accessibilityIdentifier("history.row.\(entry.id.uuidString)")
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            entryToDelete = entry
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        .accessibilityIdentifier("history.row.\(entry.id.uuidString).deleteButton")
                     }
                 }
             }
@@ -118,6 +124,7 @@ struct HistoryView: View {
                     Text(location.fullDisplayName).tag(Location?.some(location))
                 }
             }
+            .accessibilityIdentifier("history.filter.location")
             .onChange(of: selectedLocation) { _, newValue in
                 viewModel.locationFilter = newValue
             }
@@ -127,6 +134,7 @@ struct HistoryView: View {
                     Text(option).tag(option)
                 }
             }
+            .accessibilityIdentifier("history.filter.dateRange")
             .onChange(of: selectedDateRange) { _, newValue in
                 applyDateRange(newValue, to: viewModel)
             }
@@ -214,5 +222,7 @@ struct HistoryView: View {
                 .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("history.emptyState")
     }
 }

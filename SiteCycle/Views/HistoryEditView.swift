@@ -35,6 +35,7 @@ struct HistoryEditView: View {
                         Text(location.fullDisplayName).tag(Location?.some(location))
                     }
                 }
+                .accessibilityIdentifier("historyEdit.locationPicker")
             }
 
             Section("Timing") {
@@ -42,8 +43,10 @@ struct HistoryEditView: View {
                     "Start Time",
                     selection: $startTime
                 )
+                .accessibilityIdentifier("historyEdit.startTime")
 
                 Toggle("Has End Time", isOn: $hasEndTime)
+                    .accessibilityIdentifier("historyEdit.hasEndTime")
 
                 if hasEndTime {
                     DatePicker(
@@ -51,23 +54,32 @@ struct HistoryEditView: View {
                         selection: $endTime,
                         in: startTime...
                     )
+                    .accessibilityIdentifier("historyEdit.endTime")
                 }
             }
 
             Section("Note") {
                 TextField("Add a note...", text: $note, axis: .vertical)
                     .lineLimit(3...6)
+                    .accessibilityIdentifier("historyEdit.note")
             }
         }
         .navigationTitle("Edit Entry")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .accessibilityIdentifier("historyEdit.cancel")
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     saveChanges()
                     connectivityManager.pushCurrentState()
                     dismiss()
                 }
+                .accessibilityIdentifier("historyEdit.save")
             }
         }
     }

@@ -6,7 +6,7 @@ picked up by a fresh agent with no prior session context — the "Context" and
 "Relevant files" subsections should be enough to get oriented without
 re-reading the whole branch history.
 
-## Current State (as of PR #67, branch `claude/ui-testing-investigation-4YoaA`)
+## Current State (as of PR #68, branch `claude/implement-ui-testing-step-3a-xfQIR`)
 
 - `SiteCycleUITests` target exists and is wired into `SiteCycle.xcodeproj`
   (scheme's `<TestAction>` references it; see
@@ -18,16 +18,25 @@ re-reading the whole branch history.
   - `-resetOnboarding` — clears `hasCompletedOnboarding` so tests start on Welcome.
   - `-completeOnboarding` — sets `hasCompletedOnboarding = true` so tests skip
     straight to Home.
+  - `-seedHistory <FixtureName>` — loads a bundled fixture JSON and inserts
+    deterministic `SiteChangeEntry` rows into the in-memory container before
+    the first view renders (Step 3a).
 - Base test classes in `SiteCycleUITests/SiteCycleUITestCase.swift`:
   - `SiteCycleUITestCase` — `-uiTestMode -resetOnboarding` by default.
   - `PostOnboardingUITestCase` — `-uiTestMode -completeOnboarding`.
 - Page objects already in place: `OnboardingScreen`, `HomeScreen`,
-  `SiteSelectionScreen`, `SiteChangeConfirmationScreen`, `HistoryScreen`.
+  `SiteSelectionScreen`, `SiteChangeConfirmationScreen`, `HistoryScreen`,
+  `HistoryEditScreen`.
 - Passing UI tests:
   - `LaunchSmokeTests.testColdLaunchCompletes`
   - `OnboardingFlowTests.testSkipOnboardingLandsOnHome`
   - `LogSiteChangeFlowTests.testLogSiteChangeUpdatesActiveSite`
   - `LogSiteChangeFlowTests.testLoggingSecondSiteClosesPreviousEntry`
+  - `HistoryFlowTests.testHistoryListRendersSeededEntries`
+  - `HistoryFlowTests.testLocationFilterLimitsRowsToOneLocation`
+  - `HistoryFlowTests.testEditingEntryNoteSaves`
+  - `HistoryFlowTests.testEditingEntryStartTimeUpdatesDuration`
+  - `HistoryFlowTests.testSwipeToDeleteRemovesRow`
 - Accessibility identifiers present:
   - `onboarding.skip`, `onboarding.welcome.getStarted`,
     `onboarding.welcome.restoreCSV`, `onboarding.configure.next`,
@@ -35,7 +44,15 @@ re-reading the whole branch history.
   - `home.allLocations`, `home.activeSite.label`, `home.emptyState`
   - `siteSelection.cancel`, `siteSelection.row.<fullDisplayName>`
   - `siteChangeConfirmation.cancel`, `siteChangeConfirmation.confirm`
-  - `history.row`
+  - `history.row.<entryID>`, `history.filter.location`,
+    `history.filter.dateRange`, `history.emptyState`,
+    `history.deleteButton`, `history.deleteConfirmation.confirm`
+  - `historyEdit.locationPicker`, `historyEdit.startTime`,
+    `historyEdit.endTime`, `historyEdit.hasEndTime`, `historyEdit.note`,
+    `historyEdit.save`, `historyEdit.cancel`
+- Fixtures bundled under `SiteCycleUITests/Fixtures/`:
+  - `BasicHistoryFixture.json` — 3 entries across 3 locations spanning 5 days
+    (one Active / no end time, two completed with durations).
 
 ### Key CI / xcodebuild flags
 
@@ -63,7 +80,11 @@ testing roadmap — file a separate bug.**
 
 ---
 
-## Step 3 — History, HistoryEdit, Delete flows
+## Step 3 — History, HistoryEdit, Delete flows  ✅ Completed
+
+Shipped in PR #68 (commits `b6e9651` for Step 3a fixture seeding,
+`40987d8` for the Step 3 history/edit/delete suite). 5 tests passing; one
+originally-planned test was deferred — see the Appendix for details.
 
 ### Goal
 Cover the core post-log flows: viewing the history list, editing an entry
@@ -109,10 +130,14 @@ confirmation, or empty-state. Adding them is the bulk of this step.
    next sequential hex IDs; the last UI-test files used `0072–0078` /
    `0172–0178`, so start at `0079` / `0179`.
 
-### Step 3a — Fixture seeding (blocker for Step 3 onward)
+### Step 3a — Fixture seeding (blocker for Step 3 onward)  ✅ Completed
 
-Several later tests need pre-seeded history. Add this before writing
-history tests:
+Shipped in commit `b6e9651`. `-seedHistory <FixtureName>` is wired into
+`SiteCycleApp` and loads JSON from the app bundle before first render.
+`BasicHistoryFixture.json` was added; `RecommendationFixture.json` was
+deferred (see Appendix — it belongs with Step 5).
+
+Original task list, for reference:
 
 1. Extend `SiteCycleApp.applyUITestLaunchArguments()` (or a new sibling
    helper called from `ContentView.onAppear` behind `-uiTestMode`) to
@@ -255,8 +280,95 @@ Once the app-side crash is fixed, re-add the test in
 
 One PR per step. Each step is roughly additive:
 
-1. **Step 3a** (fixture seeding) — small, foundational. Land first.
-2. **Step 3** (History + Edit + Delete).
-3. **Step 4** (Settings + Location Management).
+1. ~~**Step 3a** (fixture seeding)~~ — ✅ landed in `b6e9651`.
+2. ~~**Step 3** (History + Edit + Delete)~~ — ✅ landed in `40987d8` (PR #68).
+3. **Step 4** (Settings + Location Management) — next.
 4. **Step 5** (Statistics + Recommendation + CSV smoke).
 5. **Step 6** (optional) only after the crash is reproduced locally.
+
+---
+
+## Appendix — Descoped / Deferred Items
+
+Items that were initially planned but dropped or changed during
+implementation. Tracked here so we can revisit them independently rather
+than having them quietly disappear from the roadmap.
+
+### A1. `testCancellingDeleteKeepsRow` — removed from Step 3
+
+**Original intent:** Verify that tapping Cancel on the delete-confirmation
+dialog leaves the row in place (negative-path UX regression test).
+
+**Why dropped:** On iOS 18 / Xcode 26, SwiftUI's `.confirmationDialog`
+Cancel action is not reliably reachable from XCUITest. We tried:
+
+- Explicit `.cancel`-role `Button` with `.accessibilityIdentifier(...)` —
+  iOS strips the identifier from the underlying `UIAlertAction` button.
+- Omitting the explicit button to let iOS auto-add one, then querying by
+  label (`"Cancel"`) with both `app.buttons[...]` and an NSPredicate over
+  all descendants — neither consistently found the button even after the
+  dialog title was confirmed visible.
+
+The destructive happy path (`testSwipeToDeleteRemovesRow`) still covers
+the delete flow end-to-end. A comment in `HistoryFlowTests.swift`
+documents the limitation.
+
+**Re-entry criteria:** Retry once we upgrade the CI simulator past iOS 18
+/ Xcode 26, or when Apple fixes confirmationDialog accessibility
+forwarding. An alternative would be a coordinate-based dismissal (tap on
+the darkened sheet background) — viable but brittle, and not worth the
+maintenance tax until we have a real UX regression to guard against.
+
+### A2. Start-time DatePicker driven directly — substituted with `hasEndTime` toggle
+
+**Original intent:** `testEditingEntryStartTimeUpdatesDuration` was to
+open an entry, change the start-time via the in-Form `DatePicker`, save,
+and assert the row's duration string re-renders.
+
+**Why changed:** SwiftUI in-Form `DatePicker`s render as a compact
+pop-over wheel picker that XCUITest cannot drive reliably (individual
+wheel columns are not queryable as `.pickerWheels` on all iOS versions,
+and tapping the picker chevron to expand inline is racey).
+
+**What shipped instead:** The test flips the `hasEndTime` toggle on the
+Active entry and asserts the Active badge disappears (the row swaps the
+badge for a duration string). Same edit → save → persist → re-render
+path; different input vector. The rationale is captured in the test's
+in-line comment.
+
+**Re-entry criteria:** When XCUITest gains stable primitives for
+driving in-Form DatePickers (or we switch the UI to a custom stepper/
+text field that is trivially testable).
+
+### A3. `tapRow(entryID:)` — substituted with positional `tapRow(at index:)`
+
+**Original intent:** Target History rows by their `SiteChangeEntry.id.uuidString`.
+
+**Why changed:** Our fixtures produce deterministic sort order, so
+zero-based indexing against the rendered rows is simpler and just as
+reliable. Per-entry identifiers (`history.row.<uuid>`) are still on each
+row — tests that need to target a specific entry by ID still can via
+the `rows` XCUIElementQuery, we just haven't needed that yet.
+
+**Re-entry criteria:** If a future test asserts behavior that depends on
+a specific entry's identity (not its list position), add the `entryID`
+helper on top of the existing identifier.
+
+### A4. `RecommendationFixture.json` — shipped but unused pending Step 5
+
+**Status:** `SiteCycleUITests/Fixtures/RecommendationFixture.json` is
+committed and registered as a bundle resource (via
+`SiteCycle.xcodeproj/project.pbxproj`), but no test currently references
+it. It rides along with `BasicHistoryFixture.json` so the fixture
+infrastructure is proven end-to-end with more than one input, and so
+Step 5 can focus purely on tests without also introducing the fixture.
+
+**Content:** 5 recent entries (72h → 9h ago) across Abdomen and Thigh
+zones, so the site-selection sheet's "recommended" / "avoid" badges will
+be deterministic once Step 5 wires up the load path.
+
+**Re-entry criteria:** Step 5 will add
+`testRecommendationBadgesHighlightThreeMostAndLeastRecent` (and
+friends) and reference this fixture via `-seedHistory RecommendationFixture`.
+If the fixture still isn't referenced by the end of Step 5, delete it
+rather than let it bit-rot.
