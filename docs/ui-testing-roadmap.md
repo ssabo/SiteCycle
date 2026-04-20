@@ -354,14 +354,21 @@ the `rows` XCUIElementQuery, we just haven't needed that yet.
 a specific entry's identity (not its list position), add the `entryID`
 helper on top of the existing identifier.
 
-### A4. `RecommendationFixture.json` — deferred to Step 5
+### A4. `RecommendationFixture.json` — shipped but unused pending Step 5
 
-**Original intent:** A second fixture (5 recent entries) so the
-site-selection sheet's recommended/avoid badges are deterministic.
+**Status:** `SiteCycleUITests/Fixtures/RecommendationFixture.json` is
+committed and registered as a bundle resource (via
+`SiteCycle.xcodeproj/project.pbxproj`), but no test currently references
+it. It rides along with `BasicHistoryFixture.json` so the fixture
+infrastructure is proven end-to-end with more than one input, and so
+Step 5 can focus purely on tests without also introducing the fixture.
 
-**Why deferred:** Step 3 only needed history-list coverage, and adding a
-second fixture we wouldn't use yet risked drift. Step 5 is the natural
-home for it because that's where recommendation-badge tests live.
+**Content:** 5 recent entries (72h → 9h ago) across Abdomen and Thigh
+zones, so the site-selection sheet's "recommended" / "avoid" badges will
+be deterministic once Step 5 wires up the load path.
 
-**Re-entry criteria:** Create it as part of Step 5 alongside
-`testRecommendationBadgesHighlightThreeMostAndLeastRecent`.
+**Re-entry criteria:** Step 5 will add
+`testRecommendationBadgesHighlightThreeMostAndLeastRecent` (and
+friends) and reference this fixture via `-seedHistory RecommendationFixture`.
+If the fixture still isn't referenced by the end of Step 5, delete it
+rather than let it bit-rot.

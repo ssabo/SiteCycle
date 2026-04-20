@@ -109,7 +109,7 @@ struct HistoryView: View {
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
-                        .accessibilityIdentifier("history.deleteButton")
+                        .accessibilityIdentifier("history.row.\(entry.id.uuidString).deleteButton")
                     }
                 }
             }

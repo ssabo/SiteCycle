@@ -33,8 +33,14 @@ struct HistoryScreen {
             .firstMatch
     }
 
+    /// The swipe-revealed delete button. Each row carries a unique
+    /// `history.row.<uuid>.deleteButton` identifier so it doesn't collide
+    /// across rows; only one row is swiped open at a time, so `firstMatch`
+    /// against the pattern picks the exposed one.
     var deleteButton: XCUIElement {
-        app.buttons.matching(identifier: "history.deleteButton").firstMatch
+        app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH 'history.row.' AND identifier ENDSWITH '.deleteButton'")
+        ).firstMatch
     }
 
     // SwiftUI's `.confirmationDialog` does not reliably forward the

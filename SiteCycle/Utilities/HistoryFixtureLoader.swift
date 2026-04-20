@@ -16,9 +16,14 @@ private struct HistoryFixture: Decodable {
 
 /// Loads a named history fixture from the app bundle and inserts entries into
 /// the provided context. No-op unless the app is running under `-uiTestMode`.
+/// Also no-op if any `SiteChangeEntry` rows already exist, so repeated
+/// `onAppear` firings (scene transitions, cover dismissals) don't double-seed.
 @MainActor
 func seedHistoryFromFixture(named name: String, context: ModelContext) {
     guard ProcessInfo.processInfo.arguments.contains("-uiTestMode") else { return }
+
+    let existingCount = (try? context.fetchCount(FetchDescriptor<SiteChangeEntry>())) ?? 0
+    guard existingCount == 0 else { return }
 
     let bundleURL = Bundle.main.url(
         forResource: name,
