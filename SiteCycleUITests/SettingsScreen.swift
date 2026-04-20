@@ -4,7 +4,9 @@ struct SettingsScreen {
     let app: XCUIApplication
 
     var targetDurationStepper: XCUIElement {
-        app.steppers.matching(identifier: "settings.targetDurationStepper").firstMatch
+        app.descendants(matching: .any)
+            .matching(identifier: "settings.targetDurationStepper")
+            .firstMatch
     }
 
     var targetDurationValue: XCUIElement {
@@ -12,7 +14,9 @@ struct SettingsScreen {
     }
 
     var absorptionThresholdStepper: XCUIElement {
-        app.steppers.matching(identifier: "settings.absorptionThresholdStepper").firstMatch
+        app.descendants(matching: .any)
+            .matching(identifier: "settings.absorptionThresholdStepper")
+            .firstMatch
     }
 
     var absorptionThresholdValue: XCUIElement {
@@ -32,15 +36,17 @@ struct SettingsScreen {
         link.tap()
     }
 
+    // Uses XCUIElement.increment() — the standard way to advance a stepper on iOS,
+    // more reliable than looking for child "Increment" buttons in SwiftUI's a11y tree.
     func incrementTargetDuration() {
         let stepper = targetDurationStepper
         XCTAssertTrue(stepper.waitForExistence(timeout: 5), "targetDurationStepper not found")
-        stepper.buttons["Increment"].tap()
+        stepper.increment()
     }
 
     func incrementAbsorptionThreshold() {
         let stepper = absorptionThresholdStepper
         XCTAssertTrue(stepper.waitForExistence(timeout: 5), "absorptionThresholdStepper not found")
-        stepper.buttons["Increment"].tap()
+        stepper.increment()
     }
 }

@@ -44,4 +44,14 @@ struct AddCustomZoneScreen {
         XCTAssertTrue(button.waitForExistence(timeout: 5), "addCustomZone.save not found")
         button.tap()
     }
+
+    /// Waits for the sheet to fully dismiss by polling until the body-part field
+    /// disappears. Required before navigating away so the SwiftData save commits
+    /// and the new zone is visible to the site-selection sheet.
+    @discardableResult
+    func waitForDismissal(timeout: TimeInterval = 10) -> Bool {
+        let predicate = NSPredicate(format: "exists == false")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: bodyPartField)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
 }

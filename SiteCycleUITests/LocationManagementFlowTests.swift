@@ -87,6 +87,7 @@ final class LocationManagementFlowTests: PostOnboardingUITestCase {
         addZone.fillBodyPart(bodyPart)
         if !laterality { addZone.disableLaterality() }
         addZone.save()
+        XCTAssertTrue(addZone.waitForDismissal(), "Add Custom Zone sheet did not dismiss after save")
     }
 
     private func navigateBack(from title: String, to destination: String) {
