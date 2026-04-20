@@ -12,7 +12,13 @@ struct AddCustomZoneScreen {
     }
 
     var hasLateralityToggle: XCUIElement {
-        app.switches.matching(identifier: "addCustomZone.hasLateralityToggle").firstMatch
+        // Identifier is on the Toggle container; drill into the UISwitch child for reliable
+        // value reads ("0"/"1") and tapping.
+        app.descendants(matching: .any)
+            .matching(identifier: "addCustomZone.hasLateralityToggle")
+            .firstMatch
+            .switches
+            .firstMatch
     }
 
     var saveButton: XCUIElement {

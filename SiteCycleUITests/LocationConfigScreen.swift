@@ -14,9 +14,9 @@ struct LocationConfigScreen {
     }
 
     func zoneToggle(_ zone: String) -> XCUIElement {
-        app.descendants(matching: .any)
-            .matching(identifier: "locationConfig.toggle.\(zone)")
-            .firstMatch
+        // zoneRow's identifier wins over the inner toggle identifier (outer modifier takes precedence).
+        // Use the UISwitch child for reliable value reads and tapping.
+        zoneSwitch(zone)
     }
 
     func zoneRow(_ zone: String) -> XCUIElement {
