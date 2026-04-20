@@ -39,12 +39,12 @@ struct SettingsScreen {
     func incrementTargetDuration() {
         let stepper = targetDurationStepper
         XCTAssertTrue(stepper.waitForExistence(timeout: 5), "targetDurationStepper not found")
-        stepper.increment()
+        stepper.buttons.element(boundBy: 1).tap()
     }
 
     func incrementAbsorptionThreshold() {
         let stepper = absorptionThresholdStepper
         XCTAssertTrue(stepper.waitForExistence(timeout: 5), "absorptionThresholdStepper not found")
-        stepper.increment()
+        stepper.buttons.element(boundBy: 1).tap()
     }
 }
