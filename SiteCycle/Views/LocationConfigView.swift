@@ -39,6 +39,7 @@ struct LocationConfigView: View {
                     locations: group.locations,
                     enabledLocationCount: enabledLocationCount
                 )
+                .accessibilityIdentifier("locationConfig.row.\(group.zone)")
             }
             .onDelete(perform: deleteZones)
             .onMove(perform: moveZones)
@@ -48,10 +49,12 @@ struct LocationConfigView: View {
             } label: {
                 Label("Add Custom Zone", systemImage: "plus.circle")
             }
+            .accessibilityIdentifier("locationConfig.addCustomZone")
         }
         .navigationTitle("Manage Locations")
         .toolbar {
             EditButton()
+                .accessibilityIdentifier("locationConfig.editMode")
         }
         .sheet(isPresented: $showingAddSheet) {
             AddCustomZoneSheet { input in
@@ -174,6 +177,7 @@ private struct ZoneRow: View {
                 }
             }
         }
+        .accessibilityIdentifier("locationConfig.toggle.\(zone)")
     }
 }
 
@@ -197,8 +201,11 @@ private struct AddCustomZoneSheet: View {
             Form {
                 Section {
                     TextField("Body Part", text: $bodyPart)
+                        .accessibilityIdentifier("addCustomZone.bodyPart")
                     TextField("Qualifier (optional)", text: $qualifier)
+                        .accessibilityIdentifier("addCustomZone.qualifier")
                     Toggle("Has Left & Right Sides", isOn: $hasLaterality)
+                        .accessibilityIdentifier("addCustomZone.hasLateralityToggle")
                 } footer: {
                     if hasLaterality {
                         Text("Two locations will be created: Left and Right.")
@@ -212,6 +219,7 @@ private struct AddCustomZoneSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("addCustomZone.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -225,6 +233,7 @@ private struct AddCustomZoneSheet: View {
                         dismiss()
                     }
                     .disabled(bodyPart.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityIdentifier("addCustomZone.save")
                 }
             }
         }

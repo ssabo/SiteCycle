@@ -25,6 +25,10 @@ struct SiteCycleApp: App {
         if args.contains("-completeOnboarding") {
             UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         }
+        if args.contains("-resetSettings") {
+            UserDefaults.standard.removeObject(forKey: "targetDurationHours")
+            UserDefaults.standard.removeObject(forKey: "absorptionAlertThreshold")
+        }
     }
 
     static func makeModelContainer() -> (ModelContainer, Bool) {
