@@ -45,9 +45,6 @@ struct AddCustomZoneScreen {
         button.tap()
     }
 
-    /// Waits for the sheet to fully dismiss by polling until the body-part field
-    /// disappears. Required before navigating away so the SwiftData save commits
-    /// and the new zone is visible to the site-selection sheet.
     @discardableResult
     func waitForDismissal(timeout: TimeInterval = 10) -> Bool {
         let predicate = NSPredicate(format: "exists == false")

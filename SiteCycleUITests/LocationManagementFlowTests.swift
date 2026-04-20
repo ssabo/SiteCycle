@@ -14,13 +14,13 @@ final class LocationManagementFlowTests: PostOnboardingUITestCase {
             locationConfig.toggleZone(zone)
         }
 
-        let buttockToggle = locationConfig.zoneToggle("Buttock")
-        XCTAssertTrue(buttockToggle.waitForExistence(timeout: 5), "Buttock toggle not found")
-        XCTAssertEqual(buttockToggle.value as? String, "1", "Buttock should still be enabled")
+        let buttockSwitch = locationConfig.zoneSwitch("Buttock")
+        XCTAssertTrue(buttockSwitch.waitForExistence(timeout: 5), "Buttock switch not found")
+        XCTAssertEqual(buttockSwitch.value as? String, "1", "Buttock should still be enabled")
 
-        buttockToggle.tap()
+        locationConfig.zoneToggle("Buttock").tap()
 
-        XCTAssertEqual(buttockToggle.value as? String, "1",
+        XCTAssertEqual(buttockSwitch.value as? String, "1",
                        "Last-enabled guard should prevent disabling the final zone")
     }
 
@@ -118,9 +118,9 @@ final class LocationManagementFlowTests: PostOnboardingUITestCase {
         XCTAssertTrue(locationConfig.waitForAppearance(), "Manage Locations screen did not appear")
         locationConfig.swipeDeleteZone(zone)
 
-        let toggle = locationConfig.zoneToggle(zone)
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "Toggle for '\(zone)' not found after soft-delete")
-        XCTAssertEqual(toggle.value as? String, "0",
+        let zoneSwitch = locationConfig.zoneSwitch(zone)
+        XCTAssertTrue(zoneSwitch.waitForExistence(timeout: 5), "Switch for '\(zone)' not found after soft-delete")
+        XCTAssertEqual(zoneSwitch.value as? String, "0",
                        "Zone toggle should be OFF after soft-delete (history exists)")
 
         navigateBack(from: "Manage Locations", to: "Settings")

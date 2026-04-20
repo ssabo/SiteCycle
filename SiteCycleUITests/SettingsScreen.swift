@@ -36,8 +36,6 @@ struct SettingsScreen {
         link.tap()
     }
 
-    // Uses XCUIElement.increment() — the standard way to advance a stepper on iOS,
-    // more reliable than looking for child "Increment" buttons in SwiftUI's a11y tree.
     func incrementTargetDuration() {
         let stepper = targetDurationStepper
         XCTAssertTrue(stepper.waitForExistence(timeout: 5), "targetDurationStepper not found")

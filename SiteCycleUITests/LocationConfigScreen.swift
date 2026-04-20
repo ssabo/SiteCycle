@@ -12,8 +12,6 @@ struct LocationConfigScreen {
         addCustomZoneButton.waitForExistence(timeout: timeout)
     }
 
-    // SwiftUI Toggle inside a List may expose its identifier on a container
-    // rather than the underlying UISwitch — use descendants to find it reliably.
     func zoneToggle(_ zone: String) -> XCUIElement {
         app.descendants(matching: .any)
             .matching(identifier: "locationConfig.toggle.\(zone)")
@@ -24,6 +22,10 @@ struct LocationConfigScreen {
         app.descendants(matching: .any)
             .matching(identifier: "locationConfig.row.\(zone)")
             .firstMatch
+    }
+
+    func zoneSwitch(_ zone: String) -> XCUIElement {
+        zoneRow(zone).switches.firstMatch
     }
 
     func tapAddCustomZone() {
