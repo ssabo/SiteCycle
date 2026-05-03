@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import SwiftData
 import WatchConnectivity
+import WidgetKit
 
 @MainActor
 @Observable
@@ -22,13 +23,16 @@ final class PhoneConnectivityManager: NSObject {
     }
 
     func pushCurrentState() {
-        guard let modelContext, let session, session.activationState == .activated else { return }
+        guard let modelContext else { return }
         let state = Self.buildWatchAppState(context: modelContext)
-        guard let data = state.encode() else { return }
-        let payload: [String: Any] = [WatchConnectivityConstants.stateKey: data]
-        try? session.updateApplicationContext(payload)
 
         writeStateToAppGroup(state)
+        WidgetCenter.shared.reloadAllTimelines()
+
+        guard let session, session.activationState == .activated,
+              let data = state.encode() else { return }
+        let payload: [String: Any] = [WatchConnectivityConstants.stateKey: data]
+        try? session.updateApplicationContext(payload)
     }
 
     // MARK: - Build State

@@ -86,6 +86,9 @@
 		8A0000000000000000000180 /* AddCustomZoneScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000080 /* AddCustomZoneScreen.swift */; };
 		8A0000000000000000000181 /* SettingsFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000081 /* SettingsFlowTests.swift */; };
 		8A0000000000000000000182 /* LocationManagementFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000082 /* LocationManagementFlowTests.swift */; };
+		8A0000000000000000000190 /* SiteCycleWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000090 /* SiteCycleWidgets.swift */; };
+		8A0000000000000000000191 /* WatchAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000003E /* WatchAppState.swift */; };
+		8A0000000000000000000192 /* SiteCycleWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000093 /* SiteCycleWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,6 +120,13 @@
 			remoteGlobalIDString = 8A0000000000000000000401;
 			remoteInfo = SiteCycle;
 		};
+		8A0000000000000000000814 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A0000000000000000000501 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A0000000000000000000450;
+			remoteInfo = SiteCycleWidgets;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -140,6 +150,17 @@
 				8A000000000000000000014A /* SiteCycleWatchWidgets.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A0000000000000000000305 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8A0000000000000000000192 /* SiteCycleWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -230,6 +251,10 @@
 		8A0000000000000000000080 /* AddCustomZoneScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddCustomZoneScreen.swift; sourceTree = "<group>"; };
 		8A0000000000000000000081 /* SettingsFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsFlowTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000082 /* LocationManagementFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManagementFlowTests.swift; sourceTree = "<group>"; };
+		8A0000000000000000000090 /* SiteCycleWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleWidgets.swift; sourceTree = "<group>"; };
+		8A0000000000000000000091 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8A0000000000000000000092 /* SiteCycleWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWidgets.entitlements; sourceTree = "<group>"; };
+		8A0000000000000000000093 /* SiteCycleWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiteCycleWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -268,6 +293,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A0000000000000000000351 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -278,6 +310,7 @@
 				8A0000000000000000000202 /* SiteCycle */,
 				8A0000000000000000000220 /* SiteCycleWatch */,
 				8A0000000000000000000230 /* SiteCycleWatchWidgets */,
+				8A0000000000000000000250 /* SiteCycleWidgets */,
 				8A0000000000000000000210 /* SiteCycleTests */,
 				8A0000000000000000000240 /* SiteCycleUITests */,
 				8A0000000000000000000208 /* Products */,
@@ -367,6 +400,7 @@
 				8A0000000000000000000049 /* SiteCycleUITests.xctest */,
 				8A0000000000000000000038 /* SiteCycleWatch.app */,
 				8A000000000000000000003C /* SiteCycleWatchWidgets.appex */,
+				8A0000000000000000000093 /* SiteCycleWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -490,6 +524,16 @@
 			path = SiteCycleWatchWidgets;
 			sourceTree = "<group>";
 		};
+		8A0000000000000000000250 /* SiteCycleWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				8A0000000000000000000090 /* SiteCycleWidgets.swift */,
+				8A0000000000000000000091 /* Info.plist */,
+				8A0000000000000000000092 /* SiteCycleWidgets.entitlements */,
+			);
+			path = SiteCycleWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -501,11 +545,13 @@
 				8A0000000000000000000302 /* Frameworks */,
 				8A0000000000000000000303 /* Resources */,
 				8A0000000000000000000304 /* Embed Watch Content */,
+				8A0000000000000000000305 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				8A0000000000000000000822 /* PBXTargetDependency */,
+				8A0000000000000000000824 /* PBXTargetDependency */,
 			);
 			name = SiteCycle;
 			productName = SiteCycle;
@@ -584,6 +630,22 @@
 			productReference = 8A0000000000000000000049 /* SiteCycleUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		8A0000000000000000000450 /* SiteCycleWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A0000000000000000000650 /* Build configuration list for PBXNativeTarget "SiteCycleWidgets" */;
+			buildPhases = (
+				8A0000000000000000000350 /* Sources */,
+				8A0000000000000000000351 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SiteCycleWidgets;
+			productName = SiteCycleWidgets;
+			productReference = 8A0000000000000000000093 /* SiteCycleWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -611,6 +673,9 @@
 						CreatedOnToolsVersion = 26.0;
 						TestTargetID = 8A0000000000000000000401;
 					};
+					8A0000000000000000000450 = {
+						CreatedOnToolsVersion = 26.0;
+					};
 				};
 			};
 			buildConfigurationList = 8A0000000000000000000601 /* Build configuration list for PBXProject "SiteCycle" */;
@@ -631,6 +696,7 @@
 				8A0000000000000000000440 /* SiteCycleUITests */,
 				8A0000000000000000000420 /* SiteCycleWatch */,
 				8A0000000000000000000430 /* SiteCycleWatchWidgets */,
+				8A0000000000000000000450 /* SiteCycleWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -786,6 +852,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A0000000000000000000350 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A0000000000000000000190 /* SiteCycleWidgets.swift in Sources */,
+				8A0000000000000000000191 /* WatchAppState.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -808,6 +883,11 @@
 			isa = PBXTargetDependency;
 			target = 8A0000000000000000000401 /* SiteCycle */;
 			targetProxy = 8A0000000000000000000813 /* PBXContainerItemProxy */;
+		};
+		8A0000000000000000000824 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8A0000000000000000000450 /* SiteCycleWidgets */;
+			targetProxy = 8A0000000000000000000814 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1190,6 +1270,66 @@
 			};
 			name = Release;
 		};
+		8A0000000000000000000750 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = SiteCycleWidgets/SiteCycleWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G58SM6WLX7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycleWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Site Status";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8A0000000000000000000751 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = SiteCycleWidgets/SiteCycleWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G58SM6WLX7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycleWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Site Status";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(SITECYCLE_BUNDLE_PREFIX).app.widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1243,6 +1383,15 @@
 			buildConfigurations = (
 				8A0000000000000000000740 /* Debug */,
 				8A0000000000000000000741 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A0000000000000000000650 /* Build configuration list for PBXNativeTarget "SiteCycleWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A0000000000000000000750 /* Debug */,
+				8A0000000000000000000751 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
