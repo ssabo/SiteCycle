@@ -55,13 +55,19 @@ struct WatchHomeView: View {
         color: Color
     ) -> some View {
         ZStack {
+            // Strokes paint centered on the path, so inset each circle by half
+            // the line width to keep the ring inside the frame — otherwise the
+            // overhang is clipped when the location label below is narrower
+            // than the painted ring.
             Circle()
                 .stroke(Color.gray.opacity(0.3), lineWidth: 8)
+                .padding(4)
 
             Circle()
                 .trim(from: 0, to: min(CGFloat(fraction), 1.0))
                 .stroke(color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .padding(4)
 
             VStack(spacing: 2) {
                 Text(formatElapsed(elapsed))
@@ -72,7 +78,7 @@ struct WatchHomeView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 110, height: 110)
+        .frame(width: 118, height: 118)
     }
 
     private func locationLabel(viewModel: WatchHomeViewModel) -> some View {
