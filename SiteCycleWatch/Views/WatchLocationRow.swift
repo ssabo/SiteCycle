@@ -3,6 +3,7 @@ import SwiftUI
 struct WatchLocationRow: View {
     let location: LocationInfo
     let category: LocationCategory
+    let now: Date
 
     var body: some View {
         HStack(spacing: 4) {
@@ -35,7 +36,7 @@ struct WatchLocationRow: View {
 
     private var daysAgoText: String {
         guard let date = location.lastUsedDate else { return "Never used" }
-        let days = Calendar.current.dateComponents([.day], from: date, to: Date()).day ?? 0
+        let days = Calendar.current.dateComponents([.day], from: date, to: now).day ?? 0
         if days == 0 { return "Today" }
         if days == 1 { return "1 day ago" }
         return "\(days) days ago"
