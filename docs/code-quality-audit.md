@@ -44,6 +44,7 @@ Findings reported by multiple reviewers independently are merged and noted.
   - [Xcode project](#xcode-project)
   - [Repo & docs](#repo--docs)
 - [Suggested sequencing (if/when you act)](#suggested-sequencing-ifwhen-you-act)
+- [Addendum — refresh-model decision (post-review)](#addendum--refresh-model-decision-post-review)
 
 ---
 
@@ -125,10 +126,12 @@ bodyPart migration into a custom stage; add unit tests for the migration (curren
   (`SiteCycleApp.swift:92-93`); a second device's first sync shows 28 locations (and feeds duplicates
   to the watch — see C4) until next launch.
 
-**Fix:** `CloudKitSyncViewModel.applyEvent` (`CloudKitSyncViewModel.swift:314-317`) already knows when
-an import succeeds — trigger VM re-fetches and the dedupe pass there. Longer term, consider
-`@Query`-driven views for entry data (current Apple-ecosystem guidance trends this way precisely
-because it eliminates the manual-refresh web).
+**Fix:** two independent halves. The dedupe pass should run on successful import events —
+`CloudKitSyncViewModel.applyEvent` (`CloudKitSyncViewModel.swift:314-317`) already knows when one
+completes — and is needed regardless of anything else. The UI-staleness half is resolved
+structurally by the decided `@Query` migration (see
+[Addendum](#addendum--refresh-model-decision-post-review)); `@Query`-driven views re-render on
+CloudKit imports automatically.
 
 ### P2-2. Zone enable/disable toggle never saves or pushes to the watch
 `SiteCycle/Views/LocationConfigView.swift:156-163`
@@ -145,7 +148,10 @@ disabled locations. **Fix:** hoist the mutation into a method that saves and pus
   it in Settings has no effect until relaunch. For a medical-adjacent alert this silently ignores
   the user's configured threshold. (Contrast `HomeView.swift:31-33`, which handles its setting.)
 
-**Fix:** unconditional `refresh()` on appear + `.onChange(of: absorptionAlertThreshold)`.
+**Fix:** resolved by construction under the decided `@Query` migration (see
+[Addendum](#addendum--refresh-model-decision-post-review)) — `@Query` data is live, and
+`@AppStorage` read in the view is reactive. The tactical fix (unconditional `refresh()` on appear +
+`.onChange(of: absorptionAlertThreshold)`) is worth applying only if the migration slips.
 
 ### P2-4. Watch→phone command path can log duplicate site changes
 `WatchConnectivityManager.swift:33-41`, `PhoneConnectivityManager.swift:76-90`
@@ -359,15 +365,64 @@ the home for shared display formatting, thresholds, and side ordering. Extract a
 
 **Bucket B — systemic fixes (each is a focused PR):**
 
-6. C2 error-surfacing pass over all `try? save()` sites
-7. P2-1/P2-4: react to CloudKit import events (refresh + dedupe) and dedupe watch commands
-8. P2-2/P2-3: zone-toggle save/push + Statistics refresh/onChange
+6. C2 error-surfacing pass over all `try? save()` sites (write paths — unaffected by the `@Query`
+   migration, keep separate)
+7. P2-1/P2-4: run the dedupe pass on CloudKit import events; dedupe watch commands by `requestedAt`
+8. P2-2: zone-toggle save + watch push (P2-3 and P2-1's UI-staleness half are instead resolved by
+   item 10)
 9. C5 `VersionedSchema` + migration tests
 
 **Bucket C — structural investment:**
 
-10. Shared presentation helpers in `WatchAppState.swift` (names, thresholds, days-ago, ring)
-11. Consistent refresh convention or `@Query` adoption; extract `LocationConfigViewModel`
+10. **`@Query` migration (decided — see
+    [Addendum](#addendum--refresh-model-decision-post-review)):** full migration of read paths,
+    staged as 3–4 sequential PRs (History → Home + site selection → Statistics), with VM logic
+    extracted into pure functions and tests reshaped in lockstep; extract `LocationConfigViewModel`
+    as part of the same effort
+11. Shared presentation helpers in `WatchAppState.swift` (names, thresholds, days-ago, ring)
 12. Accessibility pass (P2-7); String Catalog if localization is wanted
 13. Test-suite hardening (shared `makeContainer`, de-tautologize LocationConfigTests, watch/widget
     logic relocation, CSV edge tests)
+
+---
+
+## Addendum — refresh-model decision (post-review)
+
+Recorded after reviewing the audit, so the report reflects the agreed direction rather than open
+options.
+
+**Decision: migrate all read paths to SwiftData's native `@Query` — no third-party framework — as
+a full migration, not opportunistic adoption.** Third-party alternatives (TCA, GRDB/SQLiteData,
+Boutique) were considered and rejected: each either rewrites the architecture or replaces the
+persistence layer (forfeiting the CloudKit integration), and all break the project's deliberate
+zero-external-dependencies stance. The staleness bugs exist because one-shot `fetch()` calls inside
+view models opt out of SwiftData's built-in change observation, not because the platform lacks a
+reactive mechanism.
+
+**Why full rather than gradual** — the scale doesn't justify maintaining two patterns:
+
+- The data-fetching view models total **418 lines** (HomeViewModel 37, HistoryViewModel 79,
+  SiteChangeViewModel 124, StatisticsViewModel 178). `CloudKitSyncViewModel` (364 lines) is out of
+  scope — it monitors sync state, not data, and is unchanged either way.
+- The bulk of the effort is **test reshaping, not production code**: ~2,100 lines of VM tests
+  across 9 files move to pure-function tests (recommendation ranking, statistics aggregation,
+  filtering take fetched arrays as input). Those tests get simpler — most no longer need an
+  in-memory container — and the extraction is the same one Priority 4 already recommends.
+- One honest caveat: `@Query` unifies **reads only**. Writes (logging, edits, deletes, seeding,
+  CSV import) still need a thin `ModelContext` write layer; `SiteChangeViewModel` splits into a
+  `@Query`-plus-pure-function read side and a write operation. The result is one coherent
+  convention, not zero non-view code.
+
+**Staging:** land as 3–4 sequential PRs (History → Home + site selection → Statistics) over a
+short window rather than one commit — UI-test coverage is uneven (Statistics has zero UI tests and
+zero accessibility identifiers), and per-screen PRs keep failures bisectable. Sequence after
+Bucket A so bug fixes don't entangle with the refactor.
+
+**Effects on the findings above:**
+
+- **Fixed by construction:** P2-1's UI-staleness half, P2-3 entirely (stale tab and ignored
+  threshold), and the Priority 3 "optional-`@State`-VM scaffold replicated in 6 views" smell.
+- **Still required independently:** dedupe-on-import (P2-1), watch-command dedupe (P2-4),
+  zone-toggle save + push (P2-2), and the C2 error-surfacing pass (write paths).
+- **Superseded:** the interim "central refresh trigger" idea (VMs observing
+  `ModelContext.didSave`/import events). Use it only if the migration is shelved.
