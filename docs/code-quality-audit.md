@@ -12,6 +12,39 @@ widget extension, and test suites), conducted by five parallel specialized revie
 **No code was changed.** Each finding lists severity, location, and a recommended fix.
 Findings reported by multiple reviewers independently are merged and noted.
 
+## Table of contents
+
+- [Executive summary](#executive-summary)
+- [Priority 1 — Critical (data loss, crashes, submission blockers)](#priority-1--critical-data-loss-crashes-submission-blockers)
+  - [C1. CSV import destroys all user data before validating rows](#c1-csv-import-destroys-all-user-data-before-validating-rows)
+  - [C2. Silent save failures throughout the persistence layer](#c2-silent-save-failures-throughout-the-persistence-layer)
+  - [C3. No privacy manifest — App Store submission blocker](#c3-no-privacy-manifest--app-store-submission-blocker)
+  - [C4. Latent watch crash on duplicate location IDs](#c4-latent-watch-crash-on-duplicate-location-ids)
+  - [C5. No SwiftData schema versioning](#c5-no-swiftdata-schema-versioning-versionedschema--schemamigrationplan)
+- [Priority 2 — High (user-visible bugs, stale data, sync gaps)](#priority-2--high-user-visible-bugs-stale-data-sync-gaps)
+  - [P2-1. CloudKit-imported changes never reach the UI; dedupe only runs at launch](#p2-1-cloudkit-imported-changes-never-reach-the-ui-dedupe-only-runs-at-launch)
+  - [P2-2. Zone enable/disable toggle never saves or pushes to the watch](#p2-2-zone-enabledisable-toggle-never-saves-or-pushes-to-the-watch)
+  - [P2-3. StatisticsView shows stale data after first visit; ignores settings changes](#p2-3-statisticsview-shows-stale-data-after-first-visit-ignores-settings-changes)
+  - [P2-4. Watch→phone command path can log duplicate site changes](#p2-4-watchphone-command-path-can-log-duplicate-site-changes)
+  - [P2-5. CSV round-trip silently corrupts data in several ways](#p2-5-csv-round-trip-silently-corrupts-data-in-several-ways)
+  - [P2-6. CloudKitSyncViewModel lifecycle leaks](#p2-6-cloudkitsyncviewmodel-lifecycle-leaks)
+  - [P2-7. Core guidance invisible to VoiceOver and color-blind users](#p2-7-core-guidance-invisible-to-voiceover-and-color-blind-users)
+  - [P2-8. App Review / compliance posture for a health app](#p2-8-app-review--compliance-posture-for-a-health-app)
+- [Priority 3 — Medium (architecture, duplication, performance)](#priority-3--medium-architecture-duplication-performance)
+  - [Code structure & duplication](#code-structure--duplication)
+  - [Performance & correctness](#performance--correctness)
+  - [Modern-API & platform adoption](#modern-api--platform-adoption)
+- [Priority 4 — Test suite](#priority-4--test-suite)
+  - [Coverage gaps (worst first)](#coverage-gaps-worst-first)
+  - [Weak / brittle existing tests](#weak--brittle-existing-tests)
+  - [Infrastructure](#infrastructure)
+- [Priority 5 — Project hygiene & CI](#priority-5--project-hygiene--ci)
+  - [CI/CD](#cicd)
+  - [SwiftLint](#swiftlint)
+  - [Xcode project](#xcode-project)
+  - [Repo & docs](#repo--docs)
+- [Suggested sequencing (if/when you act)](#suggested-sequencing-ifwhen-you-act)
+
 ---
 
 ## Executive summary
@@ -105,6 +138,7 @@ disabled locations. **Fix:** hoist the mutation into a method that saves and pus
 
 ### P2-3. StatisticsView shows stale data after first visit; ignores settings changes
 `SiteCycle/Views/StatisticsView.swift:23-32`, `StatisticsViewModel.swift:27`
+
 - `refresh()` only runs when the VM is first created; returning to the tab after logging/editing
   shows old charts (the empty state can even persist after the first entry).
 - `absorptionAlertThreshold` is read once into a `let` at VM creation with no `.onChange` — changing
@@ -122,6 +156,7 @@ dead code — never read on the phone. **Fix:** dedupe in `processCommand` by `r
 
 ### P2-5. CSV round-trip silently corrupts data in several ways
 `CSVImporter.swift:177-179, 207-268`, `CSVExporter.swift:47`
+
 - Non-numeric duration → `endTime` silently nil → row imports as an extra **active** entry
   (multiple such rows = multiple concurrent actives). Untested.
 - Import wipes and recreates only locations referenced in entries: unused/disabled/custom locations
@@ -145,6 +180,7 @@ unused teardown path deliberately.
 ### P2-7. Core guidance invisible to VoiceOver and color-blind users
 `HomeView.swift:155-176, 254-258`, `SiteSelectionSheet.swift:115-129`, `WatchLocationRow.swift:45-59`,
 `StatisticsView.swift:60, 192`, widget views
+
 - Overdue state is conveyed by ring color only; the ring has no `accessibilityLabel`/`Value`.
 - Recommended/avoid badges are color-coded icons with no accessibility labels — VoiceOver users
   never hear the app's core recommendation.
@@ -313,6 +349,7 @@ the home for shared display formatting, thresholds, and side ordering. Extract a
 ## Suggested sequencing (if/when you act)
 
 **Bucket A — do first (small, high-impact, independent):**
+
 1. C4 one-line watch crash fix (`uniquingKeysWith:`)
 2. C1 CSV import: validate-before-delete
 3. C3 privacy manifests (3 small plist files)
@@ -321,12 +358,14 @@ the home for shared display formatting, thresholds, and side ordering. Extract a
 5. Fix CI.md's phantom tag trigger + secrets table
 
 **Bucket B — systemic fixes (each is a focused PR):**
+
 6. C2 error-surfacing pass over all `try? save()` sites
 7. P2-1/P2-4: react to CloudKit import events (refresh + dedupe) and dedupe watch commands
 8. P2-2/P2-3: zone-toggle save/push + Statistics refresh/onChange
 9. C5 `VersionedSchema` + migration tests
 
 **Bucket C — structural investment:**
+
 10. Shared presentation helpers in `WatchAppState.swift` (names, thresholds, days-ago, ring)
 11. Consistent refresh convention or `@Query` adoption; extract `LocationConfigViewModel`
 12. Accessibility pass (P2-7); String Catalog if localization is wanted
