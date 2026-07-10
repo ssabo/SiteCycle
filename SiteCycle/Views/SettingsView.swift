@@ -6,6 +6,8 @@ struct SettingsView: View {
     @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
     @AppStorage("absorptionAlertThreshold") private var absorptionAlertThreshold: Int = 20
+    @AppStorage(RecommendationStrategy.storageKey)
+    private var recommendationStrategyRaw: String = RecommendationStrategy.bySite.rawValue
     @State private var csvFileURL: URL?
     @State private var showingShareSheet = false
     @State private var showingImportWarning = false
@@ -16,6 +18,9 @@ struct SettingsView: View {
         Form { formSections }
             .navigationTitle("Settings")
             .onChange(of: targetDurationHours) {
+                connectivityManager.pushCurrentState()
+            }
+            .onChange(of: recommendationStrategyRaw) {
                 connectivityManager.pushCurrentState()
             }
             .background(
@@ -78,6 +83,21 @@ struct SettingsView: View {
                 }
             }
             .accessibilityIdentifier("settings.absorptionThresholdStepper")
+
+            Picker(selection: $recommendationStrategyRaw) {
+                ForEach(RecommendationStrategy.allCases) { strategy in
+                    Text(strategy.displayName).tag(strategy.rawValue)
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Recommendation Mode")
+                    Text(recommendationModeDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("settings.recommendationMode.value")
+                }
+            }
+            .accessibilityIdentifier("settings.recommendationModePicker")
         }
 
         Section("Data") {
@@ -101,6 +121,15 @@ struct SettingsView: View {
                 Text(appVersion)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private var recommendationModeDescription: String {
+        switch RecommendationStrategy(rawValue: recommendationStrategyRaw) ?? .bySite {
+        case .bySite:
+            return "Rotate among individual sites"
+        case .byBodyPart:
+            return "Rotate among body parts, using each part's oldest site"
         }
     }
 
