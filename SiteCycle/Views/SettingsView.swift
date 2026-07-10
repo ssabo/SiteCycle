@@ -129,7 +129,7 @@ struct SettingsView: View {
         case .bySite:
             return "Rotate among individual sites"
         case .byBodyPart:
-            return "Rotate among body parts, using each part's oldest site"
+            return "Let each body part rest between uses, even across nearby sites"
         }
     }
 

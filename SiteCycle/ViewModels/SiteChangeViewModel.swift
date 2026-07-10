@@ -13,7 +13,9 @@ enum RecommendationStrategy: String, CaseIterable, Identifiable {
     /// 3 least recently used individual sites.
     case bySite
     /// 3 least recently used body-part groups (bodyPart + side); the least
-    /// recently used site within each group is recommended.
+    /// recently used site within each group is recommended. Gives an entire
+    /// body part a cooling-off period between uses even when the sites differ —
+    /// e.g. prevents "L Thigh (Front)" right after "L Thigh (Side)".
     case byBodyPart
 
     static let storageKey = "recommendationStrategy"
@@ -126,7 +128,9 @@ final class SiteChangeViewModel {
 
     /// Groups by (bodyPart, side), ranks groups least-recently-used first (group recency =
     /// most recent use across its sites; never-used groups sort oldest), then recommends the
-    /// least recently used site within each of the stalest groups.
+    /// least recently used site within each of the stalest groups. Ranking by the group's
+    /// *most* recent use is what enforces the cooling-off: any use of a body part pushes the
+    /// whole part down the list, so its sibling sites aren't offered in quick succession.
     private static func byBodyPartRecommended(
         locations: [Location],
         avoidIds: Set<UUID>

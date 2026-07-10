@@ -61,7 +61,7 @@ Tab-based: Home, History, Statistics. Settings is accessible via a gear icon in 
 The site selection sheet shows two sections — **Recommended** and **All Locations**:
 - **Recommended section:** depends on the `RecommendationStrategy` setting (`@AppStorage("recommendationStrategy")`, default `bySite`):
   - **By Site** (default): 3 least recently used / never-used locations (most recovery time)
-  - **By Body Part:** locations are grouped by (bodyPart, side); the 3 least recently used groups are chosen (group recency = most recent use across its sites; never-used groups sort as oldest), and the least recently used site within each group is recommended (never-used sites first, ties by lowest `sortOrder`)
+  - **By Body Part:** locations are grouped by (bodyPart, side); the 3 least recently used groups are chosen (group recency = most recent use across its sites; never-used groups sort as oldest), and the least recently used site within each group is recommended (never-used sites first, ties by lowest `sortOrder`). The point of this mode is to give an entire body part a cooling-off period between uses even when the specific sites differ — e.g. it prevents "L Thigh (Front)" being used immediately after "L Thigh (Side)", which by-site rotation would allow
 - **All Locations section:** Every enabled location sorted by most-recent-use, with inline badges — orange warning for the 3 most recently used (avoid), green checkmark for recommended
 - The avoid list is always site-based (3 most recently used individual sites) in both strategies; avoid and recommended never overlap
 - Never-used locations sort as oldest (always recommended until used)
