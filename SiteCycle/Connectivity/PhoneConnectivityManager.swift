@@ -35,12 +35,14 @@ final class PhoneConnectivityManager: NSObject {
 
     static func buildWatchAppState(
         context: ModelContext,
-        strategy: RecommendationStrategy = RecommendationStrategy.load()
+        strategy: RecommendationStrategy = RecommendationStrategy.load(),
+        cooldownCount: Int = RecommendationStrategy.loadCooldownCount()
     ) -> WatchAppState {
         let locations = fetchEnabledLocations(context: context)
         let recommendations = SiteChangeViewModel.computeRecommendations(
             locations: locations,
-            strategy: strategy
+            strategy: strategy,
+            cooldownCount: cooldownCount
         )
         let activeEntry = fetchActiveEntry(context: context)
 

@@ -17,8 +17,17 @@ enum RecommendationStrategy: String, CaseIterable, Identifiable {
     /// body part a cooling-off period between uses even when the sites differ —
     /// e.g. prevents "L Thigh (Front)" right after "L Thigh (Side)".
     case byBodyPart
+    /// Per-site least recently used, but any site whose (bodyPart, side) group
+    /// was used within the last `cooldownCount` site changes sorts below all
+    /// sites from groups that were not — deprioritized, never excluded, so
+    /// recommendations stay non-empty. Fixes byBodyPart over-using sites on
+    /// body parts with few sites.
+    case byBodyPartCooldown
 
     static let storageKey = "recommendationStrategy"
+    static let cooldownCountKey = "bodyPartCooldownCount"
+    static let defaultCooldownCount = 2
+    static let cooldownCountRange = 1...10
 
     var id: String { rawValue }
 
@@ -26,6 +35,7 @@ enum RecommendationStrategy: String, CaseIterable, Identifiable {
         switch self {
         case .bySite: return "By Site"
         case .byBodyPart: return "By Body Part"
+        case .byBodyPartCooldown: return "Body Part Cooldown"
         }
     }
 
@@ -35,6 +45,13 @@ enum RecommendationStrategy: String, CaseIterable, Identifiable {
             return .bySite
         }
         return strategy
+    }
+
+    /// `integer(forKey:)` returns 0 for a missing key, which would clamp to the
+    /// range minimum instead of the default — read via `object(forKey:)` instead.
+    static func loadCooldownCount(from defaults: UserDefaults = .standard) -> Int {
+        let stored = defaults.object(forKey: cooldownCountKey) as? Int ?? defaultCooldownCount
+        return min(max(stored, cooldownCountRange.lowerBound), cooldownCountRange.upperBound)
     }
 }
 
@@ -64,7 +81,8 @@ final class SiteChangeViewModel {
         let locations = (try? modelContext.fetch(descriptor)) ?? []
         recommendations = Self.computeRecommendations(
             locations: locations,
-            strategy: RecommendationStrategy.load()
+            strategy: RecommendationStrategy.load(),
+            cooldownCount: RecommendationStrategy.loadCooldownCount()
         )
         activeSiteEntry = SiteChangeEntry.fetchActive(in: modelContext)
     }
@@ -72,11 +90,12 @@ final class SiteChangeViewModel {
     /// Sorts locations by most-recent-use descending, then splits into avoid/recommended lists.
     static func computeRecommendations(
         locations: [Location],
-        strategy: RecommendationStrategy = .bySite
+        strategy: RecommendationStrategy = .bySite,
+        cooldownCount: Int = RecommendationStrategy.defaultCooldownCount
     ) -> SiteRecommendations {
         let sorted = sortedByRecencyDescending(locations)
 
-        // Avoid: up to 3 most recently used (only those with history) — site-based in both modes
+        // Avoid: up to 3 most recently used (only those with history) — site-based in all modes
         let usedLocations = sorted.filter { !$0.safeEntries.isEmpty }
         let avoid = Array(usedLocations.prefix(3))
         let avoidIds = Set(avoid.map(\.id))
@@ -89,6 +108,12 @@ final class SiteChangeViewModel {
             recommended = Array(candidates.suffix(3).reversed())
         case .byBodyPart:
             recommended = byBodyPartRecommended(locations: locations, avoidIds: avoidIds)
+        case .byBodyPartCooldown:
+            recommended = cooldownRecommended(
+                locations: locations,
+                avoidIds: avoidIds,
+                cooldownCount: cooldownCount
+            )
         }
 
         // All locations sorted by sortOrder, with left before right within same zone
@@ -122,8 +147,26 @@ final class SiteChangeViewModel {
         let side: String?
     }
 
+    private static func groupKey(_ location: Location) -> BodyPartGroupKey {
+        BodyPartGroupKey(bodyPart: location.bodyPart, side: location.side)
+    }
+
     private static func lastUsed(_ location: Location) -> Date? {
         location.safeEntries.map(\.startTime).max()
+    }
+
+    /// Never-used first, then oldest last use; ties broken by lowest sortOrder.
+    private static func isLessRecentlyUsed(_ lhs: Location, _ rhs: Location) -> Bool {
+        switch (lastUsed(lhs), lastUsed(rhs)) {
+        case (.some(let d1), .some(let d2)) where d1 != d2:
+            return d1 < d2
+        case (.none, .some):
+            return true
+        case (.some, .none):
+            return false
+        default:
+            return lhs.sortOrder < rhs.sortOrder
+        }
     }
 
     /// Groups by (bodyPart, side), ranks groups least-recently-used first (group recency =
@@ -162,25 +205,38 @@ final class SiteChangeViewModel {
         return result
     }
 
-    /// The least recently used site in a group: never-used first, then oldest last use;
-    /// ties broken by lowest sortOrder. Avoid-listed sites are never picked.
+    /// The least recently used site in a group. Avoid-listed sites are never picked.
     private static func leastRecentlyUsedSite(
         in group: [Location],
         excluding avoidIds: Set<UUID>
     ) -> Location? {
         group.filter { !avoidIds.contains($0.id) }
-            .min { lhs, rhs in
-                switch (lastUsed(lhs), lastUsed(rhs)) {
-                case (.some(let d1), .some(let d2)) where d1 != d2:
-                    return d1 < d2
-                case (.none, .some):
-                    return true
-                case (.some, .none):
-                    return false
-                default:
-                    return lhs.sortOrder < rhs.sortOrder
-                }
-            }
+            .min(by: isLessRecentlyUsed)
+    }
+
+    /// Groups touched by any of the last `count` site changes across the given locations.
+    private static func hotGroups(in locations: [Location], count: Int) -> Set<BodyPartGroupKey> {
+        let stamped = locations.flatMap { location in
+            location.safeEntries.map { (startTime: $0.startTime, key: groupKey(location)) }
+        }
+        let recent = stamped.sorted { $0.startTime > $1.startTime }.prefix(max(0, count))
+        return Set(recent.map(\.key))
+    }
+
+    /// Per-site LRU, but sites whose (bodyPart, side) group was used within the last
+    /// `cooldownCount` site changes sort below all sites from groups that were not.
+    /// Hot sites are demoted, never excluded, so recommendations stay non-empty; when
+    /// every group is hot the ordering degrades gracefully to plain per-site LRU.
+    private static func cooldownRecommended(
+        locations: [Location],
+        avoidIds: Set<UUID>,
+        cooldownCount: Int
+    ) -> [Location] {
+        let hot = hotGroups(in: locations, count: cooldownCount)
+        let candidates = locations.filter { !avoidIds.contains($0.id) }
+        let cool = candidates.filter { !hot.contains(groupKey($0)) }.sorted(by: isLessRecentlyUsed)
+        let cooled = candidates.filter { hot.contains(groupKey($0)) }.sorted(by: isLessRecentlyUsed)
+        return Array((cool + cooled).prefix(3))
     }
 
     private static func sideOrder(_ side: String?) -> Int {

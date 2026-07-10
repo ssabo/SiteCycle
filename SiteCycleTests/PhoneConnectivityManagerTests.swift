@@ -86,6 +86,35 @@ struct PhoneConnectivityManagerTests {
         #expect(state.avoidIds.isEmpty)
     }
 
+    @Test func buildWatchAppStateRespectsCooldownStrategy() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        let abdomenFront = Location(bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0)
+        let abdomenBack = Location(bodyPart: "Abdomen", subArea: "Back", side: "left", sortOrder: 1)
+        let thigh = Location(bodyPart: "Thigh", subArea: "Front", side: "left", sortOrder: 2)
+        let arm = Location(bodyPart: "Arm", subArea: "Back", side: "left", sortOrder: 3)
+        context.insert(abdomenFront)
+        context.insert(abdomenBack)
+        context.insert(thigh)
+        context.insert(arm)
+
+        let entry = SiteChangeEntry(startTime: Date(), location: abdomenFront)
+        context.insert(entry)
+        try context.save()
+
+        let state = PhoneConnectivityManager.buildWatchAppState(
+            context: context,
+            strategy: .byBodyPartCooldown,
+            cooldownCount: 1
+        )
+
+        // Abdomen is hot, so the never-used abdomenBack is demoted behind the
+        // never-used sites of untouched groups despite its lower sortOrder.
+        #expect(state.recommendedIds == [thigh.id, arm.id, abdomenBack.id])
+        #expect(state.avoidIds == [abdomenFront.id])
+    }
+
     @Test func buildWatchAppStateExcludesDisabledLocations() throws {
         let container = try makeContainer()
         let context = container.mainContext

@@ -8,6 +8,8 @@ struct SettingsView: View {
     @AppStorage("absorptionAlertThreshold") private var absorptionAlertThreshold: Int = 20
     @AppStorage(RecommendationStrategy.storageKey)
     private var recommendationStrategyRaw: String = RecommendationStrategy.bySite.rawValue
+    @AppStorage(RecommendationStrategy.cooldownCountKey)
+    private var bodyPartCooldownCount: Int = RecommendationStrategy.defaultCooldownCount
     @State private var csvFileURL: URL?
     @State private var showingShareSheet = false
     @State private var showingImportWarning = false
@@ -21,6 +23,9 @@ struct SettingsView: View {
                 connectivityManager.pushCurrentState()
             }
             .onChange(of: recommendationStrategyRaw) {
+                connectivityManager.pushCurrentState()
+            }
+            .onChange(of: bodyPartCooldownCount) {
                 connectivityManager.pushCurrentState()
             }
             .background(
@@ -98,6 +103,19 @@ struct SettingsView: View {
                 }
             }
             .accessibilityIdentifier("settings.recommendationModePicker")
+
+            if selectedStrategy == .byBodyPartCooldown {
+                Stepper(value: $bodyPartCooldownCount, in: RecommendationStrategy.cooldownCountRange) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Cooldown Window")
+                        Text("Last \(bodyPartCooldownCount) site \(bodyPartCooldownCount == 1 ? "change" : "changes")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("settings.cooldownWindow.value")
+                    }
+                }
+                .accessibilityIdentifier("settings.cooldownWindowStepper")
+            }
         }
 
         Section("Data") {
@@ -124,12 +142,18 @@ struct SettingsView: View {
         }
     }
 
+    private var selectedStrategy: RecommendationStrategy {
+        RecommendationStrategy(rawValue: recommendationStrategyRaw) ?? .bySite
+    }
+
     private var recommendationModeDescription: String {
-        switch RecommendationStrategy(rawValue: recommendationStrategyRaw) ?? .bySite {
+        switch selectedStrategy {
         case .bySite:
             return "Rotate among individual sites"
         case .byBodyPart:
             return "Let each body part rest between uses, even across nearby sites"
+        case .byBodyPartCooldown:
+            return "Deprioritize body parts used in the last \(bodyPartCooldownCount) site changes"
         }
     }
 
