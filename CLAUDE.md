@@ -68,18 +68,24 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 - Never-used locations sort as oldest (always recommended until used)
 - `SiteChangeViewModel.computeRecommendations(locations:strategy:cooldownCount:)` is a pure static function; callers (`refresh()`, `PhoneConnectivityManager.buildWatchAppState`) read the settings from UserDefaults via `RecommendationStrategy.load()` / `RecommendationStrategy.loadCooldownCount()`
 
-## CI / GitHub Actions
+## CI / CD
 
-Two workflows run on PRs to `main`:
+**Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**
 
-- `.github/workflows/ci.yml` — runs on every push and PR. Steps:
-  1. **SwiftLint** — lints all Swift code with `--strict` mode (covers `SiteCycle/`, `SiteCycleWatch/`, `SiteCycleWatchWidgets/`).
-  2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all unit tests (`SiteCycleTests`).
-  3. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
-- `.github/workflows/ui-tests.yml` — runs on PRs only, **paths-filtered** to app / UI-test / project-file / workflow changes, so docs-only PRs don't burn CI minutes. Runs the `SiteCycleUITests` target serially on a single simulator. See the Testing section below for the non-obvious flags.
+- Xcode Cloud handles build/test/publish via two workflows: **"CI"** (unit tests, UI tests, watch build, and a signing-verification archive — all as parallel actions in one workflow, triggered on every PR to `main`) and **"TestFlight"** (archive + upload, both manually startable and automatic on `main` changes). See [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the full configuration.
+- `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration.
 
-Key CI considerations:
-- Code signing is disabled (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements are absent. Both the iOS and Watch app's `ModelContainer` init have a fallback from `.automatic` to `.none` to handle this — **do not remove the fallbacks**.
+The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback), now that Xcode Cloud covers what they did:
+
+- `.github/workflows/ci.yml` — ran on every push and PR. Jobs (SwiftLint has since moved to `lint.yml` above and was removed from this file):
+  1. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all unit tests (`SiteCycleTests`).
+  2. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
+  3. **Archive (TestFlight dry run)** — see `docs/testflight-setup.md`.
+- `.github/workflows/ui-tests.yml` — ran on PRs only, **paths-filtered** to app / UI-test / project-file / workflow changes, so docs-only PRs didn't burn CI minutes. Ran the `SiteCycleUITests` target serially on a single simulator. See the Testing section below for the non-obvious flags.
+- `.github/workflows/testflight.yml` — see `docs/testflight-setup.md`.
+
+Key CI considerations (apply to both the disabled GitHub Actions workflows and their Xcode Cloud equivalents, since Xcode Cloud's Automatic signing runs full builds — no signing bypass needed there):
+- The GitHub Actions workflows disabled code signing (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements were absent there. Both the iOS and Watch app's `ModelContainer` init have a fallback from `.automatic` to `.none` to handle this — **do not remove the fallbacks**, since Xcode Cloud's non-Archive (Test/Build) actions don't sign either.
 - The test target (`SiteCycleTests`) is **hosted by the app** (`TEST_HOST` is set in the Xcode project). The app must launch successfully for tests to run.
 
 ## Testing
@@ -139,7 +145,7 @@ Full roadmap and remaining steps: **`docs/ui-testing-roadmap.md`**.
 
 ## SwiftLint Rules (CI-enforced)
 
-SwiftLint runs in CI with `--strict` mode (all warnings are errors). Key rules:
+SwiftLint runs in CI (`.github/workflows/lint.yml`) with `--strict` mode (all warnings are errors). Key rules:
 - `large_tuple`: Tuples may have at most 2 members. Use a struct instead.
 - `empty_count` (opt-in, enabled): Use `.isEmpty` instead of `.count == 0`.
 - `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)`.
