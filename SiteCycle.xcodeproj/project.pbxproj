@@ -214,6 +214,8 @@
 		8A0000000000000000000044 /* PhoneConnectivityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnectivityManagerTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000045 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000047 /* SiteCycleConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SiteCycleConfig.xcconfig; sourceTree = "<group>"; };
+		8A0000000000000000000050 /* SiteCycle.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SiteCycle.xctestplan; sourceTree = "<group>"; };
+		8A0000000000000000000051 /* SiteCycleUnitTests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SiteCycleUnitTests.xctestplan; sourceTree = "<group>"; };
 		8A0000000000000000000049 /* SiteCycleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteCycleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A0000000000000000000070 /* SiteCycleUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleUITestCase.swift; sourceTree = "<group>"; };
 		8A0000000000000000000071 /* LaunchSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSmokeTests.swift; sourceTree = "<group>"; };
@@ -279,6 +281,8 @@
 			isa = PBXGroup;
 			children = (
 				8A0000000000000000000047 /* SiteCycleConfig.xcconfig */,
+				8A0000000000000000000050 /* SiteCycle.xctestplan */,
+				8A0000000000000000000051 /* SiteCycleUnitTests.xctestplan */,
 				8A0000000000000000000202 /* SiteCycle */,
 				8A0000000000000000000220 /* SiteCycleWatch */,
 				8A0000000000000000000230 /* SiteCycleWatchWidgets */,

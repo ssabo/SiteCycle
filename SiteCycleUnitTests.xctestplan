@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "8A000000-0000-0000-0000-000000000702",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:SiteCycle.xcodeproj",
+        "identifier" : "8A0000000000000000000410",
+        "name" : "SiteCycleTests"
+      }
+    }
+  ],
+  "version" : 1
+}
