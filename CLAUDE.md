@@ -59,9 +59,14 @@ Tab-based: Home, History, Statistics. Settings is accessible via a gear icon in 
 ### Recommendation Engine (core logic)
 
 The site selection sheet shows two sections — **Recommended** and **All Locations**:
-- **Recommended section:** 3 least recently used / never-used locations (most recovery time)
+- **Recommended section:** depends on the `RecommendationStrategy` setting (`@AppStorage("recommendationStrategy")`, default `bySite`):
+  - **By Site** (default): 3 least recently used / never-used locations (most recovery time)
+  - **By Body Part:** locations are grouped by (bodyPart, side); the 3 least recently used groups are chosen (group recency = most recent use across its sites; never-used groups sort as oldest), and the least recently used site within each group is recommended (never-used sites first, ties by lowest `sortOrder`). The point of this mode is to give an entire body part a cooling-off period between uses even when the specific sites differ — e.g. it prevents "L Thigh (Front)" being used immediately after "L Thigh (Side)", which by-site rotation would allow
+  - **Body Part Cooldown:** per-site least-recently-used, but any site whose (bodyPart, side) group was used within the last N site changes (`@AppStorage("bodyPartCooldownCount")`, default 2, range 1–10; the Settings stepper is only visible in this mode) sorts below all sites from groups that were not. Hot sites are deprioritized, never excluded, so recommendations never go empty; when every group is hot the ordering degrades gracefully to By Site. Note: a never-used site in a hot group sorts below used sites from cool groups (the partition dominates the never-used-first rule). Rationale: By Body Part rotates groups evenly, so a body part with 1 site gets used 3x as often per-site as one with 3 sites; cooldown keeps the rest period without that per-site overuse
 - **All Locations section:** Every enabled location sorted by most-recent-use, with inline badges — orange warning for the 3 most recently used (avoid), green checkmark for recommended
+- The avoid list is always site-based (3 most recently used individual sites) in all strategies; avoid and recommended never overlap
 - Never-used locations sort as oldest (always recommended until used)
+- `SiteChangeViewModel.computeRecommendations(locations:strategy:cooldownCount:)` is a pure static function; callers (`refresh()`, `PhoneConnectivityManager.buildWatchAppState`) read the settings from UserDefaults via `RecommendationStrategy.load()` / `RecommendationStrategy.loadCooldownCount()`
 
 ## CI / GitHub Actions
 
@@ -222,7 +227,7 @@ Reads the same `WatchAppState` from the App Group `UserDefaults` that the watch 
 
 ## Key Design Decisions
 
-- Settings values (target duration, absorption alert threshold) use `@AppStorage` (UserDefaults), not SwiftData.
+- Settings values (target duration, absorption alert threshold, recommendation strategy, body part cooldown count) use `@AppStorage` (UserDefaults), not SwiftData.
 - Logging a new site change automatically closes the previous active entry by setting its `endTime`.
 - Soft-delete for locations with history (set `isEnabled = false`); hard-delete only if no history exists.
 - CloudKit sync is transparent — no account creation, works offline, syncs when connectivity returns.

@@ -5,6 +5,10 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
+    @AppStorage(RecommendationStrategy.storageKey)
+    private var recommendationStrategyRaw: String = RecommendationStrategy.bySite.rawValue
+    @AppStorage(RecommendationStrategy.cooldownCountKey)
+    private var bodyPartCooldownCount: Int = RecommendationStrategy.defaultCooldownCount
     @State private var viewModel: HomeViewModel?
     @State private var siteChangeViewModel: SiteChangeViewModel?
     @State private var showingSiteSheet = false
@@ -30,6 +34,12 @@ struct HomeView: View {
         .onReceive(timer) { now = $0 }
         .onChange(of: targetDurationHours) { _, newValue in
             viewModel?.targetDurationHours = Double(newValue)
+        }
+        .onChange(of: recommendationStrategyRaw) {
+            siteChangeViewModel?.refresh()
+        }
+        .onChange(of: bodyPartCooldownCount) {
+            siteChangeViewModel?.refresh()
         }
         .onChange(of: connectivityManager.lastWatchCommandDate) {
             viewModel?.refreshActiveSite()

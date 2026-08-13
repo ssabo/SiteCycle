@@ -56,31 +56,37 @@ struct WatchSiteSelectionView: View {
     }
 
     private func siteList(viewModel: WatchSiteChangeViewModel) -> some View {
-        List {
-            if !viewModel.recommendedLocations.isEmpty {
-                Section("Recommended") {
-                    ForEach(viewModel.recommendedLocations) { location in
+        // TimelineView keeps the "days ago" labels current — the watch app can
+        // stay resumed for days without any state change to trigger a re-render.
+        TimelineView(.periodic(from: .now, by: 60)) { timeline in
+            List {
+                if !viewModel.recommendedLocations.isEmpty {
+                    Section("Recommended") {
+                        ForEach(viewModel.recommendedLocations) { location in
+                            Button {
+                                confirmingLocation = location
+                            } label: {
+                                WatchLocationRow(
+                                    location: location,
+                                    category: .recommended,
+                                    now: timeline.date
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Section("All Locations") {
+                    ForEach(viewModel.allLocationsSorted) { location in
                         Button {
                             confirmingLocation = location
                         } label: {
                             WatchLocationRow(
                                 location: location,
-                                category: .recommended
+                                category: viewModel.category(for: location),
+                                now: timeline.date
                             )
                         }
-                    }
-                }
-            }
-
-            Section("All Locations") {
-                ForEach(viewModel.allLocationsSorted) { location in
-                    Button {
-                        confirmingLocation = location
-                    } label: {
-                        WatchLocationRow(
-                            location: location,
-                            category: viewModel.category(for: location)
-                        )
                     }
                 }
             }
