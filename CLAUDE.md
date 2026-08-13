@@ -70,18 +70,19 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 
 ## CI / CD
 
-**Active CI is Xcode Cloud** — see [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the current workflows (Unit Tests, UI Tests, Watch Build, TestFlight, Archive Check) and how they're configured.
+**Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**
 
-The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback):
+- Xcode Cloud handles build/test/publish — see [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the current workflows (Unit Tests, UI Tests, Watch Build, TestFlight, Archive Check) and how they're configured.
+- `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration.
 
-- `.github/workflows/ci.yml` — ran on every push and PR. Jobs:
-  1. **SwiftLint** — lints all Swift code with `--strict` mode (covers `SiteCycle/`, `SiteCycleWatch/`, `SiteCycleWatchWidgets/`).
-  2. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all unit tests (`SiteCycleTests`).
-  3. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
+The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback), now that Xcode Cloud covers what they did:
+
+- `.github/workflows/ci.yml` — ran on every push and PR. Jobs (SwiftLint has since moved to `lint.yml` above and was removed from this file):
+  1. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all unit tests (`SiteCycleTests`).
+  2. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
+  3. **Archive (TestFlight dry run)** — see `docs/testflight-setup.md`.
 - `.github/workflows/ui-tests.yml` — ran on PRs only, **paths-filtered** to app / UI-test / project-file / workflow changes, so docs-only PRs didn't burn CI minutes. Ran the `SiteCycleUITests` target serially on a single simulator. See the Testing section below for the non-obvious flags.
 - `.github/workflows/testflight.yml` — see `docs/testflight-setup.md`.
-
-**Known gap**: jobs 2 and 3 of `ci.yml` are covered by Xcode Cloud's Unit Tests and Watch Build workflows, and `ui-tests.yml`/`testflight.yml` by UI Tests/TestFlight — but **SwiftLint (job 1) has no Xcode Cloud equivalent yet**. Disabling `ci.yml` means `--strict` lint enforcement is not currently running on any PR. This wasn't part of the original CI migration scope; needs its own follow-up (e.g. an Xcode Cloud `ci_scripts` step) if lint-on-PR is still wanted.
 
 Key CI considerations (apply to both the disabled GitHub Actions workflows and their Xcode Cloud equivalents, since Xcode Cloud's Automatic signing runs full builds — no signing bypass needed there):
 - The GitHub Actions workflows disabled code signing (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements were absent there. Both the iOS and Watch app's `ModelContainer` init have a fallback from `.automatic` to `.none` to handle this — **do not remove the fallbacks**, since Xcode Cloud's non-Archive (Test/Build) actions don't sign either.
@@ -142,9 +143,9 @@ Full roadmap and remaining steps: **`docs/ui-testing-roadmap.md`**.
 - **`@Observable` needs `import Observation`** — `SwiftData` does NOT re-export the `Observation` framework. ViewModels that use `@Observable` without importing `SwiftUI` must explicitly `import Observation`.
 - **Multiple closures:** When a SwiftUI modifier takes 2+ closure arguments (e.g., `.sheet(isPresented:onDismiss:content:)`), use explicit parameter labels for all closures — do NOT use trailing closure syntax.
 
-## SwiftLint Rules
+## SwiftLint Rules (CI-enforced)
 
-**Not currently enforced in CI** — `ci.yml` (the workflow that ran SwiftLint `--strict`) is disabled; see "CI / CD" above. Still follow these rules; they're the project's style baseline even without automated enforcement. Key rules:
+SwiftLint runs in CI (`.github/workflows/lint.yml`) with `--strict` mode (all warnings are errors). Key rules:
 - `large_tuple`: Tuples may have at most 2 members. Use a struct instead.
 - `empty_count` (opt-in, enabled): Use `.isEmpty` instead of `.count == 0`.
 - `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)`.

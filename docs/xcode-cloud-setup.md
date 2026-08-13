@@ -2,7 +2,7 @@
 
 This documents how to configure SiteCycle's Xcode Cloud workflows — the **active CI** for this repo. Workflow creation happens in Xcode / App Store Connect, not in this repo, so this doc is the source of truth for how each one is configured — treat it the way [`testflight-setup.md`](testflight-setup.md) documented GitHub Actions signing (now deprecated).
 
-`ci.yml`, `ui-tests.yml`, and `testflight.yml` are **disabled** (`gh workflow disable` — kept in the repo, not removed, in case a rollback is ever needed). `stale-branch-cleanup.yml` is unrelated to build/test/publish and stays enabled.
+`ci.yml`, `ui-tests.yml`, and `testflight.yml` are **disabled** (`gh workflow disable` — kept in the repo, not removed, in case a rollback is ever needed). `stale-branch-cleanup.yml` is unrelated to build/test/publish and stays enabled. `lint.yml` (SwiftLint) also stays enabled permanently, by design — Xcode Cloud has no built-in lint step, so this is the one piece of CI that isn't migrating.
 
 | Phase | Workflow | Replaces | Status |
 |---|---|---|---|
@@ -140,7 +140,6 @@ Parity is confirmed and `ci.yml`, `ui-tests.yml`, and `testflight.yml` are now d
 
 ## Not done yet
 
-- **SwiftLint has no Xcode Cloud replacement.** `ci.yml` bundled a SwiftLint `--strict` job together with build-and-test and build-watch in one workflow; disabling the whole workflow means lint enforcement on PRs stopped too. This wasn't part of the original migration scope and needs its own follow-up.
 - No Xcode Cloud check is marked as a required status check in branch protection (`main` currently has none configured either way).
 - No automatic schedule is configured on the TestFlight workflow — still manual-trigger only (see above).
 - `testflight-setup.md`'s GitHub Secrets haven't been removed, and the disabled GitHub Actions workflow files are still in the repo — full removal (secrets + files) is a separate, not-yet-requested step. Disabling is reversible via `gh workflow enable <name>` if anything needs to roll back.
