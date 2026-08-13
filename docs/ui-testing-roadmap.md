@@ -13,6 +13,8 @@ re-reading the whole branch history.
   `SiteCycle.xcodeproj/xcshareddata/xcschemes/SiteCycle.xcscheme`).
 - Dedicated CI workflow: `.github/workflows/ui-tests.yml` (separate from
   `ci.yml`, `paths:`-filtered so it only runs when app or UI-test code changes).
+  **Now disabled** — active CI for this suite is the Xcode Cloud "UI Tests"
+  workflow; see [`docs/xcode-cloud-setup.md`](xcode-cloud-setup.md).
 - Launch-argument plumbing in `SiteCycle/SiteCycleApp.swift`:
   - `-uiTestMode` — forces in-memory SwiftData + `cloudKitDatabase: .none`.
   - `-resetOnboarding` — clears `hasCompletedOnboarding` so tests start on Welcome.
@@ -54,10 +56,12 @@ re-reading the whole branch history.
   - `BasicHistoryFixture.json` — 3 entries across 3 locations spanning 5 days
     (one Active / no end time, two completed with durations).
 
-### Key CI / xcodebuild flags
+### Key CI / xcodebuild flags (GitHub Actions — disabled workflow, kept for reference)
 
 The UI-tests workflow uses these non-obvious flags — keep them when adding
-steps:
+steps, in case the workflow is ever re-enabled. They don't necessarily apply
+to Xcode Cloud, which provisions simulators differently — see the "UI Tests"
+workflow section in `docs/xcode-cloud-setup.md`:
 
 - `-parallel-testing-enabled NO` and `-disable-concurrent-destination-testing`
   to avoid `** TEST EXECUTE FAILED **` from simulator-clone cleanup bugs.
@@ -157,7 +161,7 @@ Original task list, for reference:
   -only-testing:SiteCycleUITests/HistoryFlowTests CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO` passes locally.
 - The new identifiers don't break unit tests.
-- CI's UI-tests workflow is still green.
+- The Xcode Cloud "UI Tests" workflow check is still green on the PR.
 
 ---
 
