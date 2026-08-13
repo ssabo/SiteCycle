@@ -1,4 +1,6 @@
-# TestFlight CI Setup
+# TestFlight CI Setup (GitHub Actions — disabled)
+
+> **Deprecated.** `testflight.yml` and `ci.yml`'s `archive` job are disabled (`gh workflow disable`, not removed) in favor of Xcode Cloud's "TestFlight" and "Archive Check" workflows, which use Automatic signing and need none of the certificates/profiles/secrets documented below. See [`docs/xcode-cloud-setup.md`](xcode-cloud-setup.md) for the active setup. This doc is kept for reference/rollback only.
 
 This documents the provisioning profiles and GitHub secrets required for the CI archive job to build, sign, and export the app for TestFlight.
 

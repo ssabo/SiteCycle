@@ -1,16 +1,16 @@
 # Xcode Cloud Setup
 
-This documents how to configure SiteCycle's Xcode Cloud workflows. Workflow creation happens in Xcode / App Store Connect, not in this repo, so this doc is the source of truth for how each one is configured — treat it the way [`testflight-setup.md`](testflight-setup.md) documents GitHub Actions signing.
+This documents how to configure SiteCycle's Xcode Cloud workflows — the **active CI** for this repo. Workflow creation happens in Xcode / App Store Connect, not in this repo, so this doc is the source of truth for how each one is configured — treat it the way [`testflight-setup.md`](testflight-setup.md) documented GitHub Actions signing (now deprecated).
 
-Rollout is phased, each running in parallel with its GitHub Actions equivalent until parity is confirmed, then the GitHub Actions version is removed in a follow-up PR:
+`ci.yml`, `ui-tests.yml`, and `testflight.yml` are **disabled** (`gh workflow disable` — kept in the repo, not removed, in case a rollback is ever needed). `stale-branch-cleanup.yml` is unrelated to build/test/publish and stays enabled.
 
-| Phase | Workflow | Mirrors | Status |
+| Phase | Workflow | Replaces | Status |
 |---|---|---|---|
-| 1 | Unit Tests | `ci.yml` build-and-test job | Trialing |
-| 2 | UI Tests | `ui-tests.yml` | Trialing |
-| 2 | Watch Build | `ci.yml` build-watch job | Trialing |
-| 3 | TestFlight | `testflight.yml` | Trialing, manual-trigger only |
-| 3 | Archive Check | `ci.yml` archive job | Trialing |
+| 1 | Unit Tests | `ci.yml` build-and-test job | Active |
+| 2 | UI Tests | `ui-tests.yml` | Active |
+| 2 | Watch Build | `ci.yml` build-watch job | Active |
+| 3 | TestFlight | `testflight.yml` | Active, manual-trigger only |
+| 3 | Archive Check | `ci.yml` archive job | Active |
 
 ## Prerequisites
 
@@ -136,10 +136,11 @@ On a handful of trial PRs, confirm:
 
 For the TestFlight/Archive Check workflows, manually trigger each once and confirm the resulting build appears in App Store Connect with the expected (corrected) build number, with no collision against prior `testflight.yml` uploads.
 
-Once each pair holds parity, removing the corresponding GitHub Actions job is a separate follow-up PR.
+Parity is confirmed and `ci.yml`, `ui-tests.yml`, and `testflight.yml` are now disabled (not removed — see the note at the top of this doc and `CLAUDE.md`'s "CI / CD" section).
 
-## Do not do yet
+## Not done yet
 
-- Don't add any Xcode Cloud check to required status checks in branch protection until its trial period confirms parity.
-- Don't add an automatic schedule to the TestFlight workflow yet — manual-trigger only, deliberately, until it's been compared against `testflight.yml` at least once.
-- Don't remove `testflight-setup.md`'s GitHub Secrets or the GitHub Actions workflows they support — that's the final step, after every Xcode Cloud workflow above has been trialed and cut over.
+- **SwiftLint has no Xcode Cloud replacement.** `ci.yml` bundled a SwiftLint `--strict` job together with build-and-test and build-watch in one workflow; disabling the whole workflow means lint enforcement on PRs stopped too. This wasn't part of the original migration scope and needs its own follow-up.
+- No Xcode Cloud check is marked as a required status check in branch protection (`main` currently has none configured either way).
+- No automatic schedule is configured on the TestFlight workflow — still manual-trigger only (see above).
+- `testflight-setup.md`'s GitHub Secrets haven't been removed, and the disabled GitHub Actions workflow files are still in the repo — full removal (secrets + files) is a separate, not-yet-requested step. Disabling is reversible via `gh workflow enable <name>` if anything needs to roll back.
