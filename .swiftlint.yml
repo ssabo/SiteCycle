@@ -3,6 +3,7 @@ included:
   - SiteCycleTests
   - SiteCycleWatch
   - SiteCycleWatchWidgets
+  - SiteCycleWidgets
 
 excluded:
   - SiteCycle/Preview Content

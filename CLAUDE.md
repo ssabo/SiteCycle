@@ -73,7 +73,7 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 **Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**
 
 - Xcode Cloud handles build/test/publish via two workflows: **"CI"** (unit tests, UI tests, watch build, and a signing-verification archive — all as parallel actions in one workflow, triggered on every PR to `main`) and **"TestFlight"** (archive + upload, both manually startable and automatic on `main` changes). See [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the full configuration.
-- `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration.
+- `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration. The `.swiftlint.yml` `included:` list already covers `SiteCycleWidgets/` alongside the existing target directories.
 
 The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback), now that Xcode Cloud covers what they did:
 
@@ -180,11 +180,12 @@ The project uses Swift 6 language mode with strict concurrency checking:
 |--------|-----------|----------|
 | `SiteCycleWatch` | `com.sitecycle.app.watchkitapp` | watchOS 11+ |
 | `SiteCycleWatchWidgets` | `com.sitecycle.app.watchkitapp.widgets` | watchOS 11+ |
+| `SiteCycleWidgets` | `com.sitecycle.app.widgets` | iOS 18+ |
 
 ### Shared Files (dual target membership)
 
 Only one source file is compiled into multiple targets:
-- `SiteCycle/Connectivity/WatchAppState.swift` — shared `Codable` types (`WatchAppState`, `WatchSiteChangeCommand`, `LocationInfo`, `LocationCategory`) and app group constants. Compiled into iOS, watchOS, and widget extension targets.
+- `SiteCycle/Connectivity/WatchAppState.swift` — shared `Codable` types (`WatchAppState`, `WatchSiteChangeCommand`, `LocationInfo`, `LocationCategory`) and app group constants. Compiled into iOS, watchOS, watch widget, and iPhone widget extension targets. The `appGroupIdentifier` helper strips `.watchkitapp[.widgets]` and `.widgets` suffixes off the bundle ID so all four targets resolve to `group.<prefix>.app`.
 
 The watch app does **not** include `Location.swift`, `SiteChangeEntry.swift`, `DefaultLocations.swift`, `HomeViewModel.swift`, or `SiteChangeViewModel.swift` — it operates as a thin client.
 
@@ -198,7 +199,7 @@ The watch is a **thin client**: the iPhone is the single source of truth. The wa
 
 Key classes: `PhoneConnectivityManager` (iOS), `WatchConnectivityManager` (watchOS) — both `@MainActor @Observable`, delegate methods dispatch to main actor.
 
-`pushCurrentState()` is called: on session activation, app launch, scene `.active`, after site changes/history edits/location config changes/settings changes/CSV import.
+`pushCurrentState()` is called: on session activation, app launch, scene `.active`, after site changes/history edits/location config changes/settings changes/CSV import. The App Group write is **unconditional** (does not depend on WCSession activation) so the iPhone widget receives data even when no Apple Watch is paired. `WidgetCenter.shared.reloadAllTimelines()` is invoked at the same time so widgets refresh promptly after a site change.
 
 ### Watch Views
 
@@ -219,6 +220,16 @@ The `SiteCycleWatchWidgets` extension provides watch face complications:
 - **AccessoryInline** — single line: "L Abdomen (Front) · 2h 15m"
 
 Timeline refreshes every 15 minutes with entries for the next 2 hours.
+
+## iPhone Widgets (`SiteCycleWidgets/`)
+
+The `SiteCycleWidgets` extension provides iPhone widgets that mirror the watch's circular complication. Two families:
+- **systemSmall** (Home Screen, 2x2) — full-color heat ring (green/yellow/red) with elapsed hours centered.
+- **accessoryCircular** (Lock Screen / StandBy / Smart Stack, 1x1) — tinted ring with abbreviated time.
+
+Reads the same `WatchAppState` from the App Group `UserDefaults` that the watch widget uses; no separate sync path. Tap-to-open is the default `StaticConfiguration` behavior — no `widgetURL` set. The heat color helper (`progressColor(for:)`) is currently duplicated across `HomeView.swift`, the watch app, the watch widget, and the iPhone widget — consolidate into shared code as a follow-up.
+
+**Lock-screen rendering note:** iOS renders `accessoryCircular` in vibrant monochrome on the Lock Screen, so the heat color collapses to the system tint. Full color is preserved on the Home Screen `systemSmall` and StandBy color mode.
 
 ## Key Design Decisions
 

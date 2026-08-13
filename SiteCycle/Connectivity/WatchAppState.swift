@@ -5,14 +5,15 @@ import Foundation
 enum WatchConnectivityConstants {
     // Derived from the bundle ID so it automatically matches whichever
     // SITECYCLE_BUNDLE_PREFIX the builder set in SiteCycleConfigOverride.xcconfig.
-    // Bundle IDs follow the pattern <prefix>.app[.watchkitapp[.widgets]].
-    // Stripping the watch/widget suffix gives the iOS app bundle ID, which is
-    // the base used for the app group identifier.
+    // Bundle IDs follow the pattern <prefix>.app[.widgets|.watchkitapp[.widgets]].
+    // Stripping the watch / iPhone-widget suffixes gives the iOS app bundle ID,
+    // which is the base used for the app group identifier.
     static var appGroupIdentifier: String {
         let bundleId = Bundle.main.bundleIdentifier ?? "com.sitecycle.app"
         let base = bundleId
             .replacingOccurrences(of: ".watchkitapp.widgets", with: "")
             .replacingOccurrences(of: ".watchkitapp", with: "")
+            .replacingOccurrences(of: ".widgets", with: "")
         return "group.\(base)"
     }
     static let stateKey = "watchAppState"
