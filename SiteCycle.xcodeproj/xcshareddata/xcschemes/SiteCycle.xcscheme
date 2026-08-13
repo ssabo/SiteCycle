@@ -36,6 +36,9 @@
          <TestPlanReference
             reference = "container:SiteCycleUnitTests.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:SiteCycleUITests.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction
