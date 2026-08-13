@@ -11,8 +11,14 @@ Unlike the GitHub Actions archive job, this workflow needs **no certificates, pr
 
 ## One-time: connect the repo
 
-1. In Xcode, open `SiteCycle.xcodeproj` and go to **Product > Xcode Cloud > Create Workflow** (or start from the **Xcode Cloud** tab on the app record in App Store Connect).
-2. Connect the `SiteCycle` app record to this GitHub repository. This installs/authorizes Apple's Xcode Cloud GitHub App with read access to the repo — a one-time OAuth-style consent, not a secret you manage.
+This flow starts in the Xcode app, hands off to a browser partway through for the GitHub authorization step, then comes back to Xcode:
+
+1. In Xcode, open `SiteCycle.xcodeproj`, open the **Report Navigator** (`⌘9`), and click the **Cloud** tab in the left sidebar. Click **Create Workflow**.
+   - The **Product > Xcode Cloud > Create Workflow** menu item does the same thing, but it isn't always present — it depends on Xcode version and whether an Apple Developer account with Xcode Cloud access is already signed in under Xcode > Settings > Accounts. The Report Navigator route is the reliable one; use the Product menu as a shortcut only if you see it.
+2. Select the `SiteCycle` product and continue. When prompted to connect a source repository, click **Grant Access** — this opens **App Store Connect in your web browser**, not the Xcode app, for the actual GitHub authorization:
+   - Link your Apple ID to GitHub and click **Authorize Xcode Cloud**.
+   - Install the Xcode Cloud GitHub App on the repo (or your GitHub account/org) — a one-time OAuth-style consent, not a secret you manage.
+   - GitHub redirects back to App Store Connect showing a green checkmark, then click **Continue in Xcode** to return to the Xcode app and finish setup there.
 3. Xcode Cloud will offer to auto-create default workflows (typically a Build workflow and an Archive-on-release-branch workflow). **Decline these** and create the workflow below instead — we don't want an Archive workflow standing up before signing/TestFlight is deliberately migrated (see "Next steps").
 
 ## Workflow: "Unit Tests"
