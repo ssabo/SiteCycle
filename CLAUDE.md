@@ -72,7 +72,7 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 
 **Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**
 
-- Xcode Cloud handles build/test/publish — see [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the current workflows (Unit Tests, UI Tests, Watch Build, TestFlight, Archive Check) and how they're configured.
+- Xcode Cloud handles build/test/publish via two workflows: **"CI"** (unit tests, UI tests, watch build, and a signing-verification archive — all as parallel actions in one workflow, triggered on every PR to `main`) and **"TestFlight"** (archive + upload, both manually startable and automatic on `main` changes). See [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the full configuration.
 - `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration.
 
 The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback), now that Xcode Cloud covers what they did:
