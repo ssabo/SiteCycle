@@ -264,13 +264,16 @@ final class SiteChangeViewModel {
     func logSiteChange(
         location: Location,
         note: String?,
-        previousNote: PreviousNoteUpdate = .leaveUnchanged
+        previousNote: PreviousNoteUpdate = .leaveUnchanged,
+        changeTime: Date? = nil
     ) {
-        let now = Date()
+        // nil means "now" — the common case of logging the change as it happens.
+        // A past time backdates a change the user forgot to log.
+        let changeTime = changeTime ?? Date()
 
         // Close the previous active entry
         if let activeEntry = SiteChangeEntry.fetchActive(in: modelContext) {
-            activeEntry.endTime = now
+            activeEntry.endTime = changeTime
             if case .replace(let value) = previousNote {
                 activeEntry.note = (value?.isEmpty ?? true) ? nil : value
             }
@@ -278,7 +281,7 @@ final class SiteChangeViewModel {
 
         // Create the new entry
         let newEntry = SiteChangeEntry(
-            startTime: now,
+            startTime: changeTime,
             note: (note?.isEmpty ?? true) ? nil : note,
             location: location
         )

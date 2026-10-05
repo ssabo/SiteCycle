@@ -34,11 +34,12 @@ struct SiteSelectionSheet: View {
                 SiteChangeConfirmationSheet(
                     targetLocation: location,
                     previousEntry: viewModel?.activeSiteEntry,
-                    onConfirm: { newNote, previousNoteUpdate in
+                    onConfirm: { newNote, previousNoteUpdate, changeTime in
                         viewModel?.logSiteChange(
                             location: location,
                             note: newNote,
-                            previousNote: previousNoteUpdate
+                            previousNote: previousNoteUpdate,
+                            changeTime: changeTime
                         )
                         connectivityManager.pushCurrentState()
                         dismiss()

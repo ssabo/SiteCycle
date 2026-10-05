@@ -296,4 +296,52 @@ struct SiteChangeViewModelLogTests {
 
         #expect(viewModel.lastUsedDate(for: location) == nil)
     }
+
+    // MARK: - Change Time
+
+    @Test func logSiteChangeDefaultsToCurrentTime() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let location = Location(bodyPart: "Zone A", sortOrder: 0)
+        context.insert(location)
+        try context.save()
+
+        let before = Date()
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: location, note: nil)
+        let after = Date()
+
+        let entry = try #require(try context.fetch(FetchDescriptor<SiteChangeEntry>()).first)
+        #expect(entry.startTime >= before)
+        #expect(entry.startTime <= after)
+    }
+
+    @Test func logSiteChangeWithChangeTimeBackdatesNewAndPreviousEntry() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let loc1 = Location(bodyPart: "Zone A", sortOrder: 0)
+        let loc2 = Location(bodyPart: "Zone B", sortOrder: 1)
+        context.insert(loc1)
+        context.insert(loc2)
+
+        let activeEntry = SiteChangeEntry(
+            startTime: Date().addingTimeInterval(-3 * 86_400),
+            location: loc1
+        )
+        context.insert(activeEntry)
+        try context.save()
+
+        let changeTime = Date().addingTimeInterval(-2 * 3600)
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: loc2, note: nil, changeTime: changeTime)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        let closed = try #require(entries.first { $0.location?.zone == "Zone A" })
+        let opened = try #require(entries.first { $0.location?.zone == "Zone B" })
+        #expect(closed.endTime == changeTime)
+        #expect(opened.startTime == changeTime)
+        #expect(opened.endTime == nil)
+    }
 }

@@ -58,11 +58,12 @@ struct HomeView: View {
             SiteChangeConfirmationSheet(
                 targetLocation: location,
                 previousEntry: viewModel?.activeSiteEntry,
-                onConfirm: { newNote, previousNoteUpdate in
+                onConfirm: { newNote, previousNoteUpdate, changeTime in
                     siteChangeViewModel?.logSiteChange(
                         location: location,
                         note: newNote,
-                        previousNote: previousNoteUpdate
+                        previousNote: previousNoteUpdate,
+                        changeTime: changeTime
                     )
                     connectivityManager.pushCurrentState()
                 }
