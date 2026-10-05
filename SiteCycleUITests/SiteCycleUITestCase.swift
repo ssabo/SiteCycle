@@ -1,8 +1,7 @@
 import XCTest
 
 /// Base class for SiteCycle UI tests. Launches the app in a deterministic state:
-/// in-memory storage, no CloudKit. Subclasses control whether onboarding is
-/// reset or pre-completed by overriding `defaultLaunchArguments`.
+/// in-memory storage, no CloudKit, onboarding already completed.
 class SiteCycleUITestCase: XCTestCase {
     var app: XCUIApplication!
 
@@ -10,32 +9,11 @@ class SiteCycleUITestCase: XCTestCase {
         try super.setUpWithError()
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = defaultLaunchArguments
+        app.launchArguments = ["-uiTestMode", "-completeOnboarding"]
     }
 
     override func tearDownWithError() throws {
         app = nil
         try super.tearDownWithError()
-    }
-
-    /// Starts every test on the onboarding screen with an empty in-memory store.
-    var defaultLaunchArguments: [String] {
-        ["-uiTestMode", "-resetOnboarding"]
-    }
-}
-
-/// Base class for tests that run past the onboarding screen. Launches straight
-/// into `ContentView` with onboarding marked complete.
-class PostOnboardingUITestCase: SiteCycleUITestCase {
-    override var defaultLaunchArguments: [String] {
-        ["-uiTestMode", "-completeOnboarding"]
-    }
-}
-
-/// Base class for tests that verify @AppStorage-backed settings. Resets both
-/// AppStorage keys before launch so each test starts from known defaults.
-class SettingsUITestCase: SiteCycleUITestCase {
-    override var defaultLaunchArguments: [String] {
-        ["-uiTestMode", "-completeOnboarding", "-resetSettings"]
     }
 }

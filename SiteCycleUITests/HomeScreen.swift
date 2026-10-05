@@ -4,37 +4,27 @@ struct HomeScreen {
     let app: XCUIApplication
 
     var allLocationsButton: XCUIElement {
-        app.descendants(matching: .any)
-            .matching(identifier: "home.allLocations")
-            .firstMatch
+        app.buttons.matching(identifier: "home.allLocations").firstMatch
     }
 
-    var activeSiteLabel: XCUIElement { activeSiteLabelAny }
-
-    var activeSiteLabelAny: XCUIElement {
+    var activeSiteLabel: XCUIElement {
         app.descendants(matching: .any)
             .matching(identifier: "home.activeSite.label")
             .firstMatch
     }
 
-    var emptyStateLabel: XCUIElement {
-        app.descendants(matching: .any)
-            .matching(identifier: "home.emptyState")
-            .firstMatch
-    }
-
+    /// Either the empty-state "All Locations" button or an active-site label
+    /// means the Home screen is ready.
     @discardableResult
     func waitForAppearance(timeout: TimeInterval = 20) -> Bool {
-        // Either the empty-state button or an active-site label means the
-        // Home screen is ready.
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if allLocationsButton.exists || activeSiteLabelAny.exists {
-                return true
-            }
-            Thread.sleep(forTimeInterval: 0.25)
-        }
-        return false
+        let readyMarkers = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier IN %@", ["home.allLocations", "home.activeSite.label"])
+        )
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "count > 0"),
+            object: readyMarkers
+        )
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
     func tapAllLocations() {
