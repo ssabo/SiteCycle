@@ -66,7 +66,7 @@ struct HistoryView: View {
                 // adds a Cancel action to every confirmationDialog. Supplying
                 // our own has been observed to strip the identifier on iOS
                 // 18 and occasionally to make the button unreachable from
-                // XCUITest. Tests match the system Cancel by label.
+                // XCUITest.
             },
             message: {
                 Text("Are you sure you want to delete this entry? This cannot be undone.")

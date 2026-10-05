@@ -18,16 +18,8 @@ struct SiteCycleApp: App {
     }
 
     static func applyUITestLaunchArguments() {
-        let args = ProcessInfo.processInfo.arguments
-        if args.contains("-resetOnboarding") {
-            UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
-        }
-        if args.contains("-completeOnboarding") {
+        if ProcessInfo.processInfo.arguments.contains("-completeOnboarding") {
             UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-        }
-        if args.contains("-resetSettings") {
-            UserDefaults.standard.removeObject(forKey: "targetDurationHours")
-            UserDefaults.standard.removeObject(forKey: "absorptionAlertThreshold")
         }
     }
 
@@ -92,7 +84,6 @@ struct SiteCycleApp: App {
                     deduplicateLocations(context: context)
                     deduplicateSiteChangeEntries(context: context)
                     migrateLocationBodyParts(context: context)
-                    applySeedHistoryLaunchArgumentIfPresent(context: context)
                     connectivityManager.configure(modelContext: context)
                     connectivityManager.pushCurrentState()
                 }

@@ -72,7 +72,7 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 
 **Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**
 
-- Xcode Cloud handles build/test/publish via two workflows: **"CI"** (unit tests, UI tests, watch build, and a signing-verification archive — all as parallel actions in one workflow, triggered on every PR to `main`) and **"TestFlight"** (archive + upload, both manually startable and automatic on `main` changes). See [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the full configuration.
+- Xcode Cloud handles build/test/publish via two workflows: **"CI"** (unit tests, watch build, and a signing-verification archive — all as parallel actions in one workflow, triggered on every PR to `main`) and **"TestFlight"** (archive + upload plus the single UI smoke test, both manually startable and automatic on `main` changes). See [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the full configuration.
 - `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration. The `.swiftlint.yml` `included:` list already covers `SiteCycleWidgets/` alongside the existing target directories.
 
 The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback), now that Xcode Cloud covers what they did:
@@ -81,7 +81,7 @@ The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not 
   1. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all unit tests (`SiteCycleTests`).
   2. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
   3. **Archive (TestFlight dry run)** — see `docs/testflight-setup.md`.
-- `.github/workflows/ui-tests.yml` — ran on PRs only, **paths-filtered** to app / UI-test / project-file / workflow changes, so docs-only PRs didn't burn CI minutes. Ran the `SiteCycleUITests` target serially on a single simulator. See the Testing section below for the non-obvious flags.
+- `.github/workflows/ui-tests.yml` — ran on PRs only, **paths-filtered** to app / UI-test / project-file / workflow changes, so docs-only PRs didn't burn CI minutes. Ran the `SiteCycleUITests` target serially on a single simulator; its non-obvious xcodebuild flags (`-parallel-testing-enabled NO`, `-disable-concurrent-destination-testing`, redirecting output before `xcpretty`) are worth keeping if it is ever re-enabled.
 - `.github/workflows/testflight.yml` — see `docs/testflight-setup.md`.
 
 Key CI considerations (apply to both the disabled GitHub Actions workflows and their Xcode Cloud equivalents, since Xcode Cloud's Automatic signing runs full builds — no signing bypass needed there):
@@ -114,28 +114,14 @@ Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Te
 
 ### UI tests (`SiteCycleUITests/`)
 
-UI tests use **XCTest + XCUIApplication** (not Swift Testing — Swift Testing lacks first-class UI-driving primitives). They boot the real app binary in the iOS Simulator and drive it via accessibility queries.
+There is deliberately **one** XCUITest smoke test (`SmokeTests.testLogSiteChangesEndToEnd`): log two site changes, check that Home and History update. It covers wiring only (sheets present, confirm saves, `@Query` views refresh). **Do not add UI tests for business logic.** Put the logic in a ViewModel and unit-test it. See `docs/ui-testing.md` for why the broader suite was removed.
 
-Full roadmap and remaining steps: **`docs/ui-testing-roadmap.md`**.
-
-#### Writing UI tests — important patterns
-
-- **Launch arguments** are parsed in `SiteCycleApp.applyUITestLaunchArguments()`:
-  - `-uiTestMode` — forces in-memory SwiftData + `cloudKitDatabase: .none`. Required by every UI test.
-  - `-resetOnboarding` — clears `hasCompletedOnboarding` so the test starts on the Welcome page.
-  - `-completeOnboarding` — sets `hasCompletedOnboarding = true` so the test lands on `ContentView` directly.
-- **Base classes** in `SiteCycleUITestCase.swift`:
-  - `SiteCycleUITestCase` — launches with `-uiTestMode -resetOnboarding`.
-  - `PostOnboardingUITestCase` — launches with `-uiTestMode -completeOnboarding`. Use this for anything other than onboarding itself.
-- **Accessibility identifiers** follow `<screen>.<element>` (e.g. `home.allLocations`, `siteSelection.row.<fullDisplayName>`, `history.row`). Every tappable/assertable SwiftUI element a test needs must have one — XCUITest queries by identifier are far more stable than by localized label.
-- **Page objects** wrap each screen (`OnboardingScreen`, `HomeScreen`, `SiteSelectionScreen`, `SiteChangeConfirmationScreen`, `HistoryScreen`). New screens should follow the same struct-with-lazy-computed-XCUIElement-properties pattern.
-- **Queries:** prefer `app.buttons.matching(identifier:).firstMatch` over `app.descendants(matching: .any).matching(identifier:).firstMatch` when targeting a button — the narrower query avoids matching non-interactive ancestors that happen to inherit the identifier.
-- **Waits:** always use `XCUIElement.waitForExistence(timeout:)`; never `Thread.sleep` as a timing hack. Typical timeouts: 10–20 s for screen transitions, 5 s for in-screen updates.
-- **CI-only xcodebuild flags** in `.github/workflows/ui-tests.yml` — **keep these when editing the workflow**:
-  - `-parallel-testing-enabled NO` + `-disable-concurrent-destination-testing` to avoid `** TEST EXECUTE FAILED **` from simulator-clone cleanup bugs on `macos-15`.
-  - Redirect raw `xcodebuild` output to `UITestOutput.txt` **before** piping to `xcpretty` (not via `tee`) — `xcpretty` sometimes exits early and truncates the `tee`d capture.
-  - The `Surface UI test failures` step emits per-assertion `::error::assert-ctx(L…)` annotations with 40 lines of preceding context, so failures are diagnosable without downloading the `UITestResults.xcresult` artifact.
-- **Known app-side UI bug:** the Welcome → Configure transition in `OnboardingView`'s paged `TabView` crashes the app during UI-test runs on Xcode 26 / iPhone 16 Pro sim. `testWelcomeToConfigureToReadyHappyPath` is intentionally not present; see `docs/ui-testing-roadmap.md` "Step 6" before re-adding it.
+- **Launch arguments** (parsed in `SiteCycleApp`): `-uiTestMode` forces in-memory SwiftData + `cloudKitDatabase: .none`; `-completeOnboarding` skips onboarding. `SiteCycleUITestCase` passes both.
+- **Page objects:** `HomeScreen`, `SiteSelectionScreen`, `SiteChangeConfirmationScreen`, `HistoryScreen`.
+- **Accessibility identifiers** follow `<screen>.<element>` (e.g. `home.allLocations`, `siteSelection.row.<fullDisplayName>`, `history.row.<uuid>`). Keep the existing ones; they also help VoiceOver tooling.
+- **Waits:** use `waitForExistence(timeout:)` or `XCTNSPredicateExpectation`, never `Thread.sleep`.
+- **Runs in** the Xcode Cloud "TestFlight" workflow (merges to `main`), not on every PR.
+- **Known app bug:** the Welcome → Configure transition in `OnboardingView`'s paged `TabView` has crashed the app during UI-test runs. It's an app bug to fix separately, not a testing task.
 
 ## SwiftUI Pitfalls
 
