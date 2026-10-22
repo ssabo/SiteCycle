@@ -10,6 +10,10 @@ struct SettingsView: View {
     private var recommendationStrategyRaw: String = RecommendationStrategy.bySite.rawValue
     @AppStorage(RecommendationStrategy.cooldownCountKey)
     private var bodyPartCooldownCount: Int = RecommendationStrategy.defaultCooldownCount
+    @AppStorage(HomeStatMetric.storageKey)
+    private var homeStatMetricRaw: String = HomeStatMetric.median.rawValue
+    @AppStorage(StatsTimeWindow.homeStatStorageKey)
+    private var homeStatWindowRaw: String = StatsTimeWindow.defaultHomeStatWindow.rawValue
     @State private var csvFileURL: URL?
     @State private var showingShareSheet = false
     @State private var showingImportWarning = false
@@ -118,6 +122,8 @@ struct SettingsView: View {
             }
         }
 
+        homeStatSection
+
         Section("Data") {
             Button {
                 exportCSV()
@@ -139,6 +145,32 @@ struct SettingsView: View {
                 Text(appVersion)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private var homeStatSection: some View {
+        Section {
+            Picker("Stat", selection: $homeStatMetricRaw) {
+                ForEach(HomeStatMetric.allCases) { metric in
+                    Text(metric.displayName).tag(metric.rawValue)
+                }
+            }
+            .accessibilityIdentifier("settings.homeStatMetricPicker")
+
+            Picker("Time Window", selection: $homeStatWindowRaw) {
+                ForEach(StatsTimeWindow.allCases) { window in
+                    Text(window.displayName).tag(window.rawValue)
+                }
+            }
+            .accessibilityIdentifier("settings.homeStatWindowPicker")
+        } header: {
+            Text("Home Screen Stat")
+        } footer: {
+            Text(
+                "Shown in the small circle next to the active site ring. "
+                + "The 25th percentile is the duration 1 in 4 of your sites ended before, "
+                + "so a low value means sites are failing early. The active site is not counted."
+            )
         }
     }
 

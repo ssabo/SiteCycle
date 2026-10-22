@@ -68,6 +68,13 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 - Never-used locations sort as oldest (always recommended until used)
 - `SiteChangeViewModel.computeRecommendations(locations:strategy:cooldownCount:)` is a pure static function; callers (`refresh()`, `PhoneConnectivityManager.buildWatchAppState`) read the settings from UserDefaults via `RecommendationStrategy.load()` / `RecommendationStrategy.loadCooldownCount()`
 
+### Statistics Time Window & Duration Percentile
+
+- The Statistics tab has a segmented time-window filter (All / 9mo / 3mo / 1mo / 14d, `StatsTimeWindow`, persisted in `@AppStorage("statisticsTimeWindow")`). Entries count when their `startTime` is in the window. Counts, durations, usage distribution and absorption flags respect the window; last-used / site rest time always use full history.
+- Duration stats (median and percentile) **always skip the active site** (no `endTime`) and run through `filterAnomalies` first. `StatisticsViewModel.summarize(_:)` / `completedDurations(of:since:)` are the shared static helpers.
+- The percentile is **P25** (`StatisticsViewModel.durationPercentile`): with site changes every ~1.5–3 days, a 14-day window has only ~5–9 sites, so a tail percentile like P10 collapses to the minimum while P25 stays stable ("1 in 4 sites ended before X" = how often sites fail early). It's omitted below 4 samples.
+- Home shows a small `QuickStatBadge` at the top-right of the progress ring: median or P25 (`@AppStorage("homeStatMetric")`) over a window (`@AppStorage("homeStatTimeWindow")`, default 1mo), configured in Settings → Home Screen Stat. Computed by `HomeViewModel.refreshQuickStat()` with the same helpers so it matches the Statistics tab.
+
 ## CI / CD
 
 **Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**

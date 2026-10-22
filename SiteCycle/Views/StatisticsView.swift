@@ -5,6 +5,8 @@ import Charts
 struct StatisticsView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("absorptionAlertThreshold") private var absorptionThreshold: Int = 20
+    @AppStorage(StatsTimeWindow.statisticsStorageKey)
+    private var timeWindowRaw: String = StatsTimeWindow.allTime.rawValue
     @State private var viewModel: StatisticsViewModel?
 
     var body: some View {
@@ -21,15 +23,36 @@ struct StatisticsView: View {
         }
         .navigationTitle("Statistics")
         .onAppear {
-            if viewModel == nil {
+            if let viewModel {
+                viewModel.refresh()
+            } else {
                 let vm = StatisticsViewModel(
                     modelContext: modelContext,
-                    absorptionThreshold: absorptionThreshold
+                    absorptionThreshold: absorptionThreshold,
+                    timeWindow: timeWindow
                 )
                 vm.refresh()
                 viewModel = vm
             }
         }
+        .onChange(of: timeWindowRaw) {
+            viewModel?.timeWindow = timeWindow
+            viewModel?.refresh()
+        }
+    }
+
+    private var timeWindow: StatsTimeWindow {
+        StatsTimeWindow(rawValue: timeWindowRaw) ?? .allTime
+    }
+
+    private var timeWindowPicker: some View {
+        Picker("Time Window", selection: $timeWindowRaw) {
+            ForEach(StatsTimeWindow.allCases) { window in
+                Text(window.shortName).tag(window.rawValue)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityIdentifier("statistics.timeWindowPicker")
     }
 
     private var emptyState: some View {
@@ -42,6 +65,11 @@ struct StatisticsView: View {
 
     private func statisticsContent(_ vm: StatisticsViewModel) -> some View {
         List {
+            Section {
+                timeWindowPicker
+            } footer: {
+                Text("Durations exclude the active site.")
+            }
             if !vm.usageDistribution.isEmpty {
                 usageChartSection(vm.usageDistribution)
             }
@@ -74,13 +102,17 @@ private extension StatisticsView {
 private extension StatisticsView {
     func overallSection(_ vm: StatisticsViewModel) -> some View {
         Section("Overall") {
-            if let avg = vm.overallMedianDuration {
-                HStack {
-                    Text("Median Duration")
-                    Spacer()
-                    Text(formatHours(avg))
-                        .foregroundStyle(.secondary)
-                }
+            HStack {
+                Text("Median Duration")
+                Spacer()
+                Text(vm.overallMedianDuration.map { formatHours($0) } ?? "–")
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Text(StatisticsViewModel.percentileDisplayName)
+                Spacer()
+                Text(vm.overallPercentileDuration.map { formatHours($0) } ?? "–")
+                    .foregroundStyle(.secondary)
             }
             HStack {
                 Text("Locations Tracked")
@@ -89,7 +121,7 @@ private extension StatisticsView {
                     .foregroundStyle(.secondary)
             }
             HStack {
-                Text("Total Site Changes")
+                Text(timeWindow == .allTime ? "Total Site Changes" : "Site Changes")
                 Spacer()
                 let total = vm.locationStats.reduce(0) { $0 + $1.totalUses }
                 Text("\(total)")
@@ -226,6 +258,12 @@ private extension StatisticsView {
         var items: [MetricItem] = []
         if let median = stat.medianDuration {
             items.append(MetricItem(label: "Median:", value: formatHours(median)))
+        }
+        if let percentile = stat.percentileDuration {
+            items.append(MetricItem(
+                label: "\(StatisticsViewModel.percentileShortName):",
+                value: formatHours(percentile)
+            ))
         }
         if let lastUsed = stat.lastUsed {
             items.append(MetricItem(
