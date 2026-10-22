@@ -197,7 +197,8 @@ Key classes: `PhoneConnectivityManager` (iOS), `WatchConnectivityManager` (watch
 ### Watch Views
 
 - **WatchHomeView** — current site status with progress ring, elapsed time, "Syncing with iPhone..." empty state when no data received
-- **WatchSiteSelectionView** — recommended-first location list, tap to send command via connectivity manager
+- **WatchContentView** — horizontal paged `TabView` (`.page`): Home on the left, site picker on the right
+- **WatchSiteSelectionView** — recommended-first location list, tap to send command via connectivity manager. The "All Locations" section is shown only when `WatchAppState.showAllLocations` is true — set on the iPhone in Settings → Watch Settings → Show All Locations (`@AppStorage("watchShowAllLocations")`, default on). `WatchAppState` decodes a missing `showAllLocations` key as `true` so older cached/sent state still decodes
 - **WatchLocationRow** — compact row using `LocationInfo` (not `Location` model)
 
 ### Watch ViewModels

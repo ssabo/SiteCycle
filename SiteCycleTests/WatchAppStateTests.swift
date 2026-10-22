@@ -90,6 +90,37 @@ struct WatchAppStateTests {
         #expect(decoded.targetDurationHours == 72)
     }
 
+    @Test func watchAppStateShowAllLocationsRoundTrip() throws {
+        let state = WatchAppState(
+            activeSite: nil,
+            recommendedIds: [],
+            avoidIds: [],
+            allLocations: [],
+            targetDurationHours: 72,
+            lastUpdated: Date(),
+            showAllLocations: false
+        )
+
+        let data = try #require(state.encode())
+        let decoded = try #require(WatchAppState.decode(from: data))
+
+        #expect(decoded.showAllLocations == false)
+    }
+
+    @Test func watchAppStateDecodesLegacyPayloadWithShowAllLocationsOn() throws {
+        // State encoded before `showAllLocations` existed has no such key.
+        let data = try #require(WatchAppState.empty.encode())
+        var json = try #require(
+            JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        json.removeValue(forKey: "showAllLocations")
+        let legacyData = try JSONSerialization.data(withJSONObject: json)
+
+        let decoded = try #require(WatchAppState.decode(from: legacyData))
+
+        #expect(decoded.showAllLocations == true)
+    }
+
     // MARK: - WatchSiteChangeCommand Encoding/Decoding
 
     @Test func watchSiteChangeCommandRoundTrip() throws {

@@ -76,16 +76,18 @@ struct WatchSiteSelectionView: View {
                     }
                 }
 
-                Section("All Locations") {
-                    ForEach(viewModel.allLocationsSorted) { location in
-                        Button {
-                            confirmingLocation = location
-                        } label: {
-                            WatchLocationRow(
-                                location: location,
-                                category: viewModel.category(for: location),
-                                now: timeline.date
-                            )
+                if viewModel.showAllLocations {
+                    Section("All Locations") {
+                        ForEach(viewModel.allLocationsSorted) { location in
+                            Button {
+                                confirmingLocation = location
+                            } label: {
+                                WatchLocationRow(
+                                    location: location,
+                                    category: viewModel.category(for: location),
+                                    now: timeline.date
+                                )
+                            }
                         }
                     }
                 }

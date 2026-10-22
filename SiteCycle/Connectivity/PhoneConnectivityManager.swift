@@ -40,7 +40,8 @@ final class PhoneConnectivityManager: NSObject {
     static func buildWatchAppState(
         context: ModelContext,
         strategy: RecommendationStrategy = RecommendationStrategy.load(),
-        cooldownCount: Int = RecommendationStrategy.loadCooldownCount()
+        cooldownCount: Int = RecommendationStrategy.loadCooldownCount(),
+        showAllLocations: Bool = PhoneConnectivityManager.loadShowAllLocations()
     ) -> WatchAppState {
         let locations = fetchEnabledLocations(context: context)
         let recommendations = SiteChangeViewModel.computeRecommendations(
@@ -77,8 +78,16 @@ final class PhoneConnectivityManager: NSObject {
                 )
             },
             targetDurationHours: targetHours > 0 ? targetHours : 72,
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            showAllLocations: showAllLocations
         )
+    }
+
+    /// Reads the "Show All Locations" watch setting; defaults to on when unset.
+    nonisolated static func loadShowAllLocations() -> Bool {
+        UserDefaults.standard.object(
+            forKey: WatchConnectivityConstants.showAllLocationsKey
+        ) as? Bool ?? true
     }
 
     // MARK: - Process Watch Command

@@ -28,6 +28,23 @@ struct PhoneConnectivityManagerTests {
         #expect(state.targetDurationHours == 72)
     }
 
+    @Test func buildWatchAppStatePassesShowAllLocations() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        let shown = PhoneConnectivityManager.buildWatchAppState(
+            context: context,
+            showAllLocations: true
+        )
+        let hidden = PhoneConnectivityManager.buildWatchAppState(
+            context: context,
+            showAllLocations: false
+        )
+
+        #expect(shown.showAllLocations == true)
+        #expect(hidden.showAllLocations == false)
+    }
+
     @Test func buildWatchAppStateWithLocations() throws {
         let container = try makeContainer()
         let context = container.mainContext

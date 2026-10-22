@@ -14,7 +14,7 @@ struct WatchContentView: View {
             })
             .tag(1)
         }
-        .tabViewStyle(.verticalPage)
+        .tabViewStyle(.page)
         .overlay {
             if connectivityManager.hasPendingCommand {
                 VStack {

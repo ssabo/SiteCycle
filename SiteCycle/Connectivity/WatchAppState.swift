@@ -18,6 +18,8 @@ enum WatchConnectivityConstants {
     }
     static let stateKey = "watchAppState"
     static let commandKey = "watchSiteChangeCommand"
+    /// iPhone `@AppStorage` key for the "Show All Locations" watch setting.
+    static let showAllLocationsKey = "watchShowAllLocations"
 }
 
 // MARK: - Location Category
@@ -71,6 +73,8 @@ struct WatchAppState: Codable, Sendable {
     let allLocations: [LocationInfo]
     let targetDurationHours: Double
     let lastUpdated: Date
+    /// When false, the watch site picker lists only the recommended locations.
+    var showAllLocations: Bool = true
 
     static let empty = WatchAppState(
         activeSite: nil,
@@ -93,6 +97,27 @@ struct WatchAppState: Codable, Sendable {
 
     static func decode(from data: Data) -> WatchAppState? {
         try? JSONDecoder().decode(WatchAppState.self, from: data)
+    }
+}
+
+// Custom decoding (in an extension, so the memberwise init is kept) lets state
+// written before `showAllLocations` existed — e.g. still cached in the App Group
+// or sent by an older iPhone build — decode with the default instead of failing.
+extension WatchAppState {
+    private enum CodingKeys: String, CodingKey {
+        case activeSite, recommendedIds, avoidIds, allLocations
+        case targetDurationHours, lastUpdated, showAllLocations
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        activeSite = try container.decodeIfPresent(ActiveSiteInfo.self, forKey: .activeSite)
+        recommendedIds = try container.decode([UUID].self, forKey: .recommendedIds)
+        avoidIds = try container.decode([UUID].self, forKey: .avoidIds)
+        allLocations = try container.decode([LocationInfo].self, forKey: .allLocations)
+        targetDurationHours = try container.decode(Double.self, forKey: .targetDurationHours)
+        lastUpdated = try container.decode(Date.self, forKey: .lastUpdated)
+        showAllLocations = try container.decodeIfPresent(Bool.self, forKey: .showAllLocations) ?? true
     }
 }
 
