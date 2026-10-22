@@ -70,12 +70,12 @@ struct StatisticsView: View {
             } footer: {
                 Text("Durations exclude the active site.")
             }
-            if !vm.usageDistribution.isEmpty {
-                usageChartSection(vm.usageDistribution)
-            }
             overallSection(vm)
             perLocationSection(vm.locationStats)
             siteRestSection(vm.locationStats)
+            if !vm.usageDistribution.isEmpty {
+                usageChartSection(vm.usageDistribution)
+            }
         }
     }
 }
