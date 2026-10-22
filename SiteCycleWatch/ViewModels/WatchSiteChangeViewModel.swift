@@ -18,6 +18,8 @@ final class WatchSiteChangeViewModel {
         return state.recommendedIds.compactMap { locationById[$0] }
     }
 
+    var showAllLocations: Bool { connectivityManager.appState.showAllLocations }
+
     var allLocationsSorted: [LocationInfo] {
         connectivityManager.appState.allLocations.sorted { loc1, loc2 in
             if loc1.displayName == loc2.displayName {

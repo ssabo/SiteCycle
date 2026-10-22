@@ -14,6 +14,8 @@ struct SettingsView: View {
     private var homeStatMetricRaw: String = HomeStatMetric.median.rawValue
     @AppStorage(StatsTimeWindow.homeStatStorageKey)
     private var homeStatWindowRaw: String = StatsTimeWindow.defaultHomeStatWindow.rawValue
+    @AppStorage(WatchConnectivityConstants.showAllLocationsKey)
+    private var watchShowAllLocations: Bool = true
     @State private var csvFileURL: URL?
     @State private var showingShareSheet = false
     @State private var showingImportWarning = false
@@ -30,6 +32,9 @@ struct SettingsView: View {
                 connectivityManager.pushCurrentState()
             }
             .onChange(of: bodyPartCooldownCount) {
+                connectivityManager.pushCurrentState()
+            }
+            .onChange(of: watchShowAllLocations) {
                 connectivityManager.pushCurrentState()
             }
             .background(
@@ -123,6 +128,15 @@ struct SettingsView: View {
         }
 
         homeStatSection
+
+        Section {
+            Toggle("Show All Locations", isOn: $watchShowAllLocations)
+                .accessibilityIdentifier("settings.watchShowAllLocationsToggle")
+        } header: {
+            Text("Watch Settings")
+        } footer: {
+            Text("When off, the watch site picker shows only the recommended locations.")
+        }
 
         Section("Data") {
             Button {
