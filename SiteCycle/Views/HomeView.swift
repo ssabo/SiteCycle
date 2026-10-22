@@ -9,6 +9,10 @@ struct HomeView: View {
     private var recommendationStrategyRaw: String = RecommendationStrategy.bySite.rawValue
     @AppStorage(RecommendationStrategy.cooldownCountKey)
     private var bodyPartCooldownCount: Int = RecommendationStrategy.defaultCooldownCount
+    @AppStorage(HomeStatMetric.storageKey)
+    private var homeStatMetricRaw: String = HomeStatMetric.median.rawValue
+    @AppStorage(StatsTimeWindow.homeStatStorageKey)
+    private var homeStatWindowRaw: String = StatsTimeWindow.defaultHomeStatWindow.rawValue
     @State private var viewModel: HomeViewModel?
     @State private var siteChangeViewModel: SiteChangeViewModel?
     @State private var showingSiteSheet = false
@@ -75,9 +79,12 @@ struct HomeView: View {
         if viewModel == nil {
             viewModel = HomeViewModel(
                 modelContext: modelContext,
-                targetDurationHours: Double(targetDurationHours)
+                targetDurationHours: Double(targetDurationHours),
+                quickStatWindow: homeStatWindow
             )
         } else {
+            // The window is changed in Settings, which returns here via onAppear.
+            viewModel?.quickStatWindow = homeStatWindow
             viewModel?.refreshActiveSite()
         }
         if siteChangeViewModel == nil {
@@ -97,6 +104,15 @@ struct HomeView: View {
         return ScrollView {
             VStack(spacing: 24) {
                 progressRing(elapsed: elapsed, fraction: fraction, color: color)
+                    .frame(maxWidth: .infinity)
+                    .overlay(alignment: .topTrailing) {
+                        QuickStatBadge(
+                            value: viewModel.quickStat?.value(for: homeStatMetric),
+                            metric: homeStatMetric,
+                            window: homeStatWindow
+                        )
+                        .padding(.trailing, 16)
+                    }
                     .padding(.top, 24)
 
                 locationInfo(viewModel: viewModel)
@@ -262,10 +278,48 @@ struct HomeView: View {
 
     // MARK: - Helpers
 
+    private var homeStatMetric: HomeStatMetric {
+        HomeStatMetric(rawValue: homeStatMetricRaw) ?? .median
+    }
+
+    private var homeStatWindow: StatsTimeWindow {
+        StatsTimeWindow(rawValue: homeStatWindowRaw) ?? StatsTimeWindow.defaultHomeStatWindow
+    }
+
     private func progressColor(for fraction: Double) -> Color {
         if fraction < 0.8 { return .green }
         if fraction <= 1.0 { return .yellow }
         return .red
+    }
+}
+
+// MARK: - Quick Stat Badge
+
+/// Small circular stat shown at the top-right of the active site ring.
+private struct QuickStatBadge: View {
+    let value: Double?
+    let metric: HomeStatMetric
+    let window: StatsTimeWindow
+
+    var body: some View {
+        VStack(spacing: 1) {
+            Text(value.map { String(format: "%.0fh", $0) } ?? "–")
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.semibold)
+            Text("\(metric.shortName) · \(window.shortName)")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        .padding(4)
+        .frame(width: 56, height: 56)
+        .background(Circle().fill(Color(.secondarySystemGroupedBackground)))
+        .overlay(Circle().stroke(Color.gray.opacity(0.3), lineWidth: 1))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(metric.displayName) duration, \(window.displayName)")
+        .accessibilityValue(value.map { String(format: "%.0f hours", $0) } ?? "Not enough data")
+        .accessibilityIdentifier("home.quickStat")
     }
 }
 
