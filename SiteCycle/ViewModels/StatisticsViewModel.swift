@@ -330,12 +330,12 @@ final class StatisticsViewModel {
         return (sorted[count / 2 - 1] + sorted[count / 2]) / 2.0
     }
 
-    /// Linearly interpolated percentile (`p` in 0...100), matching
-    /// `computeMedian` at p = 50.
-    static func computePercentile(_ values: [Double], _ p: Double) -> Double? {
+    /// Linearly interpolated percentile (`percentile` in 0...100), matching
+    /// `computeMedian` at 50.
+    static func computePercentile(_ values: [Double], _ percentile: Double) -> Double? {
         guard !values.isEmpty else { return nil }
         let sorted = values.sorted()
-        let rank = min(max(p, 0), 100) / 100 * Double(sorted.count - 1)
+        let rank = min(max(percentile, 0), 100) / 100 * Double(sorted.count - 1)
         let lower = Int(rank.rounded(.down))
         let upper = min(lower + 1, sorted.count - 1)
         let fraction = rank - Double(lower)
