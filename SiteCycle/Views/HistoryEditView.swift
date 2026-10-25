@@ -15,7 +15,7 @@ struct HistoryEditView: View {
     @State private var endTime: Date
     @State private var hasEndTime: Bool
     @State private var note: String
-    @State private var problem: SiteProblem?
+    @State private var problems: [SiteProblem]
 
     init(
         entry: SiteChangeEntry,
@@ -32,7 +32,7 @@ struct HistoryEditView: View {
         _endTime = State(initialValue: entry.endTime ?? Date())
         _hasEndTime = State(initialValue: entry.endTime != nil)
         _note = State(initialValue: entry.note ?? "")
-        _problem = State(initialValue: entry.problem)
+        _problems = State(initialValue: entry.safeProblems)
     }
 
     var body: some View {
@@ -97,17 +97,17 @@ struct HistoryEditView: View {
 
     private var problemSection: some View {
         Section {
-            ProblemPicker(selection: $problem, problems: allProblems, original: entry.problem)
-                .accessibilityIdentifier("historyEdit.problem")
+            ProblemChips(selection: $problems, problems: allProblems, original: entry.safeProblems)
+                .accessibilityIdentifier("historyEdit.problems")
         } header: {
-            Text("Problem")
+            Text("Problems")
         } footer: {
-            Text("Why this site was changed early, if it was.")
+            Text("Why this site was changed early, if it was. Tap to select any that apply.")
         }
     }
 
     private func saveChanges() {
-        viewModel.setProblem(entry, problem: problem)
+        viewModel.setProblems(entry, problems: problems)
 
         let newLocation = selectedLocation?.id != entry.location?.id ? selectedLocation : nil
         let newStart = abs(startTime.timeIntervalSince(entry.startTime)) > 1 ? startTime : nil

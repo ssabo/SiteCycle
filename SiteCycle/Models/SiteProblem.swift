@@ -17,10 +17,10 @@ final class SiteProblem {
     /// renames one. Nil for custom problems.
     var defaultKey: String?
 
-    @Relationship(deleteRule: .nullify, inverse: \SiteChangeEntry.problem)
+    @Relationship(deleteRule: .nullify, inverse: \SiteChangeEntry.problems)
     var entries: [SiteChangeEntry]?
 
-    /// Non-optional convenience accessor. To modify, set `entry.problem` on the SiteChangeEntry side.
+    /// Non-optional convenience accessor. To modify, set `entry.problems` on the SiteChangeEntry side.
     var safeEntries: [SiteChangeEntry] {
         entries ?? []
     }
@@ -72,8 +72,23 @@ final class SiteProblem {
         return first.properties.isEmojiPresentation || scalars.count > 1
     }
 
-    /// Whether `name` (trimmed, case-insensitive) is already used by another
-    /// problem. Names identify problems in CSV import/export, so they must be unique.
+    /// Separates several problem names in one CSV field, so names can't contain it.
+    static let csvSeparator: Character = ";"
+
+    /// Why `name` can't be used, or nil if it can: it must be non-empty, can't
+    /// contain the CSV separator, and must be unique (trimmed, case-insensitive)
+    /// because CSV import/export identifies problems by name.
+    static func nameError(_ name: String, among problems: [SiteProblem], excluding: SiteProblem? = nil) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "Enter a name." }
+        if trimmed.contains(csvSeparator) { return "Names can't contain \"\(csvSeparator)\"." }
+        if isNameTaken(trimmed, among: problems, excluding: excluding) {
+            return "Another problem already has this name."
+        }
+        return nil
+    }
+
+    /// Whether `name` (trimmed, case-insensitive) is already used by another problem.
     static func isNameTaken(_ name: String, among problems: [SiteProblem], excluding: SiteProblem? = nil) -> Bool {
         let key = name.trimmingCharacters(in: .whitespaces).lowercased()
         return problems.contains { problem in
@@ -83,11 +98,11 @@ final class SiteProblem {
     }
 
     /// Enabled problems in display order, plus any `retained` problems even when
-    /// disabled — an entry's original problem must stay pickable after the user
-    /// moves the selection away from it.
-    static func pickerOptions(from problems: [SiteProblem], including retained: SiteProblem?...) -> [SiteProblem] {
+    /// disabled — an entry's original problems must stay pickable after the user
+    /// deselects them.
+    static func pickerOptions(from problems: [SiteProblem], including retained: [SiteProblem]) -> [SiteProblem] {
         var options = problems.filter(\.isEnabled)
-        for problem in retained.compactMap({ $0 }) where !options.contains(where: { $0.id == problem.id }) {
+        for problem in retained where !options.contains(where: { $0.id == problem.id }) {
             options.append(problem)
         }
         return options.sorted { $0.sortOrder < $1.sortOrder }

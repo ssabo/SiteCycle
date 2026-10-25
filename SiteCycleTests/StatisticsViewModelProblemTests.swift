@@ -19,9 +19,9 @@ struct StatisticsViewModelProblemTests {
     private let hour: TimeInterval = 3600
     private let day: TimeInterval = 86400
 
-    private func completed(daysAgo: Double, now: Date, problem: SiteProblem? = nil) -> SiteChangeEntry {
+    private func completed(daysAgo: Double, now: Date, problems: [SiteProblem] = []) -> SiteChangeEntry {
         let start = now.addingTimeInterval(-daysAgo * day)
-        return SiteChangeEntry(startTime: start, endTime: start.addingTimeInterval(48 * hour), problem: problem)
+        return SiteChangeEntry(startTime: start, endTime: start.addingTimeInterval(48 * hour), problems: problems)
     }
 
     // MARK: - summarizeProblems
@@ -31,9 +31,9 @@ struct StatisticsViewModelProblemTests {
         let painful = SiteProblem(name: "Painful", emoji: "🤕", sortOrder: 0)
         let leaking = SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 1)
         let entries = [
-            completed(daysAgo: 10, now: now, problem: leaking),
-            completed(daysAgo: 8, now: now, problem: leaking),
-            completed(daysAgo: 6, now: now, problem: painful),
+            completed(daysAgo: 10, now: now, problems: [leaking]),
+            completed(daysAgo: 8, now: now, problems: [leaking]),
+            completed(daysAgo: 6, now: now, problems: [painful]),
             completed(daysAgo: 4, now: now),
         ]
 
@@ -48,13 +48,34 @@ struct StatisticsViewModelProblemTests {
         #expect(abs(summary.items[0].rate - 0.5) < 0.001)
     }
 
+    @Test func siteWithSeveralProblemsCountsOnceForAnyAndOnceForEach() throws {
+        let now = Date()
+        let painful = SiteProblem(name: "Painful", emoji: "🤕", sortOrder: 0)
+        let leaking = SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 1)
+        let entries = [
+            completed(daysAgo: 6, now: now, problems: [painful, leaking]),
+            completed(daysAgo: 4, now: now, problems: [leaking]),
+            completed(daysAgo: 2, now: now),
+            completed(daysAgo: 1, now: now),
+        ]
+
+        let summary = StatisticsViewModel.summarizeProblems(entries)
+
+        #expect(summary.siteCount == 4)
+        #expect(summary.problemSiteCount == 2)
+        let rate = try #require(summary.anyProblemRate)
+        #expect(abs(rate - 0.5) < 0.001)
+        #expect(summary.items.map(\.problem.name) == ["Leaking", "Painful"])
+        #expect(summary.items.map(\.count) == [2, 1])
+    }
+
     @Test func summaryBreaksCountTiesBySortOrder() {
         let now = Date()
         let first = SiteProblem(name: "First", emoji: "1️⃣", sortOrder: 0)
         let second = SiteProblem(name: "Second", emoji: "2️⃣", sortOrder: 1)
         let entries = [
-            completed(daysAgo: 4, now: now, problem: second),
-            completed(daysAgo: 2, now: now, problem: first),
+            completed(daysAgo: 4, now: now, problems: [second]),
+            completed(daysAgo: 2, now: now, problems: [first]),
         ]
 
         let summary = StatisticsViewModel.summarizeProblems(entries)
@@ -81,7 +102,7 @@ struct StatisticsViewModelProblemTests {
         let painful = SiteProblem(name: "Painful", emoji: "🤕")
         let entries = [
             completed(daysAgo: 4, now: now),
-            SiteChangeEntry(startTime: now.addingTimeInterval(-hour), problem: painful),
+            SiteChangeEntry(startTime: now.addingTimeInterval(-hour), problems: [painful]),
         ]
 
         let summary = StatisticsViewModel.summarizeProblems(entries)
@@ -110,9 +131,9 @@ struct StatisticsViewModelProblemTests {
         context.insert(thigh)
         context.insert(leaking)
 
-        let old = completed(daysAgo: 60, now: now, problem: leaking)
+        let old = completed(daysAgo: 60, now: now, problems: [leaking])
         old.location = abdomen
-        let recentProblem = completed(daysAgo: 6, now: now, problem: leaking)
+        let recentProblem = completed(daysAgo: 6, now: now, problems: [leaking])
         recentProblem.location = abdomen
         let recentClean = completed(daysAgo: 3, now: now)
         recentClean.location = thigh
@@ -126,8 +147,10 @@ struct StatisticsViewModelProblemTests {
         #expect(viewModel.problemSummary.problemSiteCount == 1)
         let abdomenStats = try #require(viewModel.locationStats.first { $0.location.id == abdomen.id })
         let thighStats = try #require(viewModel.locationStats.first { $0.location.id == thigh.id })
-        #expect(abdomenStats.problemCount == 1)
-        #expect(thighStats.problemCount == 0)
+        #expect(abdomenStats.problems.problemSiteCount == 1)
+        #expect(abdomenStats.problems.siteCount == 1)
+        #expect(thighStats.problems.problemSiteCount == 0)
+        #expect(thighStats.problems.siteCount == 1)
 
         viewModel.timeWindow = .allTime
         viewModel.refresh(now: now)

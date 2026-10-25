@@ -2,6 +2,22 @@ import Foundation
 import Observation
 import SwiftData
 
+/// History's problem filter: every entry, entries with any problem, or
+/// entries with one specific problem.
+enum HistoryProblemFilter: Hashable {
+    case all
+    case anyProblem
+    case problem(SiteProblem)
+
+    func matches(_ entry: SiteChangeEntry) -> Bool {
+        switch self {
+        case .all: return true
+        case .anyProblem: return entry.hasProblems
+        case .problem(let problem): return entry.safeProblems.contains { $0.id == problem.id }
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class HistoryViewModel {
@@ -10,6 +26,7 @@ final class HistoryViewModel {
     var locationFilter: Location?
     var startDate: Date?
     var endDate: Date?
+    var problemFilter: HistoryProblemFilter = .all
 
     var filteredEntries: [SiteChangeEntry] {
         let descriptor = FetchDescriptor<SiteChangeEntry>(
@@ -37,7 +54,7 @@ final class HistoryViewModel {
                 }
             }
 
-            return true
+            return problemFilter.matches(entry)
         }
     }
 
@@ -72,10 +89,11 @@ final class HistoryViewModel {
         try? modelContext.save()
     }
 
-    /// Sets or clears (nil) why the site was changed early.
-    func setProblem(_ entry: SiteChangeEntry, problem: SiteProblem?) {
-        guard entry.problem?.id != problem?.id else { return }
-        entry.problem = problem
+    /// Replaces why the site was changed early; an empty array clears it.
+    func setProblems(_ entry: SiteChangeEntry, problems: [SiteProblem]) {
+        let current = Set(entry.safeProblems.map(\.id))
+        guard current != Set(problems.map(\.id)) else { return }
+        entry.problems = problems
         try? modelContext.save()
     }
 

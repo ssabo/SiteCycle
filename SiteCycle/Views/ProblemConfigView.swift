@@ -109,8 +109,6 @@ private struct ProblemRow: View {
 // MARK: - Shared Fields
 
 private struct ProblemFields: View {
-    static let duplicateNameMessage = "Another problem already has this name."
-
     @Binding var name: String
     @Binding var emoji: String
 
@@ -165,8 +163,9 @@ private struct EditProblemView: View {
         name.trimmingCharacters(in: .whitespaces)
     }
 
-    private var isDuplicateName: Bool {
-        SiteProblem.isNameTaken(trimmedName, among: allProblems, excluding: problem)
+    /// Shown once the user has typed something; an empty name just disables Save.
+    private var nameError: String? {
+        SiteProblem.nameError(name, among: allProblems, excluding: problem)
     }
 
     var body: some View {
@@ -174,8 +173,8 @@ private struct EditProblemView: View {
             Section {
                 ProblemFields(name: $name, emoji: $emoji)
             } footer: {
-                if isDuplicateName {
-                    Text(ProblemFields.duplicateNameMessage)
+                if let nameError, !trimmedName.isEmpty {
+                    Text(nameError)
                         .foregroundStyle(.red)
                 } else {
                     Text("Tap the emoji field and switch to the emoji keyboard to pick a new one.")
@@ -208,7 +207,7 @@ private struct EditProblemView: View {
                     try? modelContext.save()
                     dismiss()
                 }
-                .disabled(trimmedName.isEmpty || isDuplicateName)
+                .disabled(nameError != nil)
                 .accessibilityIdentifier("problemForm.save")
             }
         }
@@ -228,8 +227,8 @@ private struct AddProblemSheet: View {
         name.trimmingCharacters(in: .whitespaces)
     }
 
-    private var isDuplicateName: Bool {
-        SiteProblem.isNameTaken(trimmedName, among: allProblems)
+    private var nameError: String? {
+        SiteProblem.nameError(name, among: allProblems)
     }
 
     var body: some View {
@@ -238,8 +237,8 @@ private struct AddProblemSheet: View {
                 Section {
                     ProblemFields(name: $name, emoji: $emoji)
                 } footer: {
-                    if isDuplicateName {
-                        Text(ProblemFields.duplicateNameMessage)
+                    if let nameError, !trimmedName.isEmpty {
+                        Text(nameError)
                             .foregroundStyle(.red)
                     } else {
                         Text("If you leave the emoji blank, \(SiteProblem.fallbackEmoji) is shown.")
@@ -258,7 +257,7 @@ private struct AddProblemSheet: View {
                         onSave(trimmedName, emoji)
                         dismiss()
                     }
-                    .disabled(trimmedName.isEmpty || isDuplicateName)
+                    .disabled(nameError != nil)
                     .accessibilityIdentifier("addProblem.save")
                 }
             }

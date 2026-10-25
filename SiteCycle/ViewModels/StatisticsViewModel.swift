@@ -14,8 +14,8 @@ struct LocationStats {
     let daysSinceLastUse: Int?
     let absorptionFlag: String?
     let anomalyCount: Int
-    /// Entries in the window with a problem recorded.
-    let problemCount: Int
+    /// Problems at this location in the window — rate and per-type counts.
+    let problems: ProblemSummary
 }
 
 struct UsageDistributionItem {
@@ -270,7 +270,6 @@ final class StatisticsViewModel {
         let minDur = filteredDurations.min()
         let maxDur = filteredDurations.max()
         let lastUsed = entries.map(\.startTime).max()
-        let problemCount = windowed.filter { $0.problem != nil }.count
 
         var daysSince: Int?
         if let lastUsed {
@@ -299,7 +298,7 @@ final class StatisticsViewModel {
             daysSinceLastUse: daysSince,
             absorptionFlag: flag,
             anomalyCount: anomalyResult.anomalyCount,
-            problemCount: problemCount
+            problems: Self.summarizeProblems(windowed)
         )
     }
 
@@ -354,8 +353,9 @@ final class StatisticsViewModel {
 
 struct ProblemStatItem: Identifiable {
     let problem: SiteProblem
+    /// Sites with this problem recorded (a site with several problems counts once for each).
     let count: Int
-    /// Share of the summary's `siteCount` that ended with this problem (0...1).
+    /// Share of the summary's `siteCount` with this problem (0...1).
     let rate: Double
 
     var id: UUID { problem.id }
@@ -365,9 +365,10 @@ struct ProblemSummary {
     /// Sites that could have had a problem: completed entries, plus any active
     /// entry that already has one recorded.
     let siteCount: Int
-    /// Sites with any problem recorded.
+    /// Sites with at least one problem recorded.
     let problemSiteCount: Int
-    /// Per-problem counts, most frequent first. Problems never recorded in the window are omitted.
+    /// Per-problem counts, most frequent first. Problems never recorded in the window are
+    /// omitted. Counts can add up to more than `problemSiteCount` when sites have several.
     let items: [ProblemStatItem]
 
     var anyProblemRate: Double? {
@@ -380,14 +381,18 @@ extension StatisticsViewModel {
     /// The active site is skipped unless it already has a problem, since it
     /// hasn't had the chance to end early yet.
     static func summarizeProblems(_ entries: [SiteChangeEntry]) -> ProblemSummary {
-        let considered = entries.filter { $0.endTime != nil || $0.problem != nil }
-        let withProblem = considered.compactMap(\.problem)
+        let considered = entries.filter { $0.endTime != nil || $0.hasProblems }
+        let problemSiteCount = considered.filter(\.hasProblems).count
 
         var counts: [UUID: Int] = [:]
         var problemsByID: [UUID: SiteProblem] = [:]
-        for problem in withProblem {
-            counts[problem.id, default: 0] += 1
-            problemsByID[problem.id] = problem
+        for entry in considered {
+            // A problem listed twice on one site still counts once for it.
+            var seen = Set<UUID>()
+            for problem in entry.safeProblems where seen.insert(problem.id).inserted {
+                counts[problem.id, default: 0] += 1
+                problemsByID[problem.id] = problem
+            }
         }
 
         let total = considered.count
@@ -405,6 +410,6 @@ extension StatisticsViewModel {
                 return lhs.problem.sortOrder < rhs.problem.sortOrder
             }
 
-        return ProblemSummary(siteCount: total, problemSiteCount: withProblem.count, items: items)
+        return ProblemSummary(siteCount: total, problemSiteCount: problemSiteCount, items: items)
     }
 }

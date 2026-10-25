@@ -73,7 +73,11 @@ func deduplicateProblems(context: ModelContext) {
 
         for duplicate in sorted.dropFirst() {
             for entry in duplicate.safeEntries {
-                entry.problem = keeper
+                var problems = (entry.problems ?? []).filter { $0.id != duplicate.id }
+                if !problems.contains(where: { $0.id == keeper.id }) {
+                    problems.append(keeper)
+                }
+                entry.problems = problems
             }
             context.delete(duplicate)
             didChange = true

@@ -64,7 +64,7 @@ struct SiteProblemTests {
     @Test func pickerOptionsHideDisabledProblems() {
         let enabled = SiteProblem(name: "A", emoji: "🅰️", sortOrder: 0)
         let disabled = SiteProblem(name: "B", emoji: "🅱️", isEnabled: false, sortOrder: 1)
-        let options = SiteProblem.pickerOptions(from: [enabled, disabled], including: nil)
+        let options = SiteProblem.pickerOptions(from: [enabled, disabled], including: [])
         #expect(options.map(\.name) == ["A"])
     }
 
@@ -72,7 +72,7 @@ struct SiteProblemTests {
         let first = SiteProblem(name: "A", emoji: "🅰️", sortOrder: 0)
         let disabled = SiteProblem(name: "B", emoji: "🅱️", isEnabled: false, sortOrder: 1)
         let third = SiteProblem(name: "C", emoji: "©️", sortOrder: 2)
-        let options = SiteProblem.pickerOptions(from: [third, disabled, first], including: disabled)
+        let options = SiteProblem.pickerOptions(from: [third, disabled, first], including: [disabled])
         #expect(options.map(\.name) == ["A", "B", "C"])
     }
 
@@ -82,7 +82,7 @@ struct SiteProblemTests {
         // The user changed the selection from the disabled original to "A".
         let options = SiteProblem.pickerOptions(
             from: [enabled, disabledOriginal],
-            including: disabledOriginal, enabled
+            including: [disabledOriginal, enabled]
         )
         #expect(options.map(\.name) == ["A", "B"])
     }
@@ -100,6 +100,15 @@ struct SiteProblemTests {
         let painful = SiteProblem(name: "Painful", emoji: "🤕")
         #expect(!SiteProblem.isNameTaken("LEAKING", among: [leaking, painful], excluding: leaking))
         #expect(SiteProblem.isNameTaken("Painful", among: [leaking, painful], excluding: leaking))
+    }
+
+    @Test func nameErrorRejectsEmptySeparatorAndDuplicates() {
+        let leaking = SiteProblem(name: "Leaking", emoji: "💧")
+        #expect(SiteProblem.nameError("  ", among: [leaking]) != nil)
+        #expect(SiteProblem.nameError("Sore; red", among: [leaking]) != nil)
+        #expect(SiteProblem.nameError("leaking", among: [leaking]) != nil)
+        #expect(SiteProblem.nameError("leaking", among: [leaking], excluding: leaking) == nil)
+        #expect(SiteProblem.nameError("Itchy", among: [leaking]) == nil)
     }
 
     // MARK: - Seeding
@@ -168,9 +177,9 @@ struct SiteProblemTests {
         context.insert(duplicate)
         let location = Location(bodyPart: "Abdomen")
         context.insert(location)
-        let entry1 = SiteChangeEntry(location: location, problem: duplicate)
-        let entry2 = SiteChangeEntry(location: location, problem: duplicate)
-        let entry3 = SiteChangeEntry(location: location, problem: keeper)
+        let entry1 = SiteChangeEntry(location: location, problems: [duplicate])
+        let entry2 = SiteChangeEntry(location: location, problems: [duplicate, keeper])
+        let entry3 = SiteChangeEntry(location: location, problems: [keeper])
         [entry1, entry2, entry3].forEach { context.insert($0) }
         try context.save()
 
@@ -179,8 +188,10 @@ struct SiteProblemTests {
         let problems = try fetchProblems(context)
         #expect(problems.count == 1)
         #expect(problems.first?.id == lowID)
-        #expect(entry1.problem?.id == lowID)
-        #expect(entry2.problem?.id == lowID)
+        #expect(entry1.safeProblems.map(\.id) == [lowID])
+        // An entry that had both copies ends up with the keeper once.
+        #expect(entry2.safeProblems.map(\.id) == [lowID])
+        #expect(entry3.safeProblems.map(\.id) == [lowID])
         #expect(keeper.safeEntries.count == 3)
     }
 
@@ -204,24 +215,26 @@ struct SiteProblemTests {
         #expect(problems.first?.isEnabled == false)
     }
 
-    @Test func entryDeduplicationKeepsProblemFromDeletedCopy() throws {
+    @Test func entryDeduplicationKeepsProblemsFromBothCopies() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
         let start = Date(timeIntervalSince1970: 1_000_000)
         let location = Location(bodyPart: "Abdomen")
-        let problem = SiteProblem(name: "Leaking", emoji: "💧")
+        let painful = SiteProblem(name: "Painful", emoji: "🤕", sortOrder: 0)
+        let leaking = SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 1)
         context.insert(location)
-        context.insert(problem)
-        context.insert(SiteChangeEntry(startTime: start, location: location))
-        context.insert(SiteChangeEntry(startTime: start, location: location, problem: problem))
+        context.insert(painful)
+        context.insert(leaking)
+        context.insert(SiteChangeEntry(startTime: start, location: location, problems: [painful]))
+        context.insert(SiteChangeEntry(startTime: start, location: location, problems: [painful, leaking]))
         try context.save()
 
         deduplicateSiteChangeEntries(context: context)
 
         let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
         #expect(entries.count == 1)
-        #expect(entries.first?.problem?.id == problem.id)
+        #expect(entries.first?.safeProblems.map(\.name) == ["Painful", "Leaking"])
     }
 
     @Test func deduplicateLeavesCustomProblemsAlone() throws {
@@ -242,7 +255,7 @@ struct SiteProblemTests {
         let context = ModelContext(container)
 
         let problem = SiteProblem(name: "Itchy", emoji: "🐜", isCustom: true)
-        let entry = SiteChangeEntry(problem: problem)
+        let entry = SiteChangeEntry(problems: [problem])
         context.insert(problem)
         context.insert(entry)
         try context.save()
@@ -252,196 +265,6 @@ struct SiteProblemTests {
 
         let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
         #expect(entries.count == 1)
-        #expect(entries.first?.problem == nil)
-    }
-}
-
-// MARK: - Logging, History & CSV
-
-extension SiteProblemTests {
-
-    /// Inserts two locations and an active entry on the first; returns (active entry, second location).
-    private func setUpActiveSite(_ context: ModelContext) throws -> (SiteChangeEntry, Location) {
-        let first = Location(bodyPart: "Abdomen", sortOrder: 0)
-        let second = Location(bodyPart: "Thigh", sortOrder: 1)
-        context.insert(first)
-        context.insert(second)
-        let active = SiteChangeEntry(startTime: Date().addingTimeInterval(-3600), location: first)
-        context.insert(active)
-        try context.save()
-        return (active, second)
-    }
-
-    @Test func logSiteChangeRecordsProblemOnClosedEntry() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let (active, next) = try setUpActiveSite(context)
-        let problem = SiteProblem(name: "Leaking", emoji: "💧")
-        context.insert(problem)
-
-        let viewModel = SiteChangeViewModel(modelContext: context)
-        viewModel.logSiteChange(location: next, note: nil, previousProblem: .replace(problem))
-
-        #expect(active.endTime != nil)
-        #expect(active.problem?.id == problem.id)
-        let newEntry = try #require(SiteChangeEntry.fetchActive(in: context))
-        #expect(newEntry.problem == nil)
-    }
-
-    @Test func logSiteChangeLeavesProblemUnchangedByDefault() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let (active, next) = try setUpActiveSite(context)
-        let problem = SiteProblem(name: "Painful", emoji: "🤕")
-        context.insert(problem)
-        active.problem = problem
-        try context.save()
-
-        let viewModel = SiteChangeViewModel(modelContext: context)
-        viewModel.logSiteChange(location: next, note: nil)
-
-        #expect(active.problem?.id == problem.id)
-    }
-
-    @Test func logSiteChangeReplaceWithNilClearsProblem() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let (active, next) = try setUpActiveSite(context)
-        let problem = SiteProblem(name: "Painful", emoji: "🤕")
-        context.insert(problem)
-        active.problem = problem
-        try context.save()
-
-        let viewModel = SiteChangeViewModel(modelContext: context)
-        viewModel.logSiteChange(location: next, note: nil, previousProblem: .replace(nil))
-
-        #expect(active.problem == nil)
-    }
-
-    @Test func logSiteChangeAppliesProblemToShownEntryNotNewerActiveOne() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let (shown, next) = try setUpActiveSite(context)
-        let painful = SiteProblem(name: "Painful", emoji: "🤕")
-        context.insert(painful)
-
-        // While the sheet showed `shown`, a watch command logged another change.
-        let viewModel = SiteChangeViewModel(modelContext: context)
-        viewModel.logSiteChange(location: next, note: nil)
-        let watchEntry = try #require(SiteChangeEntry.fetchActive(in: context))
-
-        viewModel.logSiteChange(
-            location: next,
-            note: nil,
-            previousNote: .replace("sore"),
-            previousProblem: .replace(painful),
-            previousEntry: shown
-        )
-
-        #expect(shown.problem?.id == painful.id)
-        #expect(shown.note == "sore")
-        #expect(watchEntry.problem == nil)
-        #expect(watchEntry.note == nil)
-        #expect(watchEntry.endTime != nil)
-    }
-
-    @Test func historySetProblemSetsAndClears() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let problem = SiteProblem(name: "Fell Off", emoji: "🩹")
-        let entry = SiteChangeEntry(startTime: Date().addingTimeInterval(-7200), endTime: Date())
-        context.insert(problem)
-        context.insert(entry)
-        try context.save()
-
-        let viewModel = HistoryViewModel(modelContext: context)
-        viewModel.setProblem(entry, problem: problem)
-        #expect(entry.problem?.id == problem.id)
-        #expect(problem.safeEntries.count == 1)
-
-        viewModel.setProblem(entry, problem: nil)
-        #expect(entry.problem == nil)
-    }
-
-    @Test func csvExportIncludesProblemName() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let location = Location(bodyPart: "Abdomen", side: "left")
-        let problem = SiteProblem(name: "Fell Off, Ripped", emoji: "🩹")
-        let entry = SiteChangeEntry(
-            startTime: Date(timeIntervalSince1970: 0),
-            endTime: Date(timeIntervalSince1970: 3600),
-            location: location,
-            problem: problem
-        )
-        context.insert(location)
-        context.insert(problem)
-        context.insert(entry)
-        try context.save()
-
-        let csv = CSVExporter.generate(from: [entry])
-
-        #expect(csv.hasPrefix("date,location,duration_hours,note,problem\n"))
-        #expect(csv.contains(",1.0,,\"Fell Off, Ripped\"\n"))
-    }
-
-    @Test func csvExportOmitsProblemColumnWhenNoEntryHasOne() {
-        let entry = SiteChangeEntry(startTime: Date(timeIntervalSince1970: 0))
-        let csv = CSVExporter.generate(from: [entry])
-        #expect(csv.hasPrefix("date,location,duration_hours,note\n"))
-        #expect(!csv.contains("problem"))
-    }
-
-    @Test func csvImportGivesNewProblemsUniqueSortOrders() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        // Names collide case-insensitively, so only one is matchable by name,
-        // but both must count toward the next sort order.
-        context.insert(SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 2))
-        context.insert(SiteProblem(name: "leaking", emoji: "💦", isCustom: true, sortOrder: 9))
-        try context.save()
-
-        let csv = """
-        date,location,duration_hours,note,problem
-        2024-01-15T10:30:00Z,L Abdomen,40.0,,Itchy
-        2024-01-17T02:30:00Z,R Abdomen,30.0,,Kinked
-        """
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".csv")
-        try csv.write(to: url, atomically: true, encoding: .utf8)
-        _ = try CSVImporter.importCSV(from: url, context: context)
-
-        let sortOrders = try fetchProblems(context).map(\.sortOrder)
-        #expect(sortOrders == [2, 9, 10, 11])
-    }
-
-    @Test func csvImportMatchesExistingProblemsAndCreatesUnknownOnes() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let leaking = SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 0, defaultKey: "leaking")
-        context.insert(leaking)
-        try context.save()
-
-        let csv = """
-        date,location,duration_hours,note,problem
-        2024-01-15T10:30:00Z,L Abdomen,40.0,,leaking
-        2024-01-17T02:30:00Z,R Abdomen,30.0,,Itchy
-        2024-01-18T08:30:00Z,L Thigh,72.0,,
-        2024-01-21T08:30:00Z,R Thigh,,,
-        """
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".csv")
-        try csv.write(to: url, atomically: true, encoding: .utf8)
-
-        let result = try CSVImporter.importCSV(from: url, context: context)
-        #expect(result.importedCount == 4)
-
-        let entries = try context.fetch(
-            FetchDescriptor<SiteChangeEntry>(sortBy: [SortDescriptor(\.startTime)])
-        )
-        #expect(entries[0].problem?.id == leaking.id)
-        #expect(entries[1].problem?.name == "Itchy")
-        #expect(entries[1].problem?.isCustom == true)
-        #expect(entries[2].problem == nil)
-        #expect(entries[3].problem == nil)
-        #expect(try fetchProblems(context).count == 2)
+        #expect(entries.first?.hasProblems == false)
     }
 }

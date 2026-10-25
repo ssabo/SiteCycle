@@ -127,10 +127,10 @@ struct CSVImporter {
             throw ImportError.invalidHeader
         }
 
-        // The `problem` column was added later; older exports without it still import.
+        // The `problems` column was added later; older exports without it still import.
         let expectedHeader = ["date", "location", "duration_hours", "note"]
         let normalizedHeader = header.map { $0.trimmingCharacters(in: .whitespaces) }
-        guard normalizedHeader == expectedHeader || normalizedHeader == expectedHeader + ["problem"] else {
+        guard normalizedHeader == expectedHeader || normalizedHeader == expectedHeader + ["problems"] else {
             let got = normalizedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             let want = expectedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             logger.error("Invalid header — got: [\(got)], want: [\(want)]")
@@ -153,7 +153,7 @@ struct CSVImporter {
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
 
         var locationCache: [String: Location] = [:]
-        var problems = try ProblemResolver(context: context)
+        var problemResolver = try ProblemResolver(context: context)
         var sortOrder = 0
         var count = 0
         var skipped: [(rowNumber: Int, reason: String)] = []
@@ -179,11 +179,11 @@ struct CSVImporter {
             let endTime: Date? = durationStr.isEmpty ? nil : Double(durationStr).map {
                 startTime.addingTimeInterval($0 * 3600)
             }
-            let problemName = row.count >= 5 ? row[4] : ""
+            let problemsField = row.count >= 5 ? row[4] : ""
             let entry = SiteChangeEntry(
                 startTime: startTime, endTime: endTime,
                 note: note.isEmpty ? nil : note, location: location,
-                problem: problems.resolve(problemName, context: context)
+                problems: problemResolver.resolveAll(problemsField, context: context)
             )
             context.insert(entry)
             count += 1
@@ -226,8 +226,20 @@ struct CSVImporter {
             }
         }
 
+        /// Resolves a `;`-separated field, dropping blanks and repeats.
         @MainActor
-        mutating func resolve(_ name: String, context: ModelContext) -> SiteProblem? {
+        mutating func resolveAll(_ field: String, context: ModelContext) -> [SiteProblem] {
+            var result: [SiteProblem] = []
+            for name in field.split(separator: SiteProblem.csvSeparator) {
+                guard let problem = resolve(String(name), context: context),
+                      !result.contains(where: { $0.id == problem.id }) else { continue }
+                result.append(problem)
+            }
+            return result
+        }
+
+        @MainActor
+        private mutating func resolve(_ name: String, context: ModelContext) -> SiteProblem? {
             let trimmed = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { return nil }
             let key = Self.key(trimmed)

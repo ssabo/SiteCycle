@@ -67,7 +67,7 @@ struct HomeView: View {
                         location: location,
                         note: confirmation.newNote,
                         previousNote: confirmation.previousNote,
-                        previousProblem: confirmation.previousProblem,
+                        previousProblems: confirmation.previousProblems,
                         previousEntry: confirmation.previousEntry,
                         changeTime: confirmation.changeTime
                     )

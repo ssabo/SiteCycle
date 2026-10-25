@@ -60,10 +60,23 @@ enum PreviousNoteUpdate {
     case replace(String?)
 }
 
-/// What to record as the reason the previous (closing) site ended early.
-enum PreviousProblemUpdate {
+/// What to record as the reasons the previous (closing) site ended early.
+enum PreviousProblemsUpdate {
     case leaveUnchanged
-    case replace(SiteProblem?)
+    case replace([SiteProblem])
+}
+
+/// Whether a closing site ended well short of the target duration, which
+/// usually means something went wrong. The confirmation sheet uses it to
+/// prompt for a problem only when one is likely.
+enum EarlyChange {
+    /// A site that lasted less than this fraction of the target counts as early.
+    static let thresholdFraction = 0.75
+
+    static func isEarly(durationHours: Double, targetHours: Double) -> Bool {
+        guard targetHours > 0 else { return false }
+        return durationHours < targetHours * thresholdFraction
+    }
 }
 
 @MainActor
@@ -271,7 +284,7 @@ final class SiteChangeViewModel {
         location: Location,
         note: String?,
         previousNote: PreviousNoteUpdate = .leaveUnchanged,
-        previousProblem: PreviousProblemUpdate = .leaveUnchanged,
+        previousProblems: PreviousProblemsUpdate = .leaveUnchanged,
         previousEntry: SiteChangeEntry? = nil,
         changeTime: Date? = nil
     ) {
@@ -290,8 +303,8 @@ final class SiteChangeViewModel {
             if case .replace(let value) = previousNote {
                 target.note = (value?.isEmpty ?? true) ? nil : value
             }
-            if case .replace(let problem) = previousProblem {
-                target.problem = problem
+            if case .replace(let problems) = previousProblems {
+                target.problems = problems
             }
         }
 

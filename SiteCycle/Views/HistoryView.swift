@@ -10,6 +10,7 @@ struct HistoryView: View {
     @State private var entryToDelete: SiteChangeEntry?
     @State private var selectedDateRange = "All Time"
     @State private var selectedLocation: Location?
+    @State private var selectedProblemFilter: HistoryProblemFilter = .all
 
     @Query(sort: \Location.sortOrder)
     private var allLocations: [Location]
@@ -40,7 +41,8 @@ struct HistoryView: View {
     @ViewBuilder
     private func historyContent(viewModel: HistoryViewModel) -> some View {
         let entries = viewModel.filteredEntries
-        if entries.isEmpty && selectedDateRange == "All Time" && selectedLocation == nil {
+        if entries.isEmpty && selectedDateRange == "All Time" && selectedLocation == nil
+            && selectedProblemFilter == .all {
             emptyStateContent
         } else {
             listContent(viewModel: viewModel, entries: entries)
@@ -133,6 +135,18 @@ struct HistoryView: View {
                 viewModel.locationFilter = newValue
             }
 
+            Picker("Problem", selection: $selectedProblemFilter) {
+                Text("All Sites").tag(HistoryProblemFilter.all)
+                Text("Any Problem").tag(HistoryProblemFilter.anyProblem)
+                ForEach(allProblems) { problem in
+                    Text(problem.labelText).tag(HistoryProblemFilter.problem(problem))
+                }
+            }
+            .accessibilityIdentifier("history.filter.problem")
+            .onChange(of: selectedProblemFilter) { _, newValue in
+                viewModel.problemFilter = newValue
+            }
+
             Picker("Date Range", selection: $selectedDateRange) {
                 ForEach(dateRangeOptions, id: \.self) { option in
                     Text(option).tag(option)
@@ -172,10 +186,11 @@ struct HistoryView: View {
                     Text("Unknown Location").font(.headline)
                 }
                 Spacer()
-                if let problem = entry.problem {
-                    Text(problem.displayEmoji)
-                        .accessibilityLabel(problem.name)
-                        .accessibilityIdentifier("history.row.\(entry.id.uuidString).problem")
+                if entry.hasProblems {
+                    let problems = entry.safeProblems
+                    Text(problems.map(\.displayEmoji).joined())
+                        .accessibilityLabel(problems.map(\.name).joined(separator: ", "))
+                        .accessibilityIdentifier("history.row.\(entry.id.uuidString).problems")
                 }
                 if entry.endTime == nil {
                     Text("Active")

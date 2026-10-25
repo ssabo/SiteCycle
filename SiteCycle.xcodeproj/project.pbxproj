@@ -18,6 +18,7 @@
 		8A0000000000000000000107 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000007 /* Preview Assets.xcassets */; };
 		8A0000000000000000000110 /* LocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000010 /* LocationTests.swift */; };
 		8A0000000000000000000198 /* SiteProblemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000098 /* SiteProblemTests.swift */; };
+		8A000000000000000000019A /* SiteProblemWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000009A /* SiteProblemWorkflowTests.swift */; };
 		8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000011 /* SiteChangeEntryTests.swift */; };
 		8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000012 /* DefaultLocationsTests.swift */; };
 		8A0000000000000000000113 /* LocationConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000013 /* LocationConfigTests.swift */; };
@@ -37,7 +38,7 @@
 		8A000000000000000000011D /* CSVExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001D /* CSVExporterTests.swift */; };
 		8A000000000000000000011E /* CSVImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000001E /* CSVImporterTests.swift */; };
 		8A0000000000000000000120 /* LocationConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000020 /* LocationConfigView.swift */; };
-		8A0000000000000000000197 /* ProblemPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000097 /* ProblemPicker.swift */; };
+		8A0000000000000000000197 /* ProblemChips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000097 /* ProblemChips.swift */; };
 		8A0000000000000000000196 /* ProblemConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000096 /* ProblemConfigView.swift */; };
 		8A0000000000000000000121 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000021 /* SettingsView.swift */; };
 		8A0000000000000000000122 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000022 /* OnboardingView.swift */; };
@@ -175,6 +176,7 @@
 		8A0000000000000000000009 /* SiteCycle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiteCycle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A0000000000000000000010 /* LocationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000098 /* SiteProblemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteProblemTests.swift; sourceTree = "<group>"; };
+		8A000000000000000000009A /* SiteProblemWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteProblemWorkflowTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000011 /* SiteChangeEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeEntryTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000012 /* DefaultLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocationsTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000013 /* LocationConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigTests.swift; sourceTree = "<group>"; };
@@ -195,7 +197,7 @@
 		8A000000000000000000001D /* CSVExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExporterTests.swift; sourceTree = "<group>"; };
 		8A000000000000000000001E /* CSVImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImporterTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000020 /* LocationConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigView.swift; sourceTree = "<group>"; };
-		8A0000000000000000000097 /* ProblemPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemPicker.swift; sourceTree = "<group>"; };
+		8A0000000000000000000097 /* ProblemChips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemChips.swift; sourceTree = "<group>"; };
 		8A0000000000000000000096 /* ProblemConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemConfigView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000022 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -350,7 +352,7 @@
 				8A0000000000000000000028 /* HistoryView.swift */,
 				8A0000000000000000000025 /* HomeView.swift */,
 				8A0000000000000000000020 /* LocationConfigView.swift */,
-				8A0000000000000000000097 /* ProblemPicker.swift */,
+				8A0000000000000000000097 /* ProblemChips.swift */,
 				8A0000000000000000000096 /* ProblemConfigView.swift */,
 				8A000000000000000000002F /* LocationLabelView.swift */,
 				8A0000000000000000000022 /* OnboardingView.swift */,
@@ -427,6 +429,7 @@
 				8A000000000000000000001E /* CSVImporterTests.swift */,
 				8A0000000000000000000010 /* LocationTests.swift */,
 				8A0000000000000000000098 /* SiteProblemTests.swift */,
+				8A000000000000000000009A /* SiteProblemWorkflowTests.swift */,
 				8A0000000000000000000011 /* SiteChangeEntryTests.swift */,
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
 				8A0000000000000000000013 /* LocationConfigTests.swift */,
@@ -742,7 +745,7 @@
 				8A0000000000000000000105 /* DefaultLocations.swift in Sources */,
 				8A0000000000000000000195 /* DefaultProblems.swift in Sources */,
 				8A0000000000000000000120 /* LocationConfigView.swift in Sources */,
-				8A0000000000000000000197 /* ProblemPicker.swift in Sources */,
+				8A0000000000000000000197 /* ProblemChips.swift in Sources */,
 				8A0000000000000000000196 /* ProblemConfigView.swift in Sources */,
 				8A0000000000000000000121 /* SettingsView.swift in Sources */,
 				8A0000000000000000000122 /* OnboardingView.swift in Sources */,
@@ -772,6 +775,7 @@
 			files = (
 				8A0000000000000000000110 /* LocationTests.swift in Sources */,
 				8A0000000000000000000198 /* SiteProblemTests.swift in Sources */,
+				8A000000000000000000019A /* SiteProblemWorkflowTests.swift in Sources */,
 				8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */,
 				8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */,
 				8A0000000000000000000113 /* LocationConfigTests.swift in Sources */,

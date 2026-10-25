@@ -181,6 +181,22 @@ private extension StatisticsView {
     }
 
     /// `rate` comes from the view model so the percentage math lives in one place.
+    /// e.g. "Problems: 3 of 9 · 33%  💧2 🤕1" — a rate rather than a raw count,
+    /// since locations are used different numbers of times.
+    func locationProblemsLine(_ summary: ProblemSummary) -> some View {
+        let rate = problemCountText(summary.problemSiteCount, of: summary.siteCount, rate: summary.anyProblemRate)
+        let breakdown = summary.items
+            .map { "\($0.problem.displayEmoji)\($0.count)" }
+            .joined(separator: " ")
+        return Label("Problems: \(rate)  \(breakdown)", systemImage: "bandage")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel(
+                "Problems: \(rate). "
+                    + summary.items.map { "\($0.problem.name) \($0.count)" }.joined(separator: ", ")
+            )
+    }
+
     func problemCountText(_ count: Int, of total: Int, rate: Double?) -> String {
         guard let rate else { return "\(count)" }
         return "\(count) of \(total) · \(Int((rate * 100).rounded()))%"
@@ -219,6 +235,10 @@ private extension StatisticsView {
 
             if stat.totalUses > 0 {
                 locationMetricsGrid(stat)
+            }
+
+            if stat.problems.problemSiteCount > 0 {
+                locationProblemsLine(stat.problems)
             }
         }
         .padding(.vertical, 4)
@@ -320,9 +340,6 @@ private extension StatisticsView {
         }
         if let days = stat.daysSinceLastUse {
             items.append(MetricItem(label: "Days since:", value: "\(days)"))
-        }
-        if stat.problemCount > 0 {
-            items.append(MetricItem(label: "Problems:", value: "\(stat.problemCount)"))
         }
         if stat.anomalyCount > 0 {
             items.append(MetricItem(
