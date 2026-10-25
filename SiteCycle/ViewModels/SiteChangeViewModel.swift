@@ -60,6 +60,12 @@ enum PreviousNoteUpdate {
     case replace(String?)
 }
 
+/// What to record as the reason the previous (closing) site ended early.
+enum PreviousProblemUpdate {
+    case leaveUnchanged
+    case replace(SiteProblem?)
+}
+
 @MainActor
 @Observable
 final class SiteChangeViewModel {
@@ -265,6 +271,7 @@ final class SiteChangeViewModel {
         location: Location,
         note: String?,
         previousNote: PreviousNoteUpdate = .leaveUnchanged,
+        previousProblem: PreviousProblemUpdate = .leaveUnchanged,
         changeTime: Date? = nil
     ) {
         // nil means "now" — the common case of logging the change as it happens.
@@ -276,6 +283,9 @@ final class SiteChangeViewModel {
             activeEntry.endTime = changeTime
             if case .replace(let value) = previousNote {
                 activeEntry.note = (value?.isEmpty ?? true) ? nil : value
+            }
+            if case .replace(let problem) = previousProblem {
+                activeEntry.problem = problem
             }
         }
 

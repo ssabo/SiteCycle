@@ -7,7 +7,7 @@ import SwiftData
 struct CSVExporterTests {
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([Location.self, SiteChangeEntry.self])
+        let schema = Schema([Location.self, SiteChangeEntry.self, SiteProblem.self])
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,
@@ -20,12 +20,12 @@ struct CSVExporterTests {
 
     @Test func csvHeaderRowIsCorrect() {
         let result = CSVExporter.generate(from: [])
-        #expect(result.hasPrefix("date,location,duration_hours,note\n"))
+        #expect(result.hasPrefix("date,location,duration_hours,note,problem\n"))
     }
 
     @Test func csvEmptyDataProducesHeaderOnly() {
         let result = CSVExporter.generate(from: [])
-        #expect(result == "date,location,duration_hours,note\n")
+        #expect(result == "date,location,duration_hours,note,problem\n")
     }
 
     // MARK: - Field Formatting

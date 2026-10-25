@@ -71,6 +71,9 @@ struct StatisticsView: View {
                 Text("Durations exclude the active site.")
             }
             overallSection(vm)
+            if vm.problemSummary.siteCount > 0 {
+                problemsSection(vm.problemSummary)
+            }
             perLocationSection(vm.locationStats)
             siteRestSection(vm.locationStats)
             if !vm.usageDistribution.isEmpty {
@@ -137,6 +140,50 @@ private extension StatisticsView {
                 }
             }
         }
+    }
+}
+
+// MARK: - Problems Section
+
+private extension StatisticsView {
+    func problemsSection(_ summary: ProblemSummary) -> some View {
+        Section {
+            HStack {
+                Text("Any Problem")
+                Spacer()
+                Text(problemCountText(summary.problemSiteCount, of: summary.siteCount))
+                    .foregroundStyle(.secondary)
+            }
+            .accessibilityIdentifier("statistics.problems.any")
+
+            if summary.items.isEmpty {
+                Text("No problems recorded.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(summary.items) { item in
+                    HStack(spacing: 8) {
+                        Text(item.problem.displayEmoji)
+                        Text(item.problem.name)
+                        Spacer()
+                        Text(problemCountText(item.count, of: summary.siteCount))
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        } header: {
+            Text("Problems")
+        } footer: {
+            Text("Share of completed sites that ended with a problem recorded. "
+                + "Set a problem when logging a site change or from History.")
+        }
+    }
+
+    func problemCountText(_ count: Int, of total: Int) -> String {
+        guard total > 0 else { return "\(count)" }
+        let percent = Int((Double(count) / Double(total) * 100).rounded())
+        return "\(count) of \(total) · \(percent)%"
     }
 }
 
@@ -274,6 +321,9 @@ private extension StatisticsView {
         if let days = stat.daysSinceLastUse {
             items.append(MetricItem(label: "Days since:", value: "\(days)"))
         }
+        if stat.problemCount > 0 {
+            items.append(MetricItem(label: "Problems:", value: "\(stat.problemCount)"))
+        }
         if stat.anomalyCount > 0 {
             items.append(MetricItem(
                 label: "Skipped:",
@@ -293,5 +343,5 @@ private extension StatisticsView {
     NavigationStack {
         StatisticsView()
     }
-    .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+    .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

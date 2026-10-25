@@ -7,7 +7,7 @@ import SwiftData
 struct LocationConfigTests {
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([Location.self, SiteChangeEntry.self])
+        let schema = Schema([Location.self, SiteChangeEntry.self, SiteProblem.self])
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,

@@ -14,6 +14,9 @@ struct HistoryView: View {
     @Query(sort: \Location.sortOrder)
     private var allLocations: [Location]
 
+    @Query(sort: \SiteProblem.sortOrder)
+    private var allProblems: [SiteProblem]
+
     private let dateRangeOptions = ["Last 7 days", "Last 30 days", "Last 90 days", "All Time"]
 
     var body: some View {
@@ -96,7 +99,8 @@ struct HistoryView: View {
                         HistoryEditView(
                             entry: entry,
                             viewModel: viewModel,
-                            allLocations: allLocations
+                            allLocations: allLocations,
+                            allProblems: allProblems
                         )
                     } label: {
                         entryRow(entry)
@@ -168,6 +172,11 @@ struct HistoryView: View {
                     Text("Unknown Location").font(.headline)
                 }
                 Spacer()
+                if let problem = entry.problem {
+                    Text(problem.displayEmoji)
+                        .accessibilityLabel(problem.name)
+                        .accessibilityIdentifier("history.row.\(entry.id.uuidString).problem")
+                }
                 if entry.endTime == nil {
                     Text("Active")
                         .font(.caption)

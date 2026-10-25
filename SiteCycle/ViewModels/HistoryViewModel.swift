@@ -72,6 +72,13 @@ final class HistoryViewModel {
         try? modelContext.save()
     }
 
+    /// Sets or clears (nil) why the site was changed early.
+    func setProblem(_ entry: SiteChangeEntry, problem: SiteProblem?) {
+        guard entry.problem?.id != problem?.id else { return }
+        entry.problem = problem
+        try? modelContext.save()
+    }
+
     func clearEndTime(_ entry: SiteChangeEntry) {
         entry.endTime = nil
         try? modelContext.save()

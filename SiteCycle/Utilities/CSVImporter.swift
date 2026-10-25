@@ -127,9 +127,10 @@ struct CSVImporter {
             throw ImportError.invalidHeader
         }
 
+        // The `problem` column was added later; older exports without it still import.
         let expectedHeader = ["date", "location", "duration_hours", "note"]
         let normalizedHeader = header.map { $0.trimmingCharacters(in: .whitespaces) }
-        guard normalizedHeader == expectedHeader else {
+        guard normalizedHeader == expectedHeader || normalizedHeader == expectedHeader + ["problem"] else {
             let got = normalizedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             let want = expectedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             logger.error("Invalid header — got: [\(got)], want: [\(want)]")
@@ -152,6 +153,7 @@ struct CSVImporter {
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
 
         var locationCache: [String: Location] = [:]
+        var problemCache = try existingProblemsByName(context: context)
         var sortOrder = 0
         var count = 0
         var skipped: [(rowNumber: Int, reason: String)] = []
@@ -177,9 +179,11 @@ struct CSVImporter {
             let endTime: Date? = durationStr.isEmpty ? nil : Double(durationStr).map {
                 startTime.addingTimeInterval($0 * 3600)
             }
+            let problemName = row.count >= 5 ? row[4] : ""
             let entry = SiteChangeEntry(
                 startTime: startTime, endTime: endTime,
-                note: note.isEmpty ? nil : note, location: location
+                note: note.isEmpty ? nil : note, location: location,
+                problem: resolveOrCreateProblem(problemName, cache: &problemCache, context: context)
             )
             context.insert(entry)
             count += 1
@@ -201,6 +205,43 @@ struct CSVImporter {
         cache[name] = loc
         sortOrder += 1
         return loc
+    }
+
+    /// Problems are configuration, not history, so import keeps them and matches
+    /// CSV names against them (case-insensitively) rather than replacing them.
+    @MainActor
+    private static func existingProblemsByName(context: ModelContext) throws -> [String: SiteProblem] {
+        let problems = try context.fetch(FetchDescriptor<SiteProblem>(sortBy: [SortDescriptor(\.sortOrder)]))
+        var byName: [String: SiteProblem] = [:]
+        for problem in problems {
+            let key = problemKey(problem.name)
+            if byName[key] == nil { byName[key] = problem }
+        }
+        return byName
+    }
+
+    @MainActor
+    private static func resolveOrCreateProblem(
+        _ name: String, cache: inout [String: SiteProblem], context: ModelContext
+    ) -> SiteProblem? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+        let key = problemKey(trimmed)
+        if let cached = cache[key] { return cached }
+        let maxSortOrder = cache.values.map(\.sortOrder).max() ?? -1
+        let problem = SiteProblem(
+            name: trimmed,
+            emoji: SiteProblem.fallbackEmoji,
+            isCustom: true,
+            sortOrder: maxSortOrder + 1
+        )
+        context.insert(problem)
+        cache[key] = problem
+        return problem
+    }
+
+    private static func problemKey(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespaces).lowercased()
     }
 
     @MainActor

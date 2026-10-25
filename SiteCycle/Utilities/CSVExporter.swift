@@ -3,7 +3,7 @@ import Foundation
 struct CSVExporter {
 
     static func generate(from entries: [SiteChangeEntry]) -> String {
-        let header = "date,location,duration_hours,note\n"
+        let header = "date,location,duration_hours,note,problem\n"
         let sorted = entries.sorted { $0.startTime < $1.startTime }
 
         let rows = sorted.map { entry -> String in
@@ -13,7 +13,8 @@ struct CSVExporter {
             )
             let duration = formatDuration(entry.durationHours)
             let note = escapeField(entry.note ?? "")
-            return "\(date),\(location),\(duration),\(note)"
+            let problem = escapeField(entry.problem?.name ?? "")
+            return "\(date),\(location),\(duration),\(note),\(problem)"
         }
 
         return header + rows.joined(separator: "\n")

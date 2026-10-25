@@ -9,6 +9,8 @@ final class SiteChangeEntry {
     var note: String?
 
     var location: Location?
+    /// Why the site was changed early, if it was. Set on the entry being closed.
+    var problem: SiteProblem?
 
     var durationHours: Double? {
         guard let endTime = endTime else { return nil }
@@ -20,13 +22,15 @@ final class SiteChangeEntry {
         startTime: Date = Date(),
         endTime: Date? = nil,
         note: String? = nil,
-        location: Location? = nil
+        location: Location? = nil,
+        problem: SiteProblem? = nil
     ) {
         self.id = id
         self.startTime = startTime
         self.endTime = endTime
         self.note = note
         self.location = location
+        self.problem = problem
     }
 
     /// Fetches the most recent entry with no `endTime`, i.e. the currently active site.

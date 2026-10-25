@@ -78,5 +78,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView(isCloudKitEnabled: false)
-        .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+        .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

@@ -14,6 +14,8 @@ struct LocationStats {
     let daysSinceLastUse: Int?
     let absorptionFlag: String?
     let anomalyCount: Int
+    /// Entries in the window with a problem recorded.
+    let problemCount: Int
 }
 
 struct UsageDistributionItem {
@@ -118,6 +120,7 @@ final class StatisticsViewModel {
     private(set) var overallMedianDuration: Double?
     private(set) var overallPercentileDuration: Double?
     private(set) var usageDistribution: [UsageDistributionItem] = []
+    private(set) var problemSummary = ProblemSummary(siteCount: 0, problemSiteCount: 0, items: [])
 
     init(
         modelContext: ModelContext,
@@ -137,6 +140,7 @@ final class StatisticsViewModel {
         let overall = Self.summarize(Self.completedDurations(of: allEntries, since: windowStart))
         overallMedianDuration = overall.median
         overallPercentileDuration = overall.percentile
+        problemSummary = Self.summarizeProblems(Self.entries(allEntries, since: windowStart))
 
         locationStats = locations.map { location in
             buildStats(
@@ -265,6 +269,7 @@ final class StatisticsViewModel {
         let minDur = filteredDurations.min()
         let maxDur = filteredDurations.max()
         let lastUsed = entries.map(\.startTime).max()
+        let problemCount = Self.entries(entries, since: windowStart).filter { $0.problem != nil }.count
 
         var daysSince: Int?
         if let lastUsed {
@@ -292,7 +297,8 @@ final class StatisticsViewModel {
             lastUsed: lastUsed,
             daysSinceLastUse: daysSince,
             absorptionFlag: flag,
-            anomalyCount: anomalyResult.anomalyCount
+            anomalyCount: anomalyResult.anomalyCount,
+            problemCount: problemCount
         )
     }
 
@@ -340,5 +346,64 @@ final class StatisticsViewModel {
         let upper = min(lower + 1, sorted.count - 1)
         let fraction = rank - Double(lower)
         return sorted[lower] + (sorted[upper] - sorted[lower]) * fraction
+    }
+}
+
+// MARK: - Problems
+
+struct ProblemStatItem: Identifiable {
+    let problem: SiteProblem
+    let count: Int
+    /// Share of the summary's `siteCount` that ended with this problem (0...1).
+    let rate: Double
+
+    var id: UUID { problem.id }
+}
+
+struct ProblemSummary {
+    /// Sites that could have had a problem: completed entries, plus any active
+    /// entry that already has one recorded.
+    let siteCount: Int
+    /// Sites with any problem recorded.
+    let problemSiteCount: Int
+    /// Per-problem counts, most frequent first. Problems never recorded in the window are omitted.
+    let items: [ProblemStatItem]
+
+    var anyProblemRate: Double? {
+        siteCount > 0 ? Double(problemSiteCount) / Double(siteCount) : nil
+    }
+}
+
+extension StatisticsViewModel {
+    /// Summarizes problems over `entries` (already filtered to the time window).
+    /// The active site is skipped unless it already has a problem, since it
+    /// hasn't had the chance to end early yet.
+    static func summarizeProblems(_ entries: [SiteChangeEntry]) -> ProblemSummary {
+        let considered = entries.filter { $0.endTime != nil || $0.problem != nil }
+        let withProblem = considered.compactMap(\.problem)
+
+        var counts: [UUID: Int] = [:]
+        var problemsByID: [UUID: SiteProblem] = [:]
+        for problem in withProblem {
+            counts[problem.id, default: 0] += 1
+            problemsByID[problem.id] = problem
+        }
+
+        let total = considered.count
+        let items = problemsByID.values
+            .map { problem in
+                let count = counts[problem.id] ?? 0
+                return ProblemStatItem(
+                    problem: problem,
+                    count: count,
+                    rate: total > 0 ? Double(count) / Double(total) : 0
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.count != rhs.count { return lhs.count > rhs.count }
+                return lhs.problem.sortOrder < rhs.problem.sortOrder
+            }
+
+        return ProblemSummary(siteCount: total, problemSiteCount: withProblem.count, items: items)
     }
 }

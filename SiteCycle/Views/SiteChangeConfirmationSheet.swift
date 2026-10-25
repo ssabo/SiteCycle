@@ -1,21 +1,28 @@
 import SwiftUI
+import SwiftData
+
+/// What the user chose on the confirmation sheet.
+struct SiteChangeConfirmation {
+    let newNote: String
+    let previousNote: PreviousNoteUpdate
+    let previousProblem: PreviousProblemUpdate
+    /// nil when the user kept the default ("now").
+    let changeTime: Date?
+}
 
 struct SiteChangeConfirmationSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \SiteProblem.sortOrder) private var allProblems: [SiteProblem]
 
     let targetLocation: Location
     let previousEntry: SiteChangeEntry?
-    /// `changeTime` is nil when the user kept the default ("now").
-    typealias ConfirmHandler = (
-        _ newNote: String,
-        _ previousNoteUpdate: PreviousNoteUpdate,
-        _ changeTime: Date?
-    ) -> Void
+    typealias ConfirmHandler = (SiteChangeConfirmation) -> Void
 
     let onConfirm: ConfirmHandler
 
     @State private var newNote: String = ""
     @State private var previousNote: String
+    @State private var previousProblem: SiteProblem?
     @State private var isSubmitting = false
     /// Only meaningful once `isCustomTime` is true. Until the user touches the
     /// picker, the change is logged at the moment Confirm is tapped (not when
@@ -32,6 +39,7 @@ struct SiteChangeConfirmationSheet: View {
         self.previousEntry = previousEntry
         self.onConfirm = onConfirm
         _previousNote = State(initialValue: previousEntry?.note ?? "")
+        _previousProblem = State(initialValue: previousEntry?.problem)
     }
 
     var body: some View {
@@ -49,19 +57,8 @@ struct SiteChangeConfirmationSheet: View {
                         .lineLimit(3...6)
                 }
 
-                if let previousEntry, let previousLocation = previousEntry.location {
-                    Section {
-                        TextField(
-                            "Add or edit a note (optional)",
-                            text: $previousNote,
-                            axis: .vertical
-                        )
-                        .lineLimit(3...6)
-                    } header: {
-                        Text("Previous Site Note")
-                    } footer: {
-                        Text("Closing: \(previousLocation.fullDisplayName)")
-                    }
+                if let previousLocation = previousEntry?.location {
+                    previousSiteSections(previousLocation: previousLocation)
                 }
             }
             .navigationTitle("Confirm Site Change")
@@ -75,16 +72,44 @@ struct SiteChangeConfirmationSheet: View {
                     Button("Confirm") {
                         guard !isSubmitting else { return }
                         isSubmitting = true
-                        let update: PreviousNoteUpdate = previousEntry == nil
-                            ? .leaveUnchanged
-                            : .replace(previousNote)
-                        onConfirm(newNote, update, isCustomTime ? changeTime : nil)
+                        let hasPrevious = previousEntry != nil
+                        onConfirm(SiteChangeConfirmation(
+                            newNote: newNote,
+                            previousNote: hasPrevious ? .replace(previousNote) : .leaveUnchanged,
+                            previousProblem: hasPrevious ? .replace(previousProblem) : .leaveUnchanged,
+                            changeTime: isCustomTime ? changeTime : nil
+                        ))
                         dismiss()
                     }
                     .disabled(isSubmitting)
                     .accessibilityIdentifier("siteChangeConfirmation.confirm")
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func previousSiteSections(previousLocation: Location) -> some View {
+        Section {
+            ProblemPicker(selection: $previousProblem, problems: allProblems)
+                .accessibilityIdentifier("siteChangeConfirmation.previousProblem")
+        } header: {
+            Text("Previous Site Problem")
+        } footer: {
+            Text("Changed early? Record why so you can spot problem sites in History and Statistics.")
+        }
+
+        Section {
+            TextField(
+                "Add or edit a note (optional)",
+                text: $previousNote,
+                axis: .vertical
+            )
+            .lineLimit(3...6)
+        } header: {
+            Text("Previous Site Note")
+        } footer: {
+            Text("Closing: \(previousLocation.fullDisplayName)")
         }
     }
 
