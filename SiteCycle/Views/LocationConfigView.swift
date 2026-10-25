@@ -244,5 +244,5 @@ private struct AddCustomZoneSheet: View {
     NavigationStack {
         LocationConfigView()
     }
-    .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+    .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

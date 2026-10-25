@@ -10,9 +10,13 @@ struct HistoryView: View {
     @State private var entryToDelete: SiteChangeEntry?
     @State private var selectedDateRange = "All Time"
     @State private var selectedLocation: Location?
+    @State private var selectedProblemFilter: HistoryProblemFilter = .all
 
     @Query(sort: \Location.sortOrder)
     private var allLocations: [Location]
+
+    @Query(sort: \SiteProblem.sortOrder)
+    private var allProblems: [SiteProblem]
 
     private let dateRangeOptions = ["Last 7 days", "Last 30 days", "Last 90 days", "All Time"]
 
@@ -25,7 +29,21 @@ struct HistoryView: View {
             }
         }
         .navigationTitle("History")
-        .onAppear { setupViewModel() }
+        .onAppear {
+            setupViewModel()
+            resetProblemFilterIfStale()
+        }
+        .onChange(of: allProblems.map(\.id)) {
+            resetProblemFilterIfStale()
+        }
+    }
+
+    /// A filter on a deleted problem would leave the picker with no matching
+    /// tag and the list empty, so fall back to showing all sites.
+    private func resetProblemFilterIfStale() {
+        guard !selectedProblemFilter.isValid(among: allProblems) else { return }
+        selectedProblemFilter = .all
+        viewModel?.problemFilter = .all
     }
 
     private func setupViewModel() {
@@ -37,7 +55,8 @@ struct HistoryView: View {
     @ViewBuilder
     private func historyContent(viewModel: HistoryViewModel) -> some View {
         let entries = viewModel.filteredEntries
-        if entries.isEmpty && selectedDateRange == "All Time" && selectedLocation == nil {
+        if entries.isEmpty && selectedDateRange == "All Time" && selectedLocation == nil
+            && selectedProblemFilter == .all {
             emptyStateContent
         } else {
             listContent(viewModel: viewModel, entries: entries)
@@ -96,7 +115,8 @@ struct HistoryView: View {
                         HistoryEditView(
                             entry: entry,
                             viewModel: viewModel,
-                            allLocations: allLocations
+                            allLocations: allLocations,
+                            allProblems: allProblems
                         )
                     } label: {
                         entryRow(entry)
@@ -127,6 +147,18 @@ struct HistoryView: View {
             .accessibilityIdentifier("history.filter.location")
             .onChange(of: selectedLocation) { _, newValue in
                 viewModel.locationFilter = newValue
+            }
+
+            Picker("Problem", selection: $selectedProblemFilter) {
+                Text("All Sites").tag(HistoryProblemFilter.all)
+                Text("Any Problem").tag(HistoryProblemFilter.anyProblem)
+                ForEach(allProblems) { problem in
+                    Text(problem.labelText).tag(HistoryProblemFilter.problem(problem))
+                }
+            }
+            .accessibilityIdentifier("history.filter.problem")
+            .onChange(of: selectedProblemFilter) { _, newValue in
+                viewModel.problemFilter = newValue
             }
 
             Picker("Date Range", selection: $selectedDateRange) {
@@ -168,6 +200,12 @@ struct HistoryView: View {
                     Text("Unknown Location").font(.headline)
                 }
                 Spacer()
+                if entry.hasProblems {
+                    let problems = entry.safeProblems
+                    Text(problems.map(\.displayEmoji).joined())
+                        .accessibilityLabel(problems.map(\.name).joined(separator: ", "))
+                        .accessibilityIdentifier("history.row.\(entry.id.uuidString).problems")
+                }
                 if entry.endTime == nil {
                     Text("Active")
                         .font(.caption)
@@ -177,7 +215,7 @@ struct HistoryView: View {
                         .padding(.vertical, 2)
                         .background(.green, in: Capsule())
                 } else if let hours = entry.durationHours {
-                    Text(formatDuration(hours))
+                    Text(DurationFormat.hoursMinutes(hours))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -195,18 +233,6 @@ struct HistoryView: View {
             }
         }
         .padding(.vertical, 2)
-    }
-
-    private func formatDuration(_ hours: Double) -> String {
-        let wholeHours = Int(hours)
-        let minutes = Int((hours - Double(wholeHours)) * 60)
-        if wholeHours > 0 && minutes > 0 {
-            return "\(wholeHours)h \(minutes)m"
-        } else if wholeHours > 0 {
-            return "\(wholeHours)h"
-        } else {
-            return "\(minutes)m"
-        }
     }
 
     private var emptyStateContent: some View {

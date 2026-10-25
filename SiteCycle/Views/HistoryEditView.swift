@@ -8,22 +8,31 @@ struct HistoryEditView: View {
     let entry: SiteChangeEntry
     let viewModel: HistoryViewModel
     let allLocations: [Location]
+    let allProblems: [SiteProblem]
 
     @State private var selectedLocation: Location?
     @State private var startTime: Date
     @State private var endTime: Date
     @State private var hasEndTime: Bool
     @State private var note: String
+    @State private var problems: [SiteProblem]
 
-    init(entry: SiteChangeEntry, viewModel: HistoryViewModel, allLocations: [Location]) {
+    init(
+        entry: SiteChangeEntry,
+        viewModel: HistoryViewModel,
+        allLocations: [Location],
+        allProblems: [SiteProblem]
+    ) {
         self.entry = entry
         self.viewModel = viewModel
         self.allLocations = allLocations
+        self.allProblems = allProblems
         _selectedLocation = State(initialValue: entry.location)
         _startTime = State(initialValue: entry.startTime)
         _endTime = State(initialValue: entry.endTime ?? Date())
         _hasEndTime = State(initialValue: entry.endTime != nil)
         _note = State(initialValue: entry.note ?? "")
+        _problems = State(initialValue: entry.safeProblems)
     }
 
     var body: some View {
@@ -58,6 +67,8 @@ struct HistoryEditView: View {
                 }
             }
 
+            problemSection
+
             Section("Note") {
                 TextField("Add a note...", text: $note, axis: .vertical)
                     .lineLimit(3...6)
@@ -84,7 +95,20 @@ struct HistoryEditView: View {
         }
     }
 
+    private var problemSection: some View {
+        Section {
+            ProblemChips(selection: $problems, problems: allProblems, original: entry.safeProblems)
+                .accessibilityIdentifier("historyEdit.problems")
+        } header: {
+            Text("Problems")
+        } footer: {
+            Text("Why this site was changed early, if it was. Tap to select any that apply.")
+        }
+    }
+
     private func saveChanges() {
+        viewModel.setProblems(entry, problems: problems)
+
         let newLocation = selectedLocation?.id != entry.location?.id ? selectedLocation : nil
         let newStart = abs(startTime.timeIntervalSince(entry.startTime)) > 1 ? startTime : nil
         let newNote = note != (entry.note ?? "") ? note : nil

@@ -41,14 +41,15 @@ xcodebuild build-for-testing \
 
 ### Data Models (SwiftData)
 
-Two `@Model` classes in `Models/`:
+Three `@Model` classes in `Models/`:
 
 - **Location** — body location for site placement. Fields: `id`, `zone`, `side` (optional "left"/"right"), `isEnabled`, `isCustom`, `sortOrder`. Has a computed `displayName` (e.g., "Left Front Abdomen"). One-to-many relationship with `SiteChangeEntry` (delete rule: nullify).
-- **SiteChangeEntry** — a single site change event. Fields: `id`, `startTime`, `endTime` (nil if active), `note`, `location` (relationship). Computed `durationHours`.
+- **SiteChangeEntry** — a single site change event. Fields: `id`, `startTime`, `endTime` (nil if active), `note`, `location` (relationship), `problems` (many-to-many with `SiteProblem` — why the site ended early; several can apply, empty means none). `safeProblems` returns them sorted by `sortOrder`; `hasProblems`. Computed `durationHours`.
+- **SiteProblem** — a reason for an early site change. Fields: `id`, `name`, `emoji`, `isEnabled`, `isCustom`, `sortOrder`, `defaultKey` (stable key for seeded defaults, nil for custom). Many-to-many with `SiteChangeEntry` via `entries` (delete rule: nullify).
 
 ### App Initialization
 
-`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and falls back to local-only storage (`.none`) if CloudKit is unavailable (e.g., CI without code signing entitlements). Seeds 14 default locations (7 zones x left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`.
+`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and falls back to local-only storage (`.none`) if CloudKit is unavailable (e.g., CI without code signing entitlements). Seeds 14 default locations (7 zones x left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`. Seeds default problems via `seedDefaultProblems()` in `Utilities/DefaultProblems.swift` (inserts any default whose `defaultKey` is missing, so a new default added in a later version reaches existing users), then `deduplicateProblems()` merges defaults sharing a `defaultKey` and custom problems sharing a `SiteProblem.nameKey` (both created when two devices act before CloudKit syncs). Every dedup keeper must be identical on every device — otherwise two devices deduplicating before syncing can each delete the copy the other kept — so keepers are picked from synced record properties only, never fetch order or entry counts: for problems, a customized default (renamed, new emoji, disabled, or moved from its seeded index) first, then for custom problems an enabled one, then lowest `id`; for entries, lowest `id`. `deduplicateSiteChangeEntries()` merges a duplicate's `problems` into the keeper's.
 
 Onboarding state is tracked via `@AppStorage("hasCompletedOnboarding")`.
 
@@ -67,6 +68,16 @@ The site selection sheet shows two sections — **Recommended** and **All Locati
 - The avoid list is always site-based (3 most recently used individual sites) in all strategies; avoid and recommended never overlap
 - Never-used locations sort as oldest (always recommended until used)
 - `SiteChangeViewModel.computeRecommendations(locations:strategy:cooldownCount:)` is a pure static function; callers (`refresh()`, `PhoneConnectivityManager.buildWatchAppState`) read the settings from UserDefaults via `RecommendationStrategy.load()` / `RecommendationStrategy.loadCooldownCount()`
+
+### Site Problems (early change reasons)
+
+- Defaults (`DefaultProblems.all`): Painful 🤕, Leaking 💧, Fell Off / Ripped Off 🩹, Occlusion 🚫, Unexplained Highs 📈, Bleeding 🩸. Never change a default's `key` — it is persisted.
+- Users manage them in Settings → Manage Problems (`ProblemConfigView`): rename, change emoji, enable/disable, reorder, add custom. Defaults can be disabled but never deleted (so seeding never re-adds them); custom problems with history are soft-deleted (`isEnabled = false`), without history hard-deleted — same rule as locations. Names are validated by `SiteProblem.nameError`: non-empty, unique case-insensitively, and free of `;` (`SiteProblem.csvSeparator`), because CSV identifies problems by name. Emoji input goes through `SiteProblem.sanitizeEmoji` (keeps the last emoji character, drops anything else); an empty emoji displays `SiteProblem.fallbackEmoji`.
+- Picked with `ProblemChips` (one-tap multi-select chip grid, shared by `SiteChangeConfirmationSheet` and `HistoryEditView`); it shows enabled problems plus the entry's original ones even if disabled.
+- **Confirmation sheet:** the "Closing" section (closing site, "31h of 72h", chips, note on that site) comes right after Time, before the new site's note. When the closing site lasted under 75% of the target duration (`EarlyChange.isEarly`), the header reads "Closing · Changed Early?" and the chips are shown; otherwise they're behind a "Record a Problem" button so routine changes stay fast. Problems and note go to `logSiteChange(previousProblems:previousEntry:)` and apply to the `previousEntry` the sheet showed, not whatever is active at confirm time (a watch command may have logged a change meanwhile). The sheet sends `.replace` only for values the user actually edited, and `logSiteChange` writes only differing values and skips an entry deleted while the sheet was open, so confirming never clobbers an edit synced from another device. Once the chip grid has been shown it stays shown for the life of the sheet. Durations on the sheet and in History use `DurationFormat.hoursMinutes` ("31h 24m"); Statistics keeps one decimal ("31.4h") for aggregates.
+- **History:** rows show all problem emojis; `HistoryEditView` edits them (`HistoryViewModel.setProblems`); a Problem filter (`HistoryProblemFilter`: all / any problem / a specific problem) sits with the location and date filters.
+- **Statistics:** a Problems section (`StatisticsViewModel.summarizeProblems`) shows the any-problem rate and per-problem counts over the time window. A site with several problems counts once toward "any" and once toward each. The denominator is completed sites plus an active site only if it already has a problem. Each location's stats carry the same `ProblemSummary` and show a rate plus per-type breakdown ("Problems: 3 of 9 · 33%  💧2 🤕1") — a rate, because locations are used different numbers of times.
+- CSV export adds a trailing `problems` column (names joined by `;`) only when some entry has a problem, so problem-free exports still import into older app versions. Import accepts headers with or without it (column 5 is only read when the header declares `problems`), keeps existing problems (they are configuration, not history), matches names case-insensitively, and creates unknown names as custom problems.
 
 ### Statistics Time Window & Duration Percentile
 
@@ -180,7 +191,7 @@ The project uses Swift 6 language mode with strict concurrency checking:
 Only one source file is compiled into multiple targets:
 - `SiteCycle/Connectivity/WatchAppState.swift` — shared `Codable` types (`WatchAppState`, `WatchSiteChangeCommand`, `LocationInfo`, `LocationCategory`) and app group constants. Compiled into iOS, watchOS, watch widget, and iPhone widget extension targets. The `appGroupIdentifier` helper strips `.watchkitapp[.widgets]` and `.widgets` suffixes off the bundle ID so all four targets resolve to `group.<prefix>.app`.
 
-The watch app does **not** include `Location.swift`, `SiteChangeEntry.swift`, `DefaultLocations.swift`, `HomeViewModel.swift`, or `SiteChangeViewModel.swift` — it operates as a thin client.
+The watch app does **not** include `Location.swift`, `SiteChangeEntry.swift`, `SiteProblem.swift`, `DefaultLocations.swift`, `HomeViewModel.swift`, or `SiteChangeViewModel.swift` — it operates as a thin client.
 
 ### Data Sync — Thin Client Architecture
 
@@ -229,7 +240,7 @@ Reads the same `WatchAppState` from the App Group `UserDefaults` that the watch 
 
 - Settings values (target duration, absorption alert threshold, recommendation strategy, body part cooldown count) use `@AppStorage` (UserDefaults), not SwiftData.
 - Logging a new site change automatically closes the previous active entry by setting its `endTime`.
-- Soft-delete for locations with history (set `isEnabled = false`); hard-delete only if no history exists.
+- Soft-delete for locations and custom problems with history (set `isEnabled = false`); hard-delete only if no history exists.
 - CloudKit sync is transparent — no account creation, works offline, syncs when connectivity returns.
 - Watch app is a thin client — no SwiftData, no CloudKit, no onboarding, no settings, no history editing. Communicates with iPhone via WatchConnectivity.
 - Error indicators must always include the technical error details (domain and code) alongside any user-friendly message. Format: append `"\n\nError: <domain> <code>"` to every `.error(...)` state string. This ensures sync failures are diagnosable from screenshots or user reports.

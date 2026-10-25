@@ -150,7 +150,21 @@ func deduplicateSiteChangeEntries(context: ModelContext) {
 
     var didChange = false
     for (_, entries) in groups where entries.count > 1 {
-        for duplicate in entries.dropFirst() {
+        // Lowest id, not fetch order: every device must keep the same copy, or
+        // two devices deduplicating before syncing could each delete the copy
+        // the other kept and lose the entry entirely.
+        let sorted = entries.sorted { $0.id.uuidString < $1.id.uuidString }
+        guard let keeper = sorted.first else { continue }
+        for duplicate in sorted.dropFirst() {
+            // Problems may have been set on only one copy (e.g. from History);
+            // keep them rather than losing them with the deleted duplicate.
+            var problems = keeper.problems ?? []
+            for problem in duplicate.problems ?? [] where !problems.contains(where: { $0.id == problem.id }) {
+                problems.append(problem)
+            }
+            if problems.count != (keeper.problems ?? []).count {
+                keeper.problems = problems
+            }
             context.delete(duplicate)
             didChange = true
         }

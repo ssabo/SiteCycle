@@ -71,6 +71,9 @@ struct StatisticsView: View {
                 Text("Durations exclude the active site.")
             }
             overallSection(vm)
+            if vm.problemSummary.siteCount > 0 {
+                problemsSection(vm.problemSummary)
+            }
             perLocationSection(vm.locationStats)
             siteRestSection(vm.locationStats)
             if !vm.usageDistribution.isEmpty {
@@ -140,6 +143,66 @@ private extension StatisticsView {
     }
 }
 
+// MARK: - Problems Section
+
+private extension StatisticsView {
+    func problemsSection(_ summary: ProblemSummary) -> some View {
+        Section {
+            HStack {
+                Text("Any Problem")
+                Spacer()
+                Text(problemCountText(summary.problemSiteCount, of: summary.siteCount, rate: summary.anyProblemRate))
+                    .foregroundStyle(.secondary)
+            }
+            .accessibilityIdentifier("statistics.problems.any")
+
+            if summary.items.isEmpty {
+                Text("No problems recorded.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(summary.items) { item in
+                    HStack(spacing: 8) {
+                        Text(item.problem.displayEmoji)
+                        Text(item.problem.name)
+                        Spacer()
+                        Text(problemCountText(item.count, of: summary.siteCount, rate: item.rate))
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        } header: {
+            Text("Problems")
+        } footer: {
+            Text("Share of finished sites with a problem recorded (the active site counts only once it has one). "
+                + "Set a problem when logging a site change or from History.")
+        }
+    }
+
+    /// `rate` comes from the view model so the percentage math lives in one place.
+    /// e.g. "Problems: 3 of 9 · 33%  💧2 🤕1" — a rate rather than a raw count,
+    /// since locations are used different numbers of times.
+    func locationProblemsLine(_ summary: ProblemSummary) -> some View {
+        let rate = problemCountText(summary.problemSiteCount, of: summary.siteCount, rate: summary.anyProblemRate)
+        let breakdown = summary.items
+            .map { "\($0.problem.displayEmoji)\($0.count)" }
+            .joined(separator: " ")
+        return Label("Problems: \(rate)  \(breakdown)", systemImage: "bandage")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel(
+                "Problems: \(rate). "
+                    + summary.items.map { "\($0.problem.name) \($0.count)" }.joined(separator: ", ")
+            )
+    }
+
+    func problemCountText(_ count: Int, of total: Int, rate: Double?) -> String {
+        guard let rate else { return "\(count)" }
+        return "\(count) of \(total) · \(Int((rate * 100).rounded()))%"
+    }
+}
+
 // MARK: - Per-Location Stats
 
 private extension StatisticsView {
@@ -172,6 +235,10 @@ private extension StatisticsView {
 
             if stat.totalUses > 0 {
                 locationMetricsGrid(stat)
+            }
+
+            if stat.problems.problemSiteCount > 0 {
+                locationProblemsLine(stat.problems)
             }
         }
         .padding(.vertical, 4)
@@ -293,5 +360,5 @@ private extension StatisticsView {
     NavigationStack {
         StatisticsView()
     }
-    .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+    .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

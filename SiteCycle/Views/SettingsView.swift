@@ -73,6 +73,13 @@ struct SettingsView: View {
                 Label("Manage Locations", systemImage: "mappin.and.ellipse")
             }
             .accessibilityIdentifier("settings.manageLocations")
+
+            NavigationLink {
+                ProblemConfigView()
+            } label: {
+                Label("Manage Problems", systemImage: "bandage")
+            }
+            .accessibilityIdentifier("settings.manageProblems")
         }
 
         Section("Preferences") {
@@ -287,5 +294,5 @@ private struct ActivityPresenter: UIViewControllerRepresentable {
     NavigationStack {
         SettingsView()
     }
-    .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+    .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

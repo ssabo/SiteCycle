@@ -60,6 +60,25 @@ enum PreviousNoteUpdate {
     case replace(String?)
 }
 
+/// What to record as the reasons the previous (closing) site ended early.
+enum PreviousProblemsUpdate {
+    case leaveUnchanged
+    case replace([SiteProblem])
+}
+
+/// Whether a closing site ended well short of the target duration, which
+/// usually means something went wrong. The confirmation sheet uses it to
+/// prompt for a problem only when one is likely.
+enum EarlyChange {
+    /// A site that lasted less than this fraction of the target counts as early.
+    static let thresholdFraction = 0.75
+
+    static func isEarly(durationHours: Double, targetHours: Double) -> Bool {
+        guard targetHours > 0 else { return false }
+        return durationHours < targetHours * thresholdFraction
+    }
+}
+
 @MainActor
 @Observable
 final class SiteChangeViewModel {
@@ -261,10 +280,32 @@ final class SiteChangeViewModel {
         location.safeEntries.map(\.startTime).max()
     }
 
+    /// Writes only values that differ, so an unchanged note or problem set
+    /// never overwrites a newer edit synced from another device (or costs a
+    /// CloudKit write). Skips an entry deleted (by sync or dedup) while the
+    /// confirmation sheet was open.
+    private func applyPreviousSiteUpdates(
+        to target: SiteChangeEntry,
+        note: PreviousNoteUpdate,
+        problems: PreviousProblemsUpdate
+    ) {
+        guard !target.isDeleted, target.modelContext != nil else { return }
+        if case .replace(let value) = note {
+            let newNote = (value?.isEmpty ?? true) ? nil : value
+            if target.note != newNote { target.note = newNote }
+        }
+        if case .replace(let newProblems) = problems,
+           Set(target.safeProblems.map(\.id)) != Set(newProblems.map(\.id)) {
+            target.problems = newProblems
+        }
+    }
+
     func logSiteChange(
         location: Location,
         note: String?,
         previousNote: PreviousNoteUpdate = .leaveUnchanged,
+        previousProblems: PreviousProblemsUpdate = .leaveUnchanged,
+        previousEntry: SiteChangeEntry? = nil,
         changeTime: Date? = nil
     ) {
         // nil means "now" — the common case of logging the change as it happens.
@@ -272,11 +313,14 @@ final class SiteChangeViewModel {
         let changeTime = changeTime ?? Date()
 
         // Close the previous active entry
-        if let activeEntry = SiteChangeEntry.fetchActive(in: modelContext) {
-            activeEntry.endTime = changeTime
-            if case .replace(let value) = previousNote {
-                activeEntry.note = (value?.isEmpty ?? true) ? nil : value
-            }
+        let activeEntry = SiteChangeEntry.fetchActive(in: modelContext)
+        activeEntry?.endTime = changeTime
+
+        // The note and problems belong to the entry the user saw on the
+        // confirmation sheet (`previousEntry`). It can differ from the active
+        // one if a watch command logged a change while the sheet was open.
+        if let target = previousEntry ?? activeEntry {
+            applyPreviousSiteUpdates(to: target, note: previousNote, problems: previousProblems)
         }
 
         // Create the new entry

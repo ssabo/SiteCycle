@@ -197,5 +197,5 @@ private struct ReadyPage: View {
 
 #Preview {
     OnboardingView()
-        .modelContainer(for: [Location.self, SiteChangeEntry.self], inMemory: true)
+        .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

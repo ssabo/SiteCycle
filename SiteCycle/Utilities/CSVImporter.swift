@@ -127,9 +127,11 @@ struct CSVImporter {
             throw ImportError.invalidHeader
         }
 
+        // The `problems` column was added later; older exports without it still import.
         let expectedHeader = ["date", "location", "duration_hours", "note"]
         let normalizedHeader = header.map { $0.trimmingCharacters(in: .whitespaces) }
-        guard normalizedHeader == expectedHeader else {
+        let hasProblemsColumn = normalizedHeader == expectedHeader + ["problems"]
+        guard normalizedHeader == expectedHeader || hasProblemsColumn else {
             let got = normalizedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             let want = expectedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             logger.error("Invalid header — got: [\(got)], want: [\(want)]")
@@ -142,16 +144,21 @@ struct CSVImporter {
         }
 
         try deleteAllData(context: context)
-        return try importEntries(from: dataRows, context: context)
+        return try importEntries(from: dataRows, hasProblemsColumn: hasProblemsColumn, context: context)
     }
 
     @MainActor
-    private static func importEntries(from dataRows: [[String]], context: ModelContext) throws -> ImportResult {
+    /// Column 5 is only read as problems when the header declares it, so a stray
+    /// extra field under the legacy header can't turn into bogus problems.
+    private static func importEntries(
+        from dataRows: [[String]], hasProblemsColumn: Bool, context: ModelContext
+    ) throws -> ImportResult {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withInternetDateTime]
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
 
         var locationCache: [String: Location] = [:]
+        var problemResolver = try ProblemResolver(context: context)
         var sortOrder = 0
         var count = 0
         var skipped: [(rowNumber: Int, reason: String)] = []
@@ -177,9 +184,11 @@ struct CSVImporter {
             let endTime: Date? = durationStr.isEmpty ? nil : Double(durationStr).map {
                 startTime.addingTimeInterval($0 * 3600)
             }
+            let problemsField = hasProblemsColumn && row.count >= 5 ? row[4] : ""
             let entry = SiteChangeEntry(
                 startTime: startTime, endTime: endTime,
-                note: note.isEmpty ? nil : note, location: location
+                note: note.isEmpty ? nil : note, location: location,
+                problems: problemResolver.resolveAll(problemsField, context: context)
             )
             context.insert(entry)
             count += 1
@@ -201,6 +210,56 @@ struct CSVImporter {
         cache[name] = loc
         sortOrder += 1
         return loc
+    }
+
+    /// Resolves CSV problem names. Problems are configuration, not history, so
+    /// import keeps them and matches names against them (case-insensitively)
+    /// rather than replacing them; unknown names become custom problems.
+    private struct ProblemResolver {
+        var byName: [String: SiteProblem] = [:]
+        var nextSortOrder = 0
+
+        @MainActor
+        init(context: ModelContext) throws {
+            let problems = try context.fetch(FetchDescriptor<SiteProblem>(sortBy: [SortDescriptor(\.sortOrder)]))
+            // Every existing problem counts toward the max, including ones whose
+            // names collide with an earlier one and so aren't in `byName`.
+            nextSortOrder = (problems.map(\.sortOrder).max() ?? -1) + 1
+            for problem in problems {
+                let key = SiteProblem.nameKey(problem.name)
+                if byName[key] == nil { byName[key] = problem }
+            }
+        }
+
+        /// Resolves a `;`-separated field, dropping blanks and repeats.
+        @MainActor
+        mutating func resolveAll(_ field: String, context: ModelContext) -> [SiteProblem] {
+            var result: [SiteProblem] = []
+            for name in field.split(separator: SiteProblem.csvSeparator) {
+                guard let problem = resolve(String(name), context: context),
+                      !result.contains(where: { $0.id == problem.id }) else { continue }
+                result.append(problem)
+            }
+            return result
+        }
+
+        @MainActor
+        private mutating func resolve(_ name: String, context: ModelContext) -> SiteProblem? {
+            let trimmed = name.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return nil }
+            let key = SiteProblem.nameKey(trimmed)
+            if let existing = byName[key] { return existing }
+            let problem = SiteProblem(
+                name: trimmed,
+                emoji: SiteProblem.fallbackEmoji,
+                isCustom: true,
+                sortOrder: nextSortOrder
+            )
+            context.insert(problem)
+            byName[key] = problem
+            nextSortOrder += 1
+            return problem
+        }
     }
 
     @MainActor

@@ -27,6 +27,7 @@ struct SiteCycleApp: App {
         let schema = Schema([
             Location.self,
             SiteChangeEntry.self,
+            SiteProblem.self,
         ])
 
         if ProcessInfo.processInfo.arguments.contains("-uiTestMode") {
@@ -84,6 +85,8 @@ struct SiteCycleApp: App {
                     deduplicateLocations(context: context)
                     deduplicateSiteChangeEntries(context: context)
                     migrateLocationBodyParts(context: context)
+                    seedDefaultProblems(context: context)
+                    deduplicateProblems(context: context)
                     connectivityManager.configure(modelContext: context)
                     connectivityManager.pushCurrentState()
                 }

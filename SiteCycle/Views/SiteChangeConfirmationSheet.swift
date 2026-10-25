@@ -1,21 +1,35 @@
 import SwiftUI
+import SwiftData
+
+/// What the user chose on the confirmation sheet.
+struct SiteChangeConfirmation {
+    let newNote: String
+    let previousNote: PreviousNoteUpdate
+    let previousProblems: PreviousProblemsUpdate
+    /// The entry shown as "Closing" — the note and problem updates apply to it.
+    let previousEntry: SiteChangeEntry?
+    /// nil when the user kept the default ("now").
+    let changeTime: Date?
+}
 
 struct SiteChangeConfirmationSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \SiteProblem.sortOrder) private var allProblems: [SiteProblem]
+    @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
 
     let targetLocation: Location
     let previousEntry: SiteChangeEntry?
-    /// `changeTime` is nil when the user kept the default ("now").
-    typealias ConfirmHandler = (
-        _ newNote: String,
-        _ previousNoteUpdate: PreviousNoteUpdate,
-        _ changeTime: Date?
-    ) -> Void
+    typealias ConfirmHandler = (SiteChangeConfirmation) -> Void
 
     let onConfirm: ConfirmHandler
 
     @State private var newNote: String = ""
     @State private var previousNote: String
+    @State private var previousProblems: [SiteProblem]
+    /// Set when the user taps "Record a Problem" on a site that wasn't early,
+    /// or up front when the site already has problems — so deselecting the
+    /// last chip doesn't collapse the grid mid-edit.
+    @State private var isProblemsExpanded: Bool
     @State private var isSubmitting = false
     /// Only meaningful once `isCustomTime` is true. Until the user touches the
     /// picker, the change is logged at the moment Confirm is tapped (not when
@@ -32,6 +46,8 @@ struct SiteChangeConfirmationSheet: View {
         self.previousEntry = previousEntry
         self.onConfirm = onConfirm
         _previousNote = State(initialValue: previousEntry?.note ?? "")
+        _previousProblems = State(initialValue: previousEntry?.safeProblems ?? [])
+        _isProblemsExpanded = State(initialValue: previousEntry?.hasProblems ?? false)
     }
 
     var body: some View {
@@ -44,24 +60,16 @@ struct SiteChangeConfirmationSheet: View {
 
                 changeTimeSection
 
+                // The closing site comes before the new site's note: when a
+                // site is changed early, what went wrong is what's on the
+                // user's mind.
+                if let previousEntry, let previousLocation = previousEntry.location {
+                    closingSiteSection(previousEntry: previousEntry, previousLocation: previousLocation)
+                }
+
                 Section("New Site Note") {
                     TextField("Add a note (optional)", text: $newNote, axis: .vertical)
                         .lineLimit(3...6)
-                }
-
-                if let previousEntry, let previousLocation = previousEntry.location {
-                    Section {
-                        TextField(
-                            "Add or edit a note (optional)",
-                            text: $previousNote,
-                            axis: .vertical
-                        )
-                        .lineLimit(3...6)
-                    } header: {
-                        Text("Previous Site Note")
-                    } footer: {
-                        Text("Closing: \(previousLocation.fullDisplayName)")
-                    }
                 }
             }
             .navigationTitle("Confirm Site Change")
@@ -75,10 +83,13 @@ struct SiteChangeConfirmationSheet: View {
                     Button("Confirm") {
                         guard !isSubmitting else { return }
                         isSubmitting = true
-                        let update: PreviousNoteUpdate = previousEntry == nil
-                            ? .leaveUnchanged
-                            : .replace(previousNote)
-                        onConfirm(newNote, update, isCustomTime ? changeTime : nil)
+                        onConfirm(SiteChangeConfirmation(
+                            newNote: newNote,
+                            previousNote: previousNoteUpdate,
+                            previousProblems: previousProblemsUpdate,
+                            previousEntry: previousEntry,
+                            changeTime: isCustomTime ? changeTime : nil
+                        ))
                         dismiss()
                     }
                     .disabled(isSubmitting)
@@ -86,6 +97,75 @@ struct SiteChangeConfirmationSheet: View {
                 }
             }
         }
+    }
+
+    /// Only edits the user made are sent, so confirming never writes the
+    /// sheet's snapshot over a change synced from another device meanwhile.
+    private var previousNoteUpdate: PreviousNoteUpdate {
+        guard let previousEntry, previousNote != (previousEntry.note ?? "") else { return .leaveUnchanged }
+        return .replace(previousNote)
+    }
+
+    private var previousProblemsUpdate: PreviousProblemsUpdate {
+        guard let previousEntry,
+              Set(previousProblems.map(\.id)) != Set(previousEntry.safeProblems.map(\.id)) else {
+            return .leaveUnchanged
+        }
+        return .replace(previousProblems)
+    }
+
+    private func closingSiteSection(previousEntry: SiteChangeEntry, previousLocation: Location) -> some View {
+        let hours = closingDurationHours(previousEntry)
+        let isEarly = EarlyChange.isEarly(durationHours: hours, targetHours: Double(targetDurationHours))
+        // Expanded when a problem is likely (early) or already recorded, so
+        // routine changes stay one tap while early ones prompt for a reason.
+        let showsProblems = isEarly || isProblemsExpanded || !previousProblems.isEmpty
+
+        return Section {
+            HStack {
+                LocationLabelView(location: previousLocation)
+                Spacer()
+                Text("\(DurationFormat.hoursMinutes(hours)) of \(targetDurationHours)h")
+                    .foregroundStyle(isEarly ? Color.orange : Color.secondary)
+            }
+            .accessibilityElement(children: .combine)
+
+            if showsProblems {
+                ProblemChips(
+                    selection: $previousProblems,
+                    problems: allProblems,
+                    original: previousEntry.safeProblems
+                )
+                .accessibilityIdentifier("siteChangeConfirmation.previousProblems")
+                // Once shown (e.g. because the site was early), stay shown even
+                // if a later change time makes it not early.
+                .onAppear { isProblemsExpanded = true }
+            } else {
+                Button {
+                    isProblemsExpanded = true
+                } label: {
+                    Label("Record a Problem", systemImage: "bandage")
+                }
+                .accessibilityIdentifier("siteChangeConfirmation.recordProblem")
+            }
+
+            TextField("Note on this site (optional)", text: $previousNote, axis: .vertical)
+                .lineLimit(2...6)
+        } header: {
+            Text(isEarly ? "Closing · Changed Early?" : "Closing")
+        } footer: {
+            if isEarly {
+                Text("This site ended well short of your \(targetDurationHours)h target. Tap what went wrong, if anything.")
+            } else {
+                Text("Problems you record show up in History and Statistics.")
+            }
+        }
+    }
+
+    /// How long the closing site will have lasted at the chosen change time.
+    private func closingDurationHours(_ previousEntry: SiteChangeEntry) -> Double {
+        let end = isCustomTime ? changeTime : Date()
+        return max(0, end.timeIntervalSince(previousEntry.startTime) / 3600)
     }
 
     private var changeTimeSection: some View {
