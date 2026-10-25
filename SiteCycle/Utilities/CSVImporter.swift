@@ -130,7 +130,8 @@ struct CSVImporter {
         // The `problems` column was added later; older exports without it still import.
         let expectedHeader = ["date", "location", "duration_hours", "note"]
         let normalizedHeader = header.map { $0.trimmingCharacters(in: .whitespaces) }
-        guard normalizedHeader == expectedHeader || normalizedHeader == expectedHeader + ["problems"] else {
+        let hasProblemsColumn = normalizedHeader == expectedHeader + ["problems"]
+        guard normalizedHeader == expectedHeader || hasProblemsColumn else {
             let got = normalizedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             let want = expectedHeader.map { "\"\($0)\"" }.joined(separator: ", ")
             logger.error("Invalid header — got: [\(got)], want: [\(want)]")
@@ -143,11 +144,15 @@ struct CSVImporter {
         }
 
         try deleteAllData(context: context)
-        return try importEntries(from: dataRows, context: context)
+        return try importEntries(from: dataRows, hasProblemsColumn: hasProblemsColumn, context: context)
     }
 
     @MainActor
-    private static func importEntries(from dataRows: [[String]], context: ModelContext) throws -> ImportResult {
+    /// Column 5 is only read as problems when the header declares it, so a stray
+    /// extra field under the legacy header can't turn into bogus problems.
+    private static func importEntries(
+        from dataRows: [[String]], hasProblemsColumn: Bool, context: ModelContext
+    ) throws -> ImportResult {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withInternetDateTime]
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
@@ -179,7 +184,7 @@ struct CSVImporter {
             let endTime: Date? = durationStr.isEmpty ? nil : Double(durationStr).map {
                 startTime.addingTimeInterval($0 * 3600)
             }
-            let problemsField = row.count >= 5 ? row[4] : ""
+            let problemsField = hasProblemsColumn && row.count >= 5 ? row[4] : ""
             let entry = SiteChangeEntry(
                 startTime: startTime, endTime: endTime,
                 note: note.isEmpty ? nil : note, location: location,
@@ -221,7 +226,7 @@ struct CSVImporter {
             // names collide with an earlier one and so aren't in `byName`.
             nextSortOrder = (problems.map(\.sortOrder).max() ?? -1) + 1
             for problem in problems {
-                let key = Self.key(problem.name)
+                let key = SiteProblem.nameKey(problem.name)
                 if byName[key] == nil { byName[key] = problem }
             }
         }
@@ -242,7 +247,7 @@ struct CSVImporter {
         private mutating func resolve(_ name: String, context: ModelContext) -> SiteProblem? {
             let trimmed = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { return nil }
-            let key = Self.key(trimmed)
+            let key = SiteProblem.nameKey(trimmed)
             if let existing = byName[key] { return existing }
             let problem = SiteProblem(
                 name: trimmed,
@@ -254,10 +259,6 @@ struct CSVImporter {
             byName[key] = problem
             nextSortOrder += 1
             return problem
-        }
-
-        static func key(_ name: String) -> String {
-            name.trimmingCharacters(in: .whitespaces).lowercased()
         }
     }
 

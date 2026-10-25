@@ -88,13 +88,16 @@ final class SiteProblem {
         return nil
     }
 
-    /// Whether `name` (trimmed, case-insensitive) is already used by another problem.
+    /// The identity of a problem name: two names with the same key are the
+    /// same problem. Shared by name validation, CSV import and deduplication.
+    static func nameKey(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespaces).lowercased()
+    }
+
+    /// Whether `name` is already used by another problem (compared by `nameKey`).
     static func isNameTaken(_ name: String, among problems: [SiteProblem], excluding: SiteProblem? = nil) -> Bool {
-        let key = name.trimmingCharacters(in: .whitespaces).lowercased()
-        return problems.contains { problem in
-            problem.id != excluding?.id
-                && problem.name.trimmingCharacters(in: .whitespaces).lowercased() == key
-        }
+        let key = nameKey(name)
+        return problems.contains { $0.id != excluding?.id && nameKey($0.name) == key }
     }
 
     /// Enabled problems in display order, plus any `retained` problems even when

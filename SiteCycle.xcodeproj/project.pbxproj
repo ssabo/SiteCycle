@@ -14,6 +14,7 @@
 		8A0000000000000000000104 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000004 /* ContentView.swift */; };
 		8A0000000000000000000105 /* DefaultLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000005 /* DefaultLocations.swift */; };
 		8A0000000000000000000195 /* DefaultProblems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000095 /* DefaultProblems.swift */; };
+		8A000000000000000000019B /* DurationFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000009B /* DurationFormat.swift */; };
 		8A0000000000000000000106 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000006 /* Assets.xcassets */; };
 		8A0000000000000000000107 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000007 /* Preview Assets.xcassets */; };
 		8A0000000000000000000110 /* LocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000010 /* LocationTests.swift */; };
@@ -170,6 +171,7 @@
 		8A0000000000000000000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000005 /* DefaultLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocations.swift; sourceTree = "<group>"; };
 		8A0000000000000000000095 /* DefaultProblems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultProblems.swift; sourceTree = "<group>"; };
+		8A000000000000000000009B /* DurationFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationFormat.swift; sourceTree = "<group>"; };
 		8A0000000000000000000006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8A0000000000000000000007 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8A0000000000000000000008 /* SiteCycle.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycle.entitlements; sourceTree = "<group>"; };
@@ -383,6 +385,7 @@
 				8A000000000000000000002D /* CSVImporter.swift */,
 				8A0000000000000000000005 /* DefaultLocations.swift */,
 				8A0000000000000000000095 /* DefaultProblems.swift */,
+				8A000000000000000000009B /* DurationFormat.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -744,6 +747,7 @@
 				8A0000000000000000000104 /* ContentView.swift in Sources */,
 				8A0000000000000000000105 /* DefaultLocations.swift in Sources */,
 				8A0000000000000000000195 /* DefaultProblems.swift in Sources */,
+				8A000000000000000000019B /* DurationFormat.swift in Sources */,
 				8A0000000000000000000120 /* LocationConfigView.swift in Sources */,
 				8A0000000000000000000197 /* ProblemChips.swift in Sources */,
 				8A0000000000000000000196 /* ProblemConfigView.swift in Sources */,

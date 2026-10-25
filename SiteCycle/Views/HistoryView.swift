@@ -29,7 +29,21 @@ struct HistoryView: View {
             }
         }
         .navigationTitle("History")
-        .onAppear { setupViewModel() }
+        .onAppear {
+            setupViewModel()
+            resetProblemFilterIfStale()
+        }
+        .onChange(of: allProblems.map(\.id)) {
+            resetProblemFilterIfStale()
+        }
+    }
+
+    /// A filter on a deleted problem would leave the picker with no matching
+    /// tag and the list empty, so fall back to showing all sites.
+    private func resetProblemFilterIfStale() {
+        guard !selectedProblemFilter.isValid(among: allProblems) else { return }
+        selectedProblemFilter = .all
+        viewModel?.problemFilter = .all
     }
 
     private func setupViewModel() {
@@ -201,7 +215,7 @@ struct HistoryView: View {
                         .padding(.vertical, 2)
                         .background(.green, in: Capsule())
                 } else if let hours = entry.durationHours {
-                    Text(formatDuration(hours))
+                    Text(DurationFormat.hoursMinutes(hours))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -219,18 +233,6 @@ struct HistoryView: View {
             }
         }
         .padding(.vertical, 2)
-    }
-
-    private func formatDuration(_ hours: Double) -> String {
-        let wholeHours = Int(hours)
-        let minutes = Int((hours - Double(wholeHours)) * 60)
-        if wholeHours > 0 && minutes > 0 {
-            return "\(wholeHours)h \(minutes)m"
-        } else if wholeHours > 0 {
-            return "\(wholeHours)h"
-        } else {
-            return "\(minutes)m"
-        }
     }
 
     private var emptyStateContent: some View {

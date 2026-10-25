@@ -13,8 +13,15 @@ enum HistoryProblemFilter: Hashable {
         switch self {
         case .all: return true
         case .anyProblem: return entry.hasProblems
-        case .problem(let problem): return entry.safeProblems.contains { $0.id == problem.id }
+        case .problem(let problem): return (entry.problems ?? []).contains { $0.id == problem.id }
         }
+    }
+
+    /// False once the filtered problem no longer exists (e.g. hard-deleted in
+    /// Manage Problems), so History can fall back to `.all`.
+    func isValid(among problems: [SiteProblem]) -> Bool {
+        guard case .problem(let filtered) = self else { return true }
+        return !filtered.isDeleted && problems.contains { $0.id == filtered.id }
     }
 }
 

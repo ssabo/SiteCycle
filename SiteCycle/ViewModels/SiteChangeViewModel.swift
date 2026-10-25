@@ -280,6 +280,26 @@ final class SiteChangeViewModel {
         location.safeEntries.map(\.startTime).max()
     }
 
+    /// Writes only values that differ, so an unchanged note or problem set
+    /// never overwrites a newer edit synced from another device (or costs a
+    /// CloudKit write). Skips an entry deleted (by sync or dedup) while the
+    /// confirmation sheet was open.
+    private func applyPreviousSiteUpdates(
+        to target: SiteChangeEntry,
+        note: PreviousNoteUpdate,
+        problems: PreviousProblemsUpdate
+    ) {
+        guard !target.isDeleted, target.modelContext != nil else { return }
+        if case .replace(let value) = note {
+            let newNote = (value?.isEmpty ?? true) ? nil : value
+            if target.note != newNote { target.note = newNote }
+        }
+        if case .replace(let newProblems) = problems,
+           Set(target.safeProblems.map(\.id)) != Set(newProblems.map(\.id)) {
+            target.problems = newProblems
+        }
+    }
+
     func logSiteChange(
         location: Location,
         note: String?,
@@ -296,16 +316,11 @@ final class SiteChangeViewModel {
         let activeEntry = SiteChangeEntry.fetchActive(in: modelContext)
         activeEntry?.endTime = changeTime
 
-        // The note and problem belong to the entry the user saw on the
+        // The note and problems belong to the entry the user saw on the
         // confirmation sheet (`previousEntry`). It can differ from the active
         // one if a watch command logged a change while the sheet was open.
         if let target = previousEntry ?? activeEntry {
-            if case .replace(let value) = previousNote {
-                target.note = (value?.isEmpty ?? true) ? nil : value
-            }
-            if case .replace(let problems) = previousProblems {
-                target.problems = problems
-            }
+            applyPreviousSiteUpdates(to: target, note: previousNote, problems: previousProblems)
         }
 
         // Create the new entry

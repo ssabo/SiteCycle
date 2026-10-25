@@ -116,6 +116,29 @@ struct SiteProblemWorkflowTests {
         #expect(watchEntry.endTime != nil)
     }
 
+    @Test func logSiteChangeSkipsPreviousEntryDeletedWhileSheetWasOpen() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let (shown, next) = try setUpActiveSite(context)
+        let painful = SiteProblem(name: "Painful", emoji: "🤕")
+        context.insert(painful)
+        context.delete(shown)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(
+            location: next,
+            note: nil,
+            previousProblems: .replace([painful]),
+            previousEntry: shown
+        )
+
+        #expect(painful.safeEntries.isEmpty)
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 1)
+        #expect(entries.first?.location?.id == next.id)
+    }
+
     // MARK: - Early Change
 
     @Test func earlyChangeIsBelowThreeQuartersOfTarget() {
@@ -182,6 +205,30 @@ struct SiteProblemWorkflowTests {
         #expect(viewModel.filteredEntries.count == 2)
     }
 
+    @Test func historyProblemFilterGoesStaleWhenProblemIsDeleted() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let kinked = SiteProblem(name: "Kinked", emoji: "➰", isCustom: true)
+        context.insert(kinked)
+        try context.save()
+
+        let filter = HistoryProblemFilter.problem(kinked)
+        #expect(filter.isValid(among: [kinked]))
+        #expect(HistoryProblemFilter.anyProblem.isValid(among: []))
+
+        context.delete(kinked)
+        try context.save()
+        #expect(!filter.isValid(among: []))
+    }
+
+    // MARK: - Duration Format
+
+    @Test func durationFormatShowsHoursAndMinutes() {
+        #expect(DurationFormat.hoursMinutes(31.5) == "31h 30m")
+        #expect(DurationFormat.hoursMinutes(72) == "72h")
+        #expect(DurationFormat.hoursMinutes(0.75) == "45m")
+    }
+
     // MARK: - CSV
 
     @Test func csvExportJoinsProblemNames() throws {
@@ -241,6 +288,22 @@ struct SiteProblemWorkflowTests {
         #expect(!entries[2].hasProblems)
         #expect(!entries[3].hasProblems)
         #expect(try fetchProblems(context).count == 2)
+    }
+
+    @Test func csvImportIgnoresExtraFieldUnderLegacyHeader() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        // An unquoted comma in the note spills into a fifth field.
+        let result = try importCSV("""
+        date,location,duration_hours,note
+        2024-01-15T10:30:00Z,L Abdomen,40.0,sore, red
+        """, context: context)
+
+        #expect(result.importedCount == 1)
+        #expect(try fetchProblems(context).isEmpty)
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.first?.hasProblems == false)
     }
 
     @Test func csvImportGivesNewProblemsUniqueSortOrders() throws {

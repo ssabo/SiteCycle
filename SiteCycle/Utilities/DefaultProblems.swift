@@ -47,22 +47,24 @@ func seedDefaultProblems(context: ModelContext) {
     }
 }
 
-/// Merges default problems that share a `defaultKey` — created when two devices
-/// both seed before CloudKit syncs — moving all entries onto one keeper.
+/// Merges duplicate problems, moving all entries onto one keeper. Duplicates
+/// arise when two devices both seed the defaults (same `defaultKey`) or both
+/// add a custom problem with the same name (same `SiteProblem.nameKey`)
+/// before CloudKit syncs.
 ///
 /// The keeper must be the same on every device, or two devices deduplicating
 /// before syncing could each delete the copy the other kept. So it is chosen
 /// only from record properties both devices see identically once both copies
-/// have synced: a copy the user customized (renamed, new emoji, disabled) wins
-/// over a pristine one, then the lowest `id`. Entry counts are not used — entry
-/// relationships sync separately and can differ between devices meanwhile.
+/// have synced: a default the user customized wins over a pristine one, then
+/// the lowest `id`. Entry counts are not used — entry relationships sync
+/// separately and can differ between devices meanwhile.
 @MainActor
 func deduplicateProblems(context: ModelContext) {
     guard let problems = try? context.fetch(FetchDescriptor<SiteProblem>()) else { return }
 
     var groups: [String: [SiteProblem]] = [:]
     for problem in problems {
-        guard let key = problem.defaultKey else { continue }
+        let key = problem.defaultKey.map { "default:\($0)" } ?? "custom:\(SiteProblem.nameKey(problem.name))"
         groups[key, default: []].append(problem)
     }
 
@@ -89,17 +91,25 @@ func deduplicateProblems(context: ModelContext) {
     }
 }
 
-/// Whether the user has changed a seeded default from how it was seeded.
+/// Whether the user has changed a seeded default from how it was seeded:
+/// renamed, new emoji, disabled, or moved from its seeded position. Seeding
+/// on a fresh store gives each default its index in `DefaultProblems.all`.
 func isCustomizedDefault(_ problem: SiteProblem) -> Bool {
-    guard let original = DefaultProblems.all.first(where: { $0.key == problem.defaultKey }) else {
+    guard let index = DefaultProblems.all.firstIndex(where: { $0.key == problem.defaultKey }) else {
         return false
     }
-    return !problem.isEnabled || problem.name != original.name || problem.emoji != original.emoji
+    let original = DefaultProblems.all[index]
+    return !problem.isEnabled
+        || problem.name != original.name
+        || problem.emoji != original.emoji
+        || problem.sortOrder != index
 }
 
 private func isPreferredDuplicateKeeper(_ lhs: SiteProblem, _ rhs: SiteProblem) -> Bool {
     let lhsCustomized = isCustomizedDefault(lhs)
     let rhsCustomized = isCustomizedDefault(rhs)
     if lhsCustomized != rhsCustomized { return lhsCustomized }
+    // Same-named custom problems: keep one the user still has enabled.
+    if lhs.isCustom, rhs.isCustom, lhs.isEnabled != rhs.isEnabled { return lhs.isEnabled }
     return lhs.id.uuidString < rhs.id.uuidString
 }

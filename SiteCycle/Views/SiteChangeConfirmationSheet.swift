@@ -83,11 +83,10 @@ struct SiteChangeConfirmationSheet: View {
                     Button("Confirm") {
                         guard !isSubmitting else { return }
                         isSubmitting = true
-                        let hasPrevious = previousEntry != nil
                         onConfirm(SiteChangeConfirmation(
                             newNote: newNote,
-                            previousNote: hasPrevious ? .replace(previousNote) : .leaveUnchanged,
-                            previousProblems: hasPrevious ? .replace(previousProblems) : .leaveUnchanged,
+                            previousNote: previousNoteUpdate,
+                            previousProblems: previousProblemsUpdate,
                             previousEntry: previousEntry,
                             changeTime: isCustomTime ? changeTime : nil
                         ))
@@ -98,6 +97,21 @@ struct SiteChangeConfirmationSheet: View {
                 }
             }
         }
+    }
+
+    /// Only edits the user made are sent, so confirming never writes the
+    /// sheet's snapshot over a change synced from another device meanwhile.
+    private var previousNoteUpdate: PreviousNoteUpdate {
+        guard let previousEntry, previousNote != (previousEntry.note ?? "") else { return .leaveUnchanged }
+        return .replace(previousNote)
+    }
+
+    private var previousProblemsUpdate: PreviousProblemsUpdate {
+        guard let previousEntry,
+              Set(previousProblems.map(\.id)) != Set(previousEntry.safeProblems.map(\.id)) else {
+            return .leaveUnchanged
+        }
+        return .replace(previousProblems)
     }
 
     private func closingSiteSection(previousEntry: SiteChangeEntry, previousLocation: Location) -> some View {
@@ -111,7 +125,7 @@ struct SiteChangeConfirmationSheet: View {
             HStack {
                 LocationLabelView(location: previousLocation)
                 Spacer()
-                Text("\(Self.formatHours(hours)) of \(targetDurationHours)h")
+                Text("\(DurationFormat.hoursMinutes(hours)) of \(targetDurationHours)h")
                     .foregroundStyle(isEarly ? Color.orange : Color.secondary)
             }
             .accessibilityElement(children: .combine)
@@ -123,6 +137,9 @@ struct SiteChangeConfirmationSheet: View {
                     original: previousEntry.safeProblems
                 )
                 .accessibilityIdentifier("siteChangeConfirmation.previousProblems")
+                // Once shown (e.g. because the site was early), stay shown even
+                // if a later change time makes it not early.
+                .onAppear { isProblemsExpanded = true }
             } else {
                 Button {
                     isProblemsExpanded = true
@@ -149,10 +166,6 @@ struct SiteChangeConfirmationSheet: View {
     private func closingDurationHours(_ previousEntry: SiteChangeEntry) -> Double {
         let end = isCustomTime ? changeTime : Date()
         return max(0, end.timeIntervalSince(previousEntry.startTime) / 3600)
-    }
-
-    private static func formatHours(_ hours: Double) -> String {
-        hours < 1 ? "\(Int(hours * 60))m" : "\(Int(hours))h"
     }
 
     private var changeTimeSection: some View {
