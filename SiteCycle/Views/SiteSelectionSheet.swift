@@ -40,6 +40,7 @@ struct SiteSelectionSheet: View {
                             note: confirmation.newNote,
                             previousNote: confirmation.previousNote,
                             previousProblem: confirmation.previousProblem,
+                            previousEntry: confirmation.previousEntry,
                             changeTime: confirmation.changeTime
                         )
                         connectivityManager.pushCurrentState()

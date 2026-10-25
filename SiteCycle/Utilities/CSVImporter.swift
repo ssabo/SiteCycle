@@ -153,7 +153,7 @@ struct CSVImporter {
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
 
         var locationCache: [String: Location] = [:]
-        var problemCache = try existingProblemsByName(context: context)
+        var problems = try ProblemResolver(context: context)
         var sortOrder = 0
         var count = 0
         var skipped: [(rowNumber: Int, reason: String)] = []
@@ -183,7 +183,7 @@ struct CSVImporter {
             let entry = SiteChangeEntry(
                 startTime: startTime, endTime: endTime,
                 note: note.isEmpty ? nil : note, location: location,
-                problem: resolveOrCreateProblem(problemName, cache: &problemCache, context: context)
+                problem: problems.resolve(problemName, context: context)
             )
             context.insert(entry)
             count += 1
@@ -207,41 +207,46 @@ struct CSVImporter {
         return loc
     }
 
-    /// Problems are configuration, not history, so import keeps them and matches
-    /// CSV names against them (case-insensitively) rather than replacing them.
-    @MainActor
-    private static func existingProblemsByName(context: ModelContext) throws -> [String: SiteProblem] {
-        let problems = try context.fetch(FetchDescriptor<SiteProblem>(sortBy: [SortDescriptor(\.sortOrder)]))
+    /// Resolves CSV problem names. Problems are configuration, not history, so
+    /// import keeps them and matches names against them (case-insensitively)
+    /// rather than replacing them; unknown names become custom problems.
+    private struct ProblemResolver {
         var byName: [String: SiteProblem] = [:]
-        for problem in problems {
-            let key = problemKey(problem.name)
-            if byName[key] == nil { byName[key] = problem }
+        var nextSortOrder = 0
+
+        @MainActor
+        init(context: ModelContext) throws {
+            let problems = try context.fetch(FetchDescriptor<SiteProblem>(sortBy: [SortDescriptor(\.sortOrder)]))
+            // Every existing problem counts toward the max, including ones whose
+            // names collide with an earlier one and so aren't in `byName`.
+            nextSortOrder = (problems.map(\.sortOrder).max() ?? -1) + 1
+            for problem in problems {
+                let key = Self.key(problem.name)
+                if byName[key] == nil { byName[key] = problem }
+            }
         }
-        return byName
-    }
 
-    @MainActor
-    private static func resolveOrCreateProblem(
-        _ name: String, cache: inout [String: SiteProblem], context: ModelContext
-    ) -> SiteProblem? {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return nil }
-        let key = problemKey(trimmed)
-        if let cached = cache[key] { return cached }
-        let maxSortOrder = cache.values.map(\.sortOrder).max() ?? -1
-        let problem = SiteProblem(
-            name: trimmed,
-            emoji: SiteProblem.fallbackEmoji,
-            isCustom: true,
-            sortOrder: maxSortOrder + 1
-        )
-        context.insert(problem)
-        cache[key] = problem
-        return problem
-    }
+        @MainActor
+        mutating func resolve(_ name: String, context: ModelContext) -> SiteProblem? {
+            let trimmed = name.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return nil }
+            let key = Self.key(trimmed)
+            if let existing = byName[key] { return existing }
+            let problem = SiteProblem(
+                name: trimmed,
+                emoji: SiteProblem.fallbackEmoji,
+                isCustom: true,
+                sortOrder: nextSortOrder
+            )
+            context.insert(problem)
+            byName[key] = problem
+            nextSortOrder += 1
+            return problem
+        }
 
-    private static func problemKey(_ name: String) -> String {
-        name.trimmingCharacters(in: .whitespaces).lowercased()
+        static func key(_ name: String) -> String {
+            name.trimmingCharacters(in: .whitespaces).lowercased()
+        }
     }
 
     @MainActor

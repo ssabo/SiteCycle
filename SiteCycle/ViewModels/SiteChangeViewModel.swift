@@ -272,6 +272,7 @@ final class SiteChangeViewModel {
         note: String?,
         previousNote: PreviousNoteUpdate = .leaveUnchanged,
         previousProblem: PreviousProblemUpdate = .leaveUnchanged,
+        previousEntry: SiteChangeEntry? = nil,
         changeTime: Date? = nil
     ) {
         // nil means "now" — the common case of logging the change as it happens.
@@ -279,13 +280,18 @@ final class SiteChangeViewModel {
         let changeTime = changeTime ?? Date()
 
         // Close the previous active entry
-        if let activeEntry = SiteChangeEntry.fetchActive(in: modelContext) {
-            activeEntry.endTime = changeTime
+        let activeEntry = SiteChangeEntry.fetchActive(in: modelContext)
+        activeEntry?.endTime = changeTime
+
+        // The note and problem belong to the entry the user saw on the
+        // confirmation sheet (`previousEntry`). It can differ from the active
+        // one if a watch command logged a change while the sheet was open.
+        if let target = previousEntry ?? activeEntry {
             if case .replace(let value) = previousNote {
-                activeEntry.note = (value?.isEmpty ?? true) ? nil : value
+                target.note = (value?.isEmpty ?? true) ? nil : value
             }
             if case .replace(let problem) = previousProblem {
-                activeEntry.problem = problem
+                target.problem = problem
             }
         }
 

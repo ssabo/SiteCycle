@@ -11,11 +11,12 @@ struct ProblemConfigView: View {
             Section {
                 ForEach(allProblems) { problem in
                     NavigationLink {
-                        EditProblemView(problem: problem)
+                        EditProblemView(problem: problem, allProblems: allProblems)
                     } label: {
                         ProblemRow(problem: problem)
                     }
                     .accessibilityIdentifier("problemConfig.row.\(problem.name)")
+                    .deleteDisabled(!problem.isCustom)
                 }
                 .onDelete(perform: deleteProblems)
                 .onMove(perform: moveProblems)
@@ -37,7 +38,7 @@ struct ProblemConfigView: View {
                 .accessibilityIdentifier("problemConfig.editMode")
         }
         .sheet(isPresented: $showingAddSheet) {
-            AddProblemSheet { name, emoji in
+            AddProblemSheet(allProblems: allProblems) { name, emoji in
                 addCustomProblem(name: name, emoji: emoji)
             }
         }
@@ -108,6 +109,8 @@ private struct ProblemRow: View {
 // MARK: - Shared Fields
 
 private struct ProblemFields: View {
+    static let duplicateNameMessage = "Another problem already has this name."
+
     @Binding var name: String
     @Binding var emoji: String
 
@@ -117,13 +120,14 @@ private struct ProblemFields: View {
         HStack {
             Text("Emoji")
             Spacer()
-            TextField(
-                SiteProblem.fallbackEmoji,
-                text: Binding(
-                    get: { emoji },
-                    set: { emoji = SiteProblem.sanitizeEmoji($0) }
-                )
-            )
+            TextField(SiteProblem.fallbackEmoji, text: $emoji)
+            // Sanitize after the edit lands in state (rather than in a custom
+            // Binding setter) so the field always re-renders to the stored value,
+            // even when sanitizing yields the value it already had.
+            .onChange(of: emoji) { _, newValue in
+                let sanitized = SiteProblem.sanitizeEmoji(newValue)
+                if sanitized != newValue { emoji = sanitized }
+            }
             .multilineTextAlignment(.trailing)
             .font(.title2)
             .frame(maxWidth: 80)
@@ -139,13 +143,15 @@ private struct EditProblemView: View {
     @Environment(\.dismiss) private var dismiss
 
     let problem: SiteProblem
+    let allProblems: [SiteProblem]
 
     @State private var name: String
     @State private var emoji: String
     @State private var isEnabled: Bool
 
-    init(problem: SiteProblem) {
+    init(problem: SiteProblem, allProblems: [SiteProblem]) {
         self.problem = problem
+        self.allProblems = allProblems
         _name = State(initialValue: problem.name)
         _emoji = State(initialValue: problem.emoji)
         _isEnabled = State(initialValue: problem.isEnabled)
@@ -159,12 +165,21 @@ private struct EditProblemView: View {
         name.trimmingCharacters(in: .whitespaces)
     }
 
+    private var isDuplicateName: Bool {
+        SiteProblem.isNameTaken(trimmedName, among: allProblems, excluding: problem)
+    }
+
     var body: some View {
         Form {
             Section {
                 ProblemFields(name: $name, emoji: $emoji)
             } footer: {
-                Text("Tap the emoji field and switch to the emoji keyboard to pick a new one.")
+                if isDuplicateName {
+                    Text(ProblemFields.duplicateNameMessage)
+                        .foregroundStyle(.red)
+                } else {
+                    Text("Tap the emoji field and switch to the emoji keyboard to pick a new one.")
+                }
             }
 
             Section {
@@ -193,7 +208,7 @@ private struct EditProblemView: View {
                     try? modelContext.save()
                     dismiss()
                 }
-                .disabled(trimmedName.isEmpty)
+                .disabled(trimmedName.isEmpty || isDuplicateName)
                 .accessibilityIdentifier("problemForm.save")
             }
         }
@@ -206,10 +221,15 @@ private struct AddProblemSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var emoji = ""
+    let allProblems: [SiteProblem]
     let onSave: (_ name: String, _ emoji: String) -> Void
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespaces)
+    }
+
+    private var isDuplicateName: Bool {
+        SiteProblem.isNameTaken(trimmedName, among: allProblems)
     }
 
     var body: some View {
@@ -218,7 +238,12 @@ private struct AddProblemSheet: View {
                 Section {
                     ProblemFields(name: $name, emoji: $emoji)
                 } footer: {
-                    Text("If you leave the emoji blank, \(SiteProblem.fallbackEmoji) is shown.")
+                    if isDuplicateName {
+                        Text(ProblemFields.duplicateNameMessage)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("If you leave the emoji blank, \(SiteProblem.fallbackEmoji) is shown.")
+                    }
                 }
             }
             .navigationTitle("Add Custom Problem")
@@ -233,7 +258,7 @@ private struct AddProblemSheet: View {
                         onSave(trimmedName, emoji)
                         dismiss()
                     }
-                    .disabled(trimmedName.isEmpty)
+                    .disabled(trimmedName.isEmpty || isDuplicateName)
                     .accessibilityIdentifier("addProblem.save")
                 }
             }

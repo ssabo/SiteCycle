@@ -2,8 +2,14 @@ import Foundation
 
 struct CSVExporter {
 
+    /// The trailing `problem` column is only written when some entry has a
+    /// problem, so exports without problems still import into app versions
+    /// that predate the column.
     static func generate(from entries: [SiteChangeEntry]) -> String {
-        let header = "date,location,duration_hours,note,problem\n"
+        let includeProblem = entries.contains { $0.problem != nil }
+        let header = includeProblem
+            ? "date,location,duration_hours,note,problem\n"
+            : "date,location,duration_hours,note\n"
         let sorted = entries.sorted { $0.startTime < $1.startTime }
 
         let rows = sorted.map { entry -> String in
@@ -13,8 +19,9 @@ struct CSVExporter {
             )
             let duration = formatDuration(entry.durationHours)
             let note = escapeField(entry.note ?? "")
-            let problem = escapeField(entry.problem?.name ?? "")
-            return "\(date),\(location),\(duration),\(note),\(problem)"
+            let row = "\(date),\(location),\(duration),\(note)"
+            guard includeProblem else { return row }
+            return row + "," + escapeField(entry.problem?.name ?? "")
         }
 
         return header + rows.joined(separator: "\n")

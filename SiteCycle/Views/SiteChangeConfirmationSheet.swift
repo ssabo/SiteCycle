@@ -6,6 +6,8 @@ struct SiteChangeConfirmation {
     let newNote: String
     let previousNote: PreviousNoteUpdate
     let previousProblem: PreviousProblemUpdate
+    /// The entry shown as "Closing" — the note and problem updates apply to it.
+    let previousEntry: SiteChangeEntry?
     /// nil when the user kept the default ("now").
     let changeTime: Date?
 }
@@ -77,6 +79,7 @@ struct SiteChangeConfirmationSheet: View {
                             newNote: newNote,
                             previousNote: hasPrevious ? .replace(previousNote) : .leaveUnchanged,
                             previousProblem: hasPrevious ? .replace(previousProblem) : .leaveUnchanged,
+                            previousEntry: previousEntry,
                             changeTime: isCustomTime ? changeTime : nil
                         ))
                         dismiss()
@@ -91,7 +94,7 @@ struct SiteChangeConfirmationSheet: View {
     @ViewBuilder
     private func previousSiteSections(previousLocation: Location) -> some View {
         Section {
-            ProblemPicker(selection: $previousProblem, problems: allProblems)
+            ProblemPicker(selection: $previousProblem, problems: allProblems, original: previousEntry?.problem)
                 .accessibilityIdentifier("siteChangeConfirmation.previousProblem")
         } header: {
             Text("Previous Site Problem")

@@ -151,7 +151,7 @@ private extension StatisticsView {
             HStack {
                 Text("Any Problem")
                 Spacer()
-                Text(problemCountText(summary.problemSiteCount, of: summary.siteCount))
+                Text(problemCountText(summary.problemSiteCount, of: summary.siteCount, rate: summary.anyProblemRate))
                     .foregroundStyle(.secondary)
             }
             .accessibilityIdentifier("statistics.problems.any")
@@ -166,7 +166,7 @@ private extension StatisticsView {
                         Text(item.problem.displayEmoji)
                         Text(item.problem.name)
                         Spacer()
-                        Text(problemCountText(item.count, of: summary.siteCount))
+                        Text(problemCountText(item.count, of: summary.siteCount, rate: item.rate))
                             .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
@@ -175,15 +175,15 @@ private extension StatisticsView {
         } header: {
             Text("Problems")
         } footer: {
-            Text("Share of completed sites that ended with a problem recorded. "
+            Text("Share of finished sites with a problem recorded (the active site counts only once it has one). "
                 + "Set a problem when logging a site change or from History.")
         }
     }
 
-    func problemCountText(_ count: Int, of total: Int) -> String {
-        guard total > 0 else { return "\(count)" }
-        let percent = Int((Double(count) / Double(total) * 100).rounded())
-        return "\(count) of \(total) · \(percent)%"
+    /// `rate` comes from the view model so the percentage math lives in one place.
+    func problemCountText(_ count: Int, of total: Int, rate: Double?) -> String {
+        guard let rate else { return "\(count)" }
+        return "\(count) of \(total) · \(Int((rate * 100).rounded()))%"
     }
 }
 

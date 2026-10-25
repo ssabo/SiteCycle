@@ -20,12 +20,12 @@ struct CSVExporterTests {
 
     @Test func csvHeaderRowIsCorrect() {
         let result = CSVExporter.generate(from: [])
-        #expect(result.hasPrefix("date,location,duration_hours,note,problem\n"))
+        #expect(result.hasPrefix("date,location,duration_hours,note\n"))
     }
 
     @Test func csvEmptyDataProducesHeaderOnly() {
         let result = CSVExporter.generate(from: [])
-        #expect(result == "date,location,duration_hours,note,problem\n")
+        #expect(result == "date,location,duration_hours,note\n")
     }
 
     // MARK: - Field Formatting

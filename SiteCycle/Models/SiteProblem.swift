@@ -54,20 +54,41 @@ final class SiteProblem {
         self.defaultKey = defaultKey
     }
 
-    /// Reduces typed text to a single emoji: the last grapheme cluster, so
-    /// typing a new emoji after the old one replaces it. Whitespace is ignored.
+    /// Reduces typed text to a single emoji: the last emoji typed, so typing a
+    /// new emoji after the old one replaces it. Anything that isn't an emoji
+    /// (letters, digits, whitespace) is dropped.
     static func sanitizeEmoji(_ text: String) -> String {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let last = trimmed.last else { return "" }
+        guard let last = text.last(where: isEmoji) else { return "" }
         return String(last)
     }
 
-    /// Enabled problems in display order, plus `including` when it is disabled,
-    /// so a picker for an entry that already uses a disabled problem still shows it.
-    static func pickerOptions(from problems: [SiteProblem], including current: SiteProblem?) -> [SiteProblem] {
+    /// Emoji-presentation characters (😀, 🩹), or emoji sequences such as
+    /// "❤️" (text-style base + variation selector), keycaps and skin tones.
+    /// Plain "1" or "#" have the Emoji property but render as text, so a lone
+    /// scalar only counts when it has emoji presentation by default.
+    private static func isEmoji(_ character: Character) -> Bool {
+        let scalars = character.unicodeScalars
+        guard let first = scalars.first, first.properties.isEmoji else { return false }
+        return first.properties.isEmojiPresentation || scalars.count > 1
+    }
+
+    /// Whether `name` (trimmed, case-insensitive) is already used by another
+    /// problem. Names identify problems in CSV import/export, so they must be unique.
+    static func isNameTaken(_ name: String, among problems: [SiteProblem], excluding: SiteProblem? = nil) -> Bool {
+        let key = name.trimmingCharacters(in: .whitespaces).lowercased()
+        return problems.contains { problem in
+            problem.id != excluding?.id
+                && problem.name.trimmingCharacters(in: .whitespaces).lowercased() == key
+        }
+    }
+
+    /// Enabled problems in display order, plus any `retained` problems even when
+    /// disabled — an entry's original problem must stay pickable after the user
+    /// moves the selection away from it.
+    static func pickerOptions(from problems: [SiteProblem], including retained: SiteProblem?...) -> [SiteProblem] {
         var options = problems.filter(\.isEnabled)
-        if let current, !options.contains(where: { $0.id == current.id }) {
-            options.append(current)
+        for problem in retained.compactMap({ $0 }) where !options.contains(where: { $0.id == problem.id }) {
+            options.append(problem)
         }
         return options.sorted { $0.sortOrder < $1.sortOrder }
     }

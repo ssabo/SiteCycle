@@ -35,6 +35,18 @@ struct SiteProblemTests {
         #expect(SiteProblem.sanitizeEmoji("❤️‍🩹") == "❤️‍🩹")
     }
 
+    @Test func sanitizeEmojiRejectsNonEmoji() {
+        #expect(SiteProblem.sanitizeEmoji("a").isEmpty)
+        #expect(SiteProblem.sanitizeEmoji("1").isEmpty)
+        #expect(SiteProblem.sanitizeEmoji("#").isEmpty)
+        #expect(SiteProblem.sanitizeEmoji("🤕a") == "🤕")
+    }
+
+    @Test func sanitizeEmojiAcceptsTextStyleBaseWithVariationSelector() {
+        #expect(SiteProblem.sanitizeEmoji("❤️") == "❤️")
+        #expect(SiteProblem.sanitizeEmoji("1️⃣") == "1️⃣")
+    }
+
     @Test func sanitizeEmojiIgnoresWhitespace() {
         #expect(SiteProblem.sanitizeEmoji("🩹 ") == "🩹")
         #expect(SiteProblem.sanitizeEmoji("   ").isEmpty)
@@ -62,6 +74,32 @@ struct SiteProblemTests {
         let third = SiteProblem(name: "C", emoji: "©️", sortOrder: 2)
         let options = SiteProblem.pickerOptions(from: [third, disabled, first], including: disabled)
         #expect(options.map(\.name) == ["A", "B", "C"])
+    }
+
+    @Test func pickerOptionsKeepOriginalAfterSelectionMovesAway() {
+        let enabled = SiteProblem(name: "A", emoji: "🅰️", sortOrder: 0)
+        let disabledOriginal = SiteProblem(name: "B", emoji: "🅱️", isEnabled: false, sortOrder: 1)
+        // The user changed the selection from the disabled original to "A".
+        let options = SiteProblem.pickerOptions(
+            from: [enabled, disabledOriginal],
+            including: disabledOriginal, enabled
+        )
+        #expect(options.map(\.name) == ["A", "B"])
+    }
+
+    // MARK: - Names
+
+    @Test func nameTakenIsCaseAndWhitespaceInsensitive() {
+        let leaking = SiteProblem(name: "Leaking", emoji: "💧")
+        #expect(SiteProblem.isNameTaken(" leaking ", among: [leaking]))
+        #expect(!SiteProblem.isNameTaken("Leak", among: [leaking]))
+    }
+
+    @Test func nameTakenIgnoresTheProblemBeingEdited() {
+        let leaking = SiteProblem(name: "Leaking", emoji: "💧")
+        let painful = SiteProblem(name: "Painful", emoji: "🤕")
+        #expect(!SiteProblem.isNameTaken("LEAKING", among: [leaking, painful], excluding: leaking))
+        #expect(SiteProblem.isNameTaken("Painful", among: [leaking, painful], excluding: leaking))
     }
 
     // MARK: - Seeding
@@ -116,31 +154,74 @@ struct SiteProblemTests {
 
     // MARK: - Deduplication
 
-    @Test func deduplicateMergesDefaultsAndMovesEntries() throws {
+    @Test func deduplicateKeepsLowestIDAndMovesEntries() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let keeper = SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 1, defaultKey: "leaking")
-        let duplicate = SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 7, defaultKey: "leaking")
+        // The keeper is chosen by id, not entry count, so two devices that
+        // deduplicate before syncing agree on which copy survives.
+        let lowID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
+        let highID = try #require(UUID(uuidString: "FFFFFFFF-0000-0000-0000-000000000000"))
+        let keeper = SiteProblem(id: lowID, name: "Leaking", emoji: "💧", sortOrder: 7, defaultKey: "leaking")
+        let duplicate = SiteProblem(id: highID, name: "Leaking", emoji: "💧", sortOrder: 1, defaultKey: "leaking")
         context.insert(keeper)
         context.insert(duplicate)
         let location = Location(bodyPart: "Abdomen")
         context.insert(location)
-        let entry1 = SiteChangeEntry(location: location, problem: keeper)
-        let entry2 = SiteChangeEntry(location: location, problem: keeper)
-        let entry3 = SiteChangeEntry(location: location, problem: duplicate)
-        context.insert(entry1)
-        context.insert(entry2)
-        context.insert(entry3)
+        let entry1 = SiteChangeEntry(location: location, problem: duplicate)
+        let entry2 = SiteChangeEntry(location: location, problem: duplicate)
+        let entry3 = SiteChangeEntry(location: location, problem: keeper)
+        [entry1, entry2, entry3].forEach { context.insert($0) }
         try context.save()
 
         deduplicateProblems(context: context)
 
         let problems = try fetchProblems(context)
         #expect(problems.count == 1)
-        #expect(problems.first?.id == keeper.id)
-        #expect(entry3.problem?.id == keeper.id)
+        #expect(problems.first?.id == lowID)
+        #expect(entry1.problem?.id == lowID)
+        #expect(entry2.problem?.id == lowID)
         #expect(keeper.safeEntries.count == 3)
+    }
+
+    @Test func deduplicatePrefersCustomizedCopy() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let lowID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
+        let highID = try #require(UUID(uuidString: "FFFFFFFF-0000-0000-0000-000000000000"))
+        let pristine = SiteProblem(id: lowID, name: "Bleeding", emoji: "🩸", defaultKey: "bleeding")
+        let renamed = SiteProblem(id: highID, name: "Blood", emoji: "🩸", isEnabled: false, defaultKey: "bleeding")
+        context.insert(pristine)
+        context.insert(renamed)
+        try context.save()
+
+        deduplicateProblems(context: context)
+
+        let problems = try fetchProblems(context)
+        #expect(problems.count == 1)
+        #expect(problems.first?.name == "Blood")
+        #expect(problems.first?.isEnabled == false)
+    }
+
+    @Test func entryDeduplicationKeepsProblemFromDeletedCopy() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let location = Location(bodyPart: "Abdomen")
+        let problem = SiteProblem(name: "Leaking", emoji: "💧")
+        context.insert(location)
+        context.insert(problem)
+        context.insert(SiteChangeEntry(startTime: start, location: location))
+        context.insert(SiteChangeEntry(startTime: start, location: location, problem: problem))
+        try context.save()
+
+        deduplicateSiteChangeEntries(context: context)
+
+        let entries = try context.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 1)
+        #expect(entries.first?.problem?.id == problem.id)
     }
 
     @Test func deduplicateLeavesCustomProblemsAlone() throws {
@@ -237,6 +318,33 @@ extension SiteProblemTests {
         #expect(active.problem == nil)
     }
 
+    @Test func logSiteChangeAppliesProblemToShownEntryNotNewerActiveOne() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let (shown, next) = try setUpActiveSite(context)
+        let painful = SiteProblem(name: "Painful", emoji: "🤕")
+        context.insert(painful)
+
+        // While the sheet showed `shown`, a watch command logged another change.
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: next, note: nil)
+        let watchEntry = try #require(SiteChangeEntry.fetchActive(in: context))
+
+        viewModel.logSiteChange(
+            location: next,
+            note: nil,
+            previousNote: .replace("sore"),
+            previousProblem: .replace(painful),
+            previousEntry: shown
+        )
+
+        #expect(shown.problem?.id == painful.id)
+        #expect(shown.note == "sore")
+        #expect(watchEntry.problem == nil)
+        #expect(watchEntry.note == nil)
+        #expect(watchEntry.endTime != nil)
+    }
+
     @Test func historySetProblemSetsAndClears() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -275,6 +383,35 @@ extension SiteProblemTests {
 
         #expect(csv.hasPrefix("date,location,duration_hours,note,problem\n"))
         #expect(csv.contains(",1.0,,\"Fell Off, Ripped\"\n"))
+    }
+
+    @Test func csvExportOmitsProblemColumnWhenNoEntryHasOne() {
+        let entry = SiteChangeEntry(startTime: Date(timeIntervalSince1970: 0))
+        let csv = CSVExporter.generate(from: [entry])
+        #expect(csv.hasPrefix("date,location,duration_hours,note\n"))
+        #expect(!csv.contains("problem"))
+    }
+
+    @Test func csvImportGivesNewProblemsUniqueSortOrders() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        // Names collide case-insensitively, so only one is matchable by name,
+        // but both must count toward the next sort order.
+        context.insert(SiteProblem(name: "Leaking", emoji: "💧", sortOrder: 2))
+        context.insert(SiteProblem(name: "leaking", emoji: "💦", isCustom: true, sortOrder: 9))
+        try context.save()
+
+        let csv = """
+        date,location,duration_hours,note,problem
+        2024-01-15T10:30:00Z,L Abdomen,40.0,,Itchy
+        2024-01-17T02:30:00Z,R Abdomen,30.0,,Kinked
+        """
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".csv")
+        try csv.write(to: url, atomically: true, encoding: .utf8)
+        _ = try CSVImporter.importCSV(from: url, context: context)
+
+        let sortOrders = try fetchProblems(context).map(\.sortOrder)
+        #expect(sortOrders == [2, 9, 10, 11])
     }
 
     @Test func csvImportMatchesExistingProblemsAndCreatesUnknownOnes() throws {

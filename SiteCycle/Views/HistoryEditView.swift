@@ -97,7 +97,7 @@ struct HistoryEditView: View {
 
     private var problemSection: some View {
         Section {
-            ProblemPicker(selection: $problem, problems: allProblems)
+            ProblemPicker(selection: $problem, problems: allProblems, original: entry.problem)
                 .accessibilityIdentifier("historyEdit.problem")
         } header: {
             Text("Problem")

@@ -48,8 +48,14 @@ func seedDefaultProblems(context: ModelContext) {
 }
 
 /// Merges default problems that share a `defaultKey` — created when two devices
-/// both seed before CloudKit syncs. Keeps the one with the most history and
-/// moves the other entries onto it.
+/// both seed before CloudKit syncs — moving all entries onto one keeper.
+///
+/// The keeper must be the same on every device, or two devices deduplicating
+/// before syncing could each delete the copy the other kept. So it is chosen
+/// only from record properties both devices see identically once both copies
+/// have synced: a copy the user customized (renamed, new emoji, disabled) wins
+/// over a pristine one, then the lowest `id`. Entry counts are not used — entry
+/// relationships sync separately and can differ between devices meanwhile.
 @MainActor
 func deduplicateProblems(context: ModelContext) {
     guard let problems = try? context.fetch(FetchDescriptor<SiteProblem>()) else { return }
@@ -62,12 +68,7 @@ func deduplicateProblems(context: ModelContext) {
 
     var didChange = false
     for (_, group) in groups where group.count > 1 {
-        let sorted = group.sorted { lhs, rhs in
-            let lhsCount = lhs.safeEntries.count
-            let rhsCount = rhs.safeEntries.count
-            if lhsCount != rhsCount { return lhsCount > rhsCount }
-            return lhs.sortOrder < rhs.sortOrder
-        }
+        let sorted = group.sorted(by: isPreferredDuplicateKeeper)
         guard let keeper = sorted.first else { continue }
 
         for duplicate in sorted.dropFirst() {
@@ -82,4 +83,19 @@ func deduplicateProblems(context: ModelContext) {
     if didChange {
         try? context.save()
     }
+}
+
+/// Whether the user has changed a seeded default from how it was seeded.
+func isCustomizedDefault(_ problem: SiteProblem) -> Bool {
+    guard let original = DefaultProblems.all.first(where: { $0.key == problem.defaultKey }) else {
+        return false
+    }
+    return !problem.isEnabled || problem.name != original.name || problem.emoji != original.emoji
+}
+
+private func isPreferredDuplicateKeeper(_ lhs: SiteProblem, _ rhs: SiteProblem) -> Bool {
+    let lhsCustomized = isCustomizedDefault(lhs)
+    let rhsCustomized = isCustomizedDefault(rhs)
+    if lhsCustomized != rhsCustomized { return lhsCustomized }
+    return lhs.id.uuidString < rhs.id.uuidString
 }

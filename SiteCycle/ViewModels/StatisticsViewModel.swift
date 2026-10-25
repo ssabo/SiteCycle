@@ -256,7 +256,8 @@ final class StatisticsViewModel {
         now: Date
     ) -> LocationStats {
         let entries = location.safeEntries
-        let totalUses = Self.entries(entries, since: windowStart).count
+        let windowed = Self.entries(entries, since: windowStart)
+        let totalUses = windowed.count
         let anomalyResult = Self.filterAnomalies(
             Self.completedDurations(of: entries, since: windowStart)
         )
@@ -269,7 +270,7 @@ final class StatisticsViewModel {
         let minDur = filteredDurations.min()
         let maxDur = filteredDurations.max()
         let lastUsed = entries.map(\.startTime).max()
-        let problemCount = Self.entries(entries, since: windowStart).filter { $0.problem != nil }.count
+        let problemCount = windowed.filter { $0.problem != nil }.count
 
         var daysSince: Int?
         if let lastUsed {

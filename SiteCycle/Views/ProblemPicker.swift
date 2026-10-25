@@ -5,11 +5,13 @@ import SwiftUI
 struct ProblemPicker: View {
     @Binding var selection: SiteProblem?
     let problems: [SiteProblem]
+    /// The entry's problem before editing; offered even if it has been disabled.
+    let original: SiteProblem?
 
     var body: some View {
         Picker("Problem", selection: $selection) {
             Text("None").tag(SiteProblem?.none)
-            ForEach(SiteProblem.pickerOptions(from: problems, including: selection)) { problem in
+            ForEach(SiteProblem.pickerOptions(from: problems, including: original, selection)) { problem in
                 Text(problem.labelText).tag(SiteProblem?.some(problem))
             }
         }

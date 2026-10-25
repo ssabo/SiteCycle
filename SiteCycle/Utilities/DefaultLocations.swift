@@ -150,7 +150,13 @@ func deduplicateSiteChangeEntries(context: ModelContext) {
 
     var didChange = false
     for (_, entries) in groups where entries.count > 1 {
+        guard let keeper = entries.first else { continue }
         for duplicate in entries.dropFirst() {
+            // A problem may have been set on only one copy (e.g. from History);
+            // keep it rather than losing it with the deleted duplicate.
+            if keeper.problem == nil, let problem = duplicate.problem {
+                keeper.problem = problem
+            }
             context.delete(duplicate)
             didChange = true
         }
