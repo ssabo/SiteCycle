@@ -148,6 +148,13 @@ struct SiteProblemWorkflowTests {
         #expect(!EarlyChange.isEarly(durationHours: 80, targetHours: 72))
     }
 
+    @Test func earlyChangeRespectsConfiguredThreshold() {
+        // 50% of 72h = 36h
+        #expect(EarlyChange.isEarly(durationHours: 35.9, targetHours: 72, thresholdPercent: 50))
+        #expect(!EarlyChange.isEarly(durationHours: 36, targetHours: 72, thresholdPercent: 50))
+        #expect(!EarlyChange.isEarly(durationHours: 53.9, targetHours: 72, thresholdPercent: 50))
+    }
+
     @Test func earlyChangeNeverTriggersWithoutTarget() {
         #expect(!EarlyChange.isEarly(durationHours: 1, targetHours: 0))
     }
