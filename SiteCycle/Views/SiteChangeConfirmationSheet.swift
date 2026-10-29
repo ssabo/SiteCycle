@@ -16,6 +16,8 @@ struct SiteChangeConfirmationSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \SiteProblem.sortOrder) private var allProblems: [SiteProblem]
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
+    @AppStorage(EarlyChange.thresholdPercentKey)
+    private var earlyChangeThresholdPercent: Int = EarlyChange.defaultThresholdPercent
 
     let targetLocation: Location
     let previousEntry: SiteChangeEntry?
@@ -116,7 +118,11 @@ struct SiteChangeConfirmationSheet: View {
 
     private func closingSiteSection(previousEntry: SiteChangeEntry, previousLocation: Location) -> some View {
         let hours = closingDurationHours(previousEntry)
-        let isEarly = EarlyChange.isEarly(durationHours: hours, targetHours: Double(targetDurationHours))
+        let isEarly = EarlyChange.isEarly(
+            durationHours: hours,
+            targetHours: Double(targetDurationHours),
+            thresholdPercent: earlyChangeThresholdPercent
+        )
         // Expanded when a problem is likely (early) or already recorded, so
         // routine changes stay one tap while early ones prompt for a reason.
         let showsProblems = isEarly || isProblemsExpanded || !previousProblems.isEmpty

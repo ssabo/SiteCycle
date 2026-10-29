@@ -70,12 +70,20 @@ enum PreviousProblemsUpdate {
 /// usually means something went wrong. The confirmation sheet uses it to
 /// prompt for a problem only when one is likely.
 enum EarlyChange {
-    /// A site that lasted less than this fraction of the target counts as early.
-    static let thresholdFraction = 0.75
+    /// `@AppStorage` key for the threshold, as a percentage of the target.
+    static let thresholdPercentKey = "earlyChangeThresholdPercent"
+    /// A site that lasted less than this percentage of the target counts as early.
+    static let defaultThresholdPercent = 75
+    static let thresholdPercentRange = 5...95
+    static let thresholdPercentStep = 5
 
-    static func isEarly(durationHours: Double, targetHours: Double) -> Bool {
+    static func isEarly(
+        durationHours: Double,
+        targetHours: Double,
+        thresholdPercent: Int = defaultThresholdPercent
+    ) -> Bool {
         guard targetHours > 0 else { return false }
-        return durationHours < targetHours * thresholdFraction
+        return durationHours < targetHours * Double(thresholdPercent) / 100
     }
 }
 

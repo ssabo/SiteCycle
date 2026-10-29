@@ -5,6 +5,8 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(PhoneConnectivityManager.self) private var connectivityManager
     @AppStorage("targetDurationHours") private var targetDurationHours: Int = 72
+    @AppStorage(EarlyChange.thresholdPercentKey)
+    private var earlyChangeThresholdPercent: Int = EarlyChange.defaultThresholdPercent
     @AppStorage("absorptionAlertThreshold") private var absorptionAlertThreshold: Int = 20
     @AppStorage(RecommendationStrategy.storageKey)
     private var recommendationStrategyRaw: String = RecommendationStrategy.bySite.rawValue
@@ -83,7 +85,7 @@ struct SettingsView: View {
         }
 
         Section("Preferences") {
-            Stepper(value: $targetDurationHours, in: 12...168, step: 12) {
+            Stepper(value: $targetDurationHours, in: 12...168, step: 6) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Target Duration")
                     Text("\(targetDurationHours) hours")
@@ -93,6 +95,21 @@ struct SettingsView: View {
                 }
             }
             .accessibilityIdentifier("settings.targetDurationStepper")
+
+            Stepper(
+                value: $earlyChangeThresholdPercent,
+                in: EarlyChange.thresholdPercentRange,
+                step: EarlyChange.thresholdPercentStep
+            ) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Early Change Threshold")
+                    Text("Under \(earlyChangeThresholdPercent)% of target")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("settings.earlyChangeThreshold.value")
+                }
+            }
+            .accessibilityIdentifier("settings.earlyChangeThresholdStepper")
 
             Stepper(value: $absorptionAlertThreshold, in: 5...50, step: 5) {
                 VStack(alignment: .leading, spacing: 2) {
