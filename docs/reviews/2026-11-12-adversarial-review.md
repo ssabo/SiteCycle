@@ -306,6 +306,7 @@ The suite has 301 `@Test`s across 23 files, all registered in the pbxproj. Every
 - **Watch:** "Watch → Phone: transferUserInfo" — it actually calls `sendMessage` first and falls back to `transferUserInfo`. The complication timeline description is backwards.
 - **`pushCurrentState()`:** said to be called "after location config changes", but not for the most common one, the on/off toggle.
 - **Known app bug:** the note on the onboarding crash duplicates `docs/ui-testing.md`, and §2.5 has the likely cause.
+- **UI tests:** described as running in the TestFlight workflow (merges to `main`), "not on every PR". This PR's own Xcode Cloud **CI** run included the `SiteCycleUITests - iOS` action, so the smoke test does run on PRs.
 
 **Elsewhere:**
 
@@ -447,7 +448,7 @@ Mutation sites and their side effects:
   - `brew install swiftlint` is unpinned on a `macos-15` runner. Move it to `ubuntu-latest` with the pinned `ghcr.io/realm/swiftlint:<ver>` image, and add `swiftlint_version:`.
   - `SiteCycleUITests` is not linted; it contains `XCUIApplication!`, which the opt-in `implicitly_unwrapped_optional` rule would reject.
   - Add a `scripts/lint.sh` that uses a local binary or the Docker image.
-- **Signing leftovers.** Release configs keep `PROVISIONING_PROFILE_SPECIFIER` alongside `CODE_SIGN_STYLE = Automatic` (app, watch, watch widgets), which Xcode reports as conflicting. Remove them. `ExportOptions.plist` still has bitcode keys.
+- **Signing leftovers.** Release configs keep `PROVISIONING_PROFILE_SPECIFIER` alongside `CODE_SIGN_STYLE = Automatic` (app, watch, watch widgets), which Xcode reports as conflicting. They don't break Xcode Cloud, whose Archive action passed on this PR, but they may break a local Release archive. Remove them. `ExportOptions.plist` still has bitcode keys.
 - **Per-target duplication.** `MARKETING_VERSION`, `CURRENT_PROJECT_VERSION` and `DEVELOPMENT_TEAM` are repeated 8–12 times. An agent that bumps only the app version produces a mismatched upload. Move them into `SiteCycleConfig.xcconfig`, which is already the base config.
 - **Warnings never fail any build.** Add `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` in Debug, which the Xcode Cloud test actions use, so Xcode 27 deprecations surface.
 - **`.gitignore` traps for a future package.** `Packages/` would silently ignore the conventional local-package folder. `Package.resolved` would also match the workspace copy that Xcode Cloud needs committed.
@@ -512,7 +513,7 @@ Claims below come from the research reviewer's sources, which are mostly develop
 4. **Onboarding crash** (§2.5): does Welcome → Configure crash with the environment fix in place?
 5. **CloudKit Console:** is the `SiteProblem` record type and its many-to-many relationship deployed to Production?
 6. **App Store Connect email** for ITMS-91053 (privacy manifest).
-7. **A local Release archive** with conflicting provisioning settings (§7).
+7. **A local Release archive** with conflicting provisioning settings (§7). Xcode Cloud's archive is unaffected; it passed on this PR.
 8. **The Xcode 27 `@State` and `TabView` changes** (§8).
 
 ## 10. Suggested PR sequence
