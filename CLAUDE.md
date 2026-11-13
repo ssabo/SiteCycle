@@ -41,6 +41,8 @@ Cloud sessions run on Linux, with no `swift`, no `xcodebuild` and no simulator, 
 - **Before pushing:**
   - Run `python3 scripts/check_project.py`.
   - Run `swiftlint lint --strict` if `swiftlint` is installed.
+    - The SiteCycle cloud environment's setup script installs a pinned SwiftLint, but `lint.yml` installs whatever Homebrew has, so the two can drift.
+    - If local results differ from CI's, compare `swiftlint version` with the version in the "Install SwiftLint" step of the latest Lint run's log. If they differ, bump `SWIFTLINT_VERSION` in the environment's setup script to CI's version, rather than changing code to satisfy the older one.
   - Re-read your diff against the compile gotchas below, because nothing else will catch them before CI.
 - **Xcode Cloud is the compile and test gate.** Its results appear as GitHub check runs on the PR:
   - `SiteCycle | CI | SiteCycleUnitTests - iOS (SiteCycle)`
