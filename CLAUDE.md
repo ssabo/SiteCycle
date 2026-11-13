@@ -92,7 +92,10 @@ Then update the doc that owns each fact:
 | CI, signing or release setup | `docs/xcode-cloud-setup.md` |
 | A known bug that you fixed | remove its **Known issue** note in `docs/`, and any "currently breaks this rule" wording in the hard rules |
 
-`docs/reviews/2026-11-12-adversarial-review.md` is a dated snapshot. Don't rewrite its findings. You may mark a §10 step as done.
+`docs/reviews/2026-11-12-adversarial-review.md` is a dated snapshot. Don't rewrite its findings. Its §1 "Top 10 actions" table tracks progress:
+
+- **When your PR completes one of those actions,** change that row's Done box from ☐ to ☑ in the same PR. You may also mark the matching §10 step done.
+- **If it completes only part of an action,** leave the box ☐ and say in the PR description what remains.
 
 ### When a new doc or section is worth adding
 

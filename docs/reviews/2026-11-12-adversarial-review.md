@@ -41,18 +41,24 @@ The serious problems are concentrated in three places.
 
 **Top 10 actions, in order**
 
-| # | Action | Why |
-|---|---|---|
-| 1 | Make CSV import validate rows before deleting anything, and confirm before restoring during onboarding | ✅ An all-invalid file, such as one re-saved in Excel, wipes all history on all devices |
-| 2 | Make the location dedup keeper deterministic, stop OR-ing `isEnabled`, and run migration before dedup | ✅ Two devices can each delete the other's copy, orphaning history; dedup re-enables sites the user disabled |
-| 3 | Fix the crash paths: confirmation-sheet `ClosedRange`, `DurationFormat` on non-finite values, onboarding missing environment | ✅ Release-build traps reachable from user data |
-| 4 | Honour `WatchSiteChangeCommand.requestedAt`, add a command ID, and activate WCSession at launch | ✅ Queued watch changes are logged hours late or out of order, which corrupts durations and stats |
-| 5 | Enforce a single active entry (close all open entries; add a repair pass) | ✅ Multiple "Active" entries are reachable from History, CSV and two devices |
-| 6 | Make `stale-branch-cleanup.yml` never delete a branch with an open PR, and default `dry_run` to true | ✅ It can delete live agent branches and close their PRs |
-| 7 | Add `PrivacyInfo.xcprivacy` to all 4 bundles (UserDefaults reasons) | ✅ Missing; App Store Connect requires it |
-| 8 | Device-check whether PR #70's App Group entitlement moved the SwiftData store | ❓ It may have orphaned the pre-August store |
-| 9 | Convert to synchronized folders, then extract a Foundation-only `SiteCycleCore` package tested on Linux | Removes hand-editing of the pbxproj, and gives agents a test loop |
-| 10 | Rewrite CLAUDE.md to about 110 lines of rules and change recipes; move the feature narration out | The current file is stale in at least 15 places |
+| Done | # | Action | Why |
+|---|---|---|---|
+| ☐ | 1 | Make CSV import validate rows before deleting anything, and confirm before restoring during onboarding | ✅ An all-invalid file, such as one re-saved in Excel, wipes all history on all devices |
+| ☐ | 2 | Make the location dedup keeper deterministic, stop OR-ing `isEnabled`, and run migration before dedup | ✅ Two devices can each delete the other's copy, orphaning history; dedup re-enables sites the user disabled |
+| ☐ | 3 | Fix the crash paths: confirmation-sheet `ClosedRange`, `DurationFormat` on non-finite values, onboarding missing environment | ✅ Release-build traps reachable from user data |
+| ☐ | 4 | Honour `WatchSiteChangeCommand.requestedAt`, add a command ID, and activate WCSession at launch | ✅ Queued watch changes are logged hours late or out of order, which corrupts durations and stats |
+| ☐ | 5 | Enforce a single active entry (close all open entries; add a repair pass) | ✅ Multiple "Active" entries are reachable from History, CSV and two devices |
+| ☐ | 6 | Make `stale-branch-cleanup.yml` never delete a branch with an open PR, and default `dry_run` to true | ✅ It can delete live agent branches and close their PRs |
+| ☐ | 7 | Add `PrivacyInfo.xcprivacy` to all 4 bundles (UserDefaults reasons) | ✅ Missing; App Store Connect requires it |
+| ☐ | 8 | Device-check whether PR #70's App Group entitlement moved the SwiftData store | ❓ It may have orphaned the pre-August store |
+| ☐ | 9 | Convert to synchronized folders, then extract a Foundation-only `SiteCycleCore` package tested on Linux | Removes hand-editing of the pbxproj, and gives agents a test loop |
+| ☑ | 10 | Rewrite CLAUDE.md to about 110 lines of rules and change recipes; move the feature narration out | The current file is stale in at least 15 places |
+
+**Tracking progress:**
+
+- **Done column:** ☐ is open and ☑ is done. Tick the box in the same PR that completes the action. The ✅ / ❓ in "Why" is the evidence tag from the legend above, not completion.
+- **Partly done:** if a PR finishes only part of an action, leave it ☐ and say what remains in that PR's description.
+- **Owner only:** #8 needs a device, and the synchronized-folders half of #9 must be done in Xcode. Agents can't complete either.
 
 ---
 
