@@ -155,10 +155,11 @@ Each rule says what enforces it. "Prose only" means nothing does yet, so take ex
    - Why: seeding and dedup run on each device before CloudKit has synced, so devices dedup the same duplicates independently. If they keep different copies, each deletes the other's, and both are gone.
    - Choose the keeper from synced record properties only:
      - For problems: a customized default first, then an enabled custom problem, then the lowest `id`.
-     - For entries: the lowest `id`.
+     - For entries and locations: the lowest `id`.
    - Never decide by fetch order, entry counts or `sortOrder` ties.
    - Move relationships onto the keeper before deleting the duplicates.
-   - *Partly enforced:* `SiteProblemTests` pins the problem keeper, but no test pins the location keeper, and `deduplicateLocations` currently breaks this rule (review §2.2).
+   - Merge the user's settings onto the keeper from synced fields too. Never OR `isEnabled`: a freshly seeded copy is always enabled, so OR-ing turns back on a site the user disabled.
+   - *Enforced by:* `DeduplicationTests` pins all three keepers across every insertion order, and the location settings merge; `SiteProblemTests` pins the problem keeper's preferences.
 4. **Never change a persisted identifier.** That covers:
    - `DefaultProblem.key`
    - `@AppStorage` and UserDefaults key strings

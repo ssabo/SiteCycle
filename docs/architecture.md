@@ -77,14 +77,17 @@ A reason a site was changed early.
 
 `SiteCycleApp.makeModelContainer()` tries CloudKit (`.automatic`) first and falls back to a local store (`.none`). The fallback exists for unsigned CI; see CLAUDE.md rule 2. The `-uiTestMode` launch argument forces an in-memory store with no CloudKit.
 
-The first time `ContentView` appears in each launch, it runs these steps in order:
+The first time `ContentView` appears in each launch, it runs these steps in order. Steps 1–6 are `prepareStore(context:)`.
 
-1. `seedDefaultLocations`: 7 zones × left/right = 14 locations. Seeds only when the store has no locations at all.
-2. `deduplicateLocations`: merges non-custom locations with the same `(bodyPart, subArea, side)`.
-   - **Known issue:** it chooses the keeper by entry count, which breaks rule 3. It also re-enables the keeper if any duplicate is enabled.
-3. `deduplicateSiteChangeEntries`: merges entries with the same start, end, location and note. The keeper is the lowest `id`, and the duplicates' problems are merged into it.
-4. `migrateLocationBodyParts`: fills `bodyPart` and `subArea` from the legacy `zone` string.
-   - **Known issue:** this runs *after* location dedup, so unmigrated legacy rows all share an empty `bodyPart` and get merged together.
+1. `seedDefaultLocations`: the 14 locations in `DefaultLocations.all` (7 zones × left/right), each seeded with its index as `sortOrder`. Seeds only when the store has no locations at all.
+2. `migrateLocationBodyParts`: fills `bodyPart` and `subArea` from the legacy `zone` string. It must run before location dedup: unmigrated rows all share an empty `bodyPart`, so dedup skips them rather than merging every legacy left site into one.
+3. `deduplicateLocations`:
+   - **Groups:** non-custom locations with the same `(bodyPart, subArea, side)`. Defaults can't be renamed, so these fields identify a default as `defaultKey` does for problems.
+   - **Keeper:** the lowest `id`.
+   - **Merge:** entries on the duplicates are moved onto the keeper. The user's settings are judged against how each copy was seeded, and copied onto the keeper:
+     - `isEnabled`: a disabled copy wins, because defaults are always seeded enabled.
+     - `sortOrder`: the keeper's if the user moved it from its seeded index, otherwise the first moved duplicate's.
+4. `deduplicateSiteChangeEntries`: merges entries with the same start, end, location and note. The keeper is the lowest `id`, and the duplicates' problems are merged into it. It runs after location dedup, because two copies of an entry match only once both point at the location keeper.
 5. `seedDefaultProblems`: inserts every default whose `defaultKey` is missing, so a default added in a later version reaches existing users.
 6. `deduplicateProblems`:
    - **Groups:** defaults are grouped by `defaultKey`, and custom problems by `SiteProblem.nameKey` (trimmed and lowercased).

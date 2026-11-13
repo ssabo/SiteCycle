@@ -1,124 +1,137 @@
 import Foundation
 import SwiftData
 
-private struct DefaultZone {
+/// A location the app seeds. Its index in `DefaultLocations.all` is the
+/// `sortOrder` it is seeded with.
+struct DefaultLocation: Sendable, Equatable {
     let bodyPart: String
     let subArea: String?
-    let hasLaterality: Bool
+    let side: String?
+}
+
+enum DefaultLocations {
+    /// Seeded in this order: 7 zones, each left then right, 14 locations in all.
+    static let all: [DefaultLocation] = zones.flatMap { zone in
+        ["left", "right"].map { side in
+            DefaultLocation(bodyPart: zone.bodyPart, subArea: zone.subArea, side: side)
+        }
+    }
+
+    private static let zones: [(bodyPart: String, subArea: String?)] = [
+        ("Abdomen", "Front"),
+        ("Abdomen", "Side"),
+        ("Abdomen", "Back"),
+        ("Thigh", "Front"),
+        ("Thigh", "Side"),
+        ("Arm", "Back"),
+        ("Buttock", nil),
+    ]
+
+    /// The `sortOrder` a fresh seed gives this location, or nil if it is custom
+    /// or not one of the current defaults.
+    static func seededSortOrder(of location: Location) -> Int? {
+        guard !location.isCustom else { return nil }
+        return all.firstIndex {
+            $0.bodyPart == location.bodyPart && $0.subArea == location.subArea && $0.side == location.side
+        }
+    }
 }
 
 /// Seeds the default body locations into the SwiftData context on first launch.
-/// Each of the 7 default zones has left/right laterality, producing 14 locations total.
+/// Seeds only into a store with no locations at all.
 @MainActor
 func seedDefaultLocations(context: ModelContext) {
-    let descriptor = FetchDescriptor<Location>()
-    let existingCount = (try? context.fetchCount(descriptor)) ?? 0
-
+    let existingCount = (try? context.fetchCount(FetchDescriptor<Location>())) ?? 0
     guard existingCount == 0 else { return }
 
-    let defaultZones: [DefaultZone] = [
-        DefaultZone(bodyPart: "Abdomen", subArea: "Front", hasLaterality: true),
-        DefaultZone(bodyPart: "Abdomen", subArea: "Side", hasLaterality: true),
-        DefaultZone(bodyPart: "Abdomen", subArea: "Back", hasLaterality: true),
-        DefaultZone(bodyPart: "Thigh", subArea: "Front", hasLaterality: true),
-        DefaultZone(bodyPart: "Thigh", subArea: "Side", hasLaterality: true),
-        DefaultZone(bodyPart: "Arm", subArea: "Back", hasLaterality: true),
-        DefaultZone(bodyPart: "Buttock", subArea: nil, hasLaterality: true),
-    ]
-
-    var sortOrder = 0
-
-    for zoneInfo in defaultZones {
-        if zoneInfo.hasLaterality {
-            let leftLocation = Location(
-                bodyPart: zoneInfo.bodyPart,
-                subArea: zoneInfo.subArea,
-                side: "left",
-                isEnabled: true,
-                isCustom: false,
-                sortOrder: sortOrder
-            )
-            context.insert(leftLocation)
-            sortOrder += 1
-
-            let rightLocation = Location(
-                bodyPart: zoneInfo.bodyPart,
-                subArea: zoneInfo.subArea,
-                side: "right",
-                isEnabled: true,
-                isCustom: false,
-                sortOrder: sortOrder
-            )
-            context.insert(rightLocation)
-            sortOrder += 1
-        } else {
-            let location = Location(
-                bodyPart: zoneInfo.bodyPart,
-                subArea: zoneInfo.subArea,
-                side: nil,
-                isEnabled: true,
-                isCustom: false,
-                sortOrder: sortOrder
-            )
-            context.insert(location)
-            sortOrder += 1
-        }
+    for (index, location) in DefaultLocations.all.enumerated() {
+        context.insert(Location(
+            bodyPart: location.bodyPart,
+            subArea: location.subArea,
+            side: location.side,
+            isEnabled: true,
+            isCustom: false,
+            sortOrder: index
+        ))
     }
 
     try? context.save()
 }
 
-/// Deduplicates non-custom locations that share the same semantic identity
-/// (bodyPart, subArea, side). Keeps the location with the most history,
-/// reassigns entries from duplicates to the keeper, then deletes duplicates.
+/// Merges non-custom locations that share `(bodyPart, subArea, side)`, moving
+/// their entries onto one keeper. Duplicates arise when two devices both seed
+/// the defaults before CloudKit syncs.
+///
+/// The keeper must be the same on every device, or two devices deduplicating
+/// before syncing could each delete the copy the other kept (CLAUDE.md rule 3).
+/// So the keeper is the lowest `id`. Entry counts are not used, because entry
+/// links sync separately and can differ between devices meanwhile, and seeded
+/// copies all tie on `sortOrder`.
+///
+/// The user's settings are then merged onto the keeper (see
+/// `mergeUserSettings(from:into:)`), so keeping a freshly seeded copy doesn't
+/// undo them.
+///
+/// Rows that `migrateLocationBodyParts` hasn't filled in yet (empty `bodyPart`)
+/// are skipped: they can't be told apart, so grouping them would merge every
+/// legacy left site into one.
 @MainActor
 func deduplicateLocations(context: ModelContext) {
-    let descriptor = FetchDescriptor<Location>()
-    guard let allLocations = try? context.fetch(descriptor) else { return }
-
-    let nonCustom = allLocations.filter { !$0.isCustom }
-
-    struct LocationKey: Hashable {
-        let bodyPart: String
-        let subArea: String?
-        let side: String?
-    }
+    guard let allLocations = try? context.fetch(FetchDescriptor<Location>()) else { return }
 
     var groups: [LocationKey: [Location]] = [:]
-    for location in nonCustom {
-        let key = LocationKey(
-            bodyPart: location.bodyPart,
-            subArea: location.subArea,
-            side: location.side
-        )
+    for location in allLocations where !location.isCustom && !location.bodyPart.isEmpty {
+        let key = LocationKey(bodyPart: location.bodyPart, subArea: location.subArea, side: location.side)
         groups[key, default: []].append(location)
     }
 
     var didChange = false
-    for (_, locations) in groups where locations.count > 1 {
-        let sorted = locations.sorted { lhs, rhs in
-            let lhsCount = lhs.safeEntries.count
-            let rhsCount = rhs.safeEntries.count
-            if lhsCount != rhsCount { return lhsCount > rhsCount }
-            return lhs.sortOrder < rhs.sortOrder
-        }
-
+    for (_, group) in groups where group.count > 1 {
+        let sorted = group.sorted { $0.id.uuidString < $1.id.uuidString }
         guard let keeper = sorted.first else { continue }
+        let duplicates = Array(sorted.dropFirst())
 
-        for duplicate in sorted.dropFirst() {
+        mergeUserSettings(from: duplicates, into: keeper)
+        for duplicate in duplicates {
             for entry in duplicate.safeEntries {
                 entry.location = keeper
             }
-            if duplicate.isEnabled {
-                keeper.isEnabled = true
-            }
             context.delete(duplicate)
-            didChange = true
         }
+        didChange = true
     }
 
     if didChange {
         try? context.save()
+    }
+}
+
+private struct LocationKey: Hashable {
+    let bodyPart: String
+    let subArea: String?
+    let side: String?
+}
+
+/// Copies onto the keeper any setting the user changed on a duplicate, judged
+/// against how the copy was seeded. Reads only synced fields, so every device
+/// merging the same copies gets the same result.
+///
+/// - `isEnabled`: a disabled copy wins. Defaults are always seeded enabled, so
+///   a disabled copy records the user turning the site off (for example,
+///   because of lipohypertrophy), and a fresh device's copy must not turn it
+///   back on.
+/// - `sortOrder`: the keeper's, if the user moved it from its seeded position;
+///   otherwise the first moved duplicate's, so a reordered list survives a new
+///   device's seed.
+private func mergeUserSettings(from duplicates: [Location], into keeper: Location) {
+    if duplicates.contains(where: { !$0.isEnabled }) {
+        keeper.isEnabled = false
+    }
+
+    if let seeded = DefaultLocations.seededSortOrder(of: keeper),
+       keeper.sortOrder == seeded,
+       let moved = duplicates.first(where: { $0.sortOrder != seeded }) {
+        keeper.sortOrder = moved.sortOrder
     }
 }
 

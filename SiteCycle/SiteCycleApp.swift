@@ -81,12 +81,7 @@ struct SiteCycleApp: App {
             ContentView(isCloudKitEnabled: isCloudKitEnabled)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
-                    seedDefaultLocations(context: context)
-                    deduplicateLocations(context: context)
-                    deduplicateSiteChangeEntries(context: context)
-                    migrateLocationBodyParts(context: context)
-                    seedDefaultProblems(context: context)
-                    deduplicateProblems(context: context)
+                    prepareStore(context: context)
                     connectivityManager.configure(modelContext: context)
                     connectivityManager.pushCurrentState()
                 }
