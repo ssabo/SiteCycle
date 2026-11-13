@@ -22,3 +22,6 @@ Pods/
 .DS_Store
 *.swp
 *~
+
+# Python bytecode (scripts/)
+__pycache__/
