@@ -55,8 +55,68 @@ Cloud sessions run on Linux, with no `swift`, no `xcodebuild` and no simulator, 
 - **Logic is tested.** Logic lives in a ViewModel or a utility, not a View, and has a unit test that fails without the change.
 - **The project file is right.** New files are registered (see "Adding a Swift file"), and `scripts/check_project.py` passes.
 - **SwiftLint is clean** in `--strict` mode.
-- **Docs match the code.** If you change a rule here, or a fact in `docs/architecture.md` or `docs/watch-and-widgets.md`, update the doc in the same PR.
-- **No feature narration here.** Put "how it works" text in `docs/` or in a comment next to the code.
+- **Docs match the code.** Any doc the change makes wrong is fixed in the same commit (see "Keeping docs current").
+
+## Keeping docs current
+
+Docs drift when each change leaves them a little wrong, so every commit that changes behaviour updates the docs it affects.
+
+### Scope
+
+- **Change only what your change makes wrong.** Update docs that describe what you changed, and nothing else. Don't use a feature PR to rewrite, reorganise or "refresh" unrelated sections.
+- **Unrelated drift:** if you spot drift elsewhere, mention it in the PR description, or fix it in a separate docs PR.
+- **Same commit:** the doc update goes in the same commit as the code change, so the two can't drift apart in history.
+
+### Before you commit
+
+Check whether the change alters anything a doc states:
+
+- a behaviour, default value or setting key
+- a rule or invariant
+- a file location or target membership
+- a CI step
+- one of the recipes below
+
+To find mentions, search the docs for every name you added, renamed or removed:
+
+```bash
+grep -rn "<name>" CLAUDE.md */CLAUDE.md docs --include=*.md
+```
+
+Then update the doc that owns each fact:
+
+| What changed | Doc to update |
+|---|---|
+| A rule, recipe or gotcha agents must follow | this file, or the nested `SiteCycleTests/CLAUDE.md` / `SiteCycleUITests/CLAUDE.md` |
+| How a part of the app works, and why | `docs/architecture.md` or `docs/watch-and-widgets.md` |
+| CI, signing or release setup | `docs/xcode-cloud-setup.md` |
+| A known bug that you fixed | remove its **Known issue** note in `docs/`, and any "currently breaks this rule" wording in the hard rules |
+
+`docs/reviews/2026-11-12-adversarial-review.md` is a dated snapshot. Don't rewrite its findings. You may mark a §10 step as done.
+
+### When a new doc or section is worth adding
+
+**Add one for:**
+
+- a new system or architectural component, such as a sync path, a persistence layer, a new target or extension, or a recommendation strategy;
+- an invariant or rule that spans files and can't be seen from any one of them, such as the dedup keeper rule or the watch payload compatibility rule;
+- a significant product or design decision, with its reason and the alternatives rejected, such as why P25 and not P10, or why the watch is a thin client;
+- a non-obvious workflow, such as the CI setup or a release step.
+
+**Don't add one for:**
+
+- individual unit tests, functions, Views or small UI tweaks;
+- a bug fix, unless it establishes a rule worth stating;
+- anything the code already says plainly, such as parameter lists, view hierarchies or which file a type is in;
+- change history ("PR #81 added…"), which belongs in git and PR descriptions.
+
+**Keep it close:** a "why" that only matters to one function belongs in a comment next to that code, not in `docs/`.
+
+**Keep it short:**
+
+- New narrative goes in `docs/`. This file holds rules and recipes only.
+- Extend an existing section before starting a new doc.
+- If a section here starts explaining how a feature works, move that text to `docs/` and leave a one-line pointer.
 
 ## Commands (macOS, Xcode 26+)
 
