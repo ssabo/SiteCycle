@@ -233,7 +233,12 @@ Import **replaces all entries and locations**, and CloudKit syncs that to every 
 2. **Confirm.** The confirmation says how many entries the file holds and which rows will be skipped, and only then offers to replace the data.
 3. **Replace.** `CSVImporter.apply` deletes the old entries and locations and inserts the new ones in a single save. It saves any unrelated pending edits first, so that on an error it can `rollback()` and leave the store as it was.
 
-- **Rows that are skipped:** fewer than 4 columns, a date that isn't ISO 8601, or a duration that is neither empty nor a finite number. An empty duration means the active site, so a damaged one such as "72h" is skipped rather than imported as active.
+- **Rows that are skipped:**
+  - fewer than 4 columns
+  - a date that isn't ISO 8601, or that is more than 5 minutes in the future (an active site that starts in the future breaks the next site change)
+  - a duration that is neither empty nor a number from 0 to 10 years. An empty duration means the active site, so a damaged one such as "72h" is skipped rather than imported as active, and "1e300" can't reach duration formatting.
+- **Blank lines** are ignored rather than reported as skipped rows.
+- **A blank location** imports as an entry with no location. The exporter writes one for an entry whose location was lost.
 - **Onboarding refuses to restore over existing history.** Onboarding appears on every new device and reinstall, often while iCloud is still downloading the user's history. So if the device already has any entries, both when the button is tapped and again on confirm, it explains and points to Settings instead. Its confirmation also tells iCloud users to skip rather than restore.
 - **Headers:** it accepts the header with or without `problems`. Column 5 is read only when the header declares it.
 - **Locations** are recreated from their display names.

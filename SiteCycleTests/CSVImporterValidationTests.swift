@@ -112,7 +112,7 @@ struct CSVImporterValidationTests {
     }
 
     /// A damaged duration used to be imported as a second "active" site.
-    @Test(arguments: ["72h", "abc", "nan", "inf", "-inf", "1e308"])
+    @Test(arguments: ["72h", "abc", "nan", "inf", "-inf"])
     func unparseableDurationIsSkippedNotImportedAsActive(duration: String) throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -132,6 +132,77 @@ struct CSVImporterValidationTests {
         #expect(entries.allSatisfy { $0.endTime != nil })
     }
 
+    /// "1e300" would crash duration formatting; a negative one ends before it starts.
+    @Test(arguments: ["-72", "-0.5", "87600.1", "1e300", "1e308"])
+    func outOfRangeDurationIsSkipped(duration: String) throws {
+        let csv = """
+        date,location,duration_hours,note
+        2024-01-15T10:30:00Z,L Abdomen (Front),87600,
+        2024-01-18T10:30:00Z,R Abdomen (Front),\(duration),
+        """
+        let plan = try CSVImporter.makePlan(csv: csv)
+        let start1 = try fixedDate(date1)
+        #expect(plan.entries.map(\.endTime) == [start1.addingTimeInterval(87600 * 3600)])
+        #expect(plan.skippedRows == [
+            CSVImporter.SkippedRow(rowNumber: 3, reason: "duration '\(duration)' is out of range (0 to 87600 hours)")
+        ])
+    }
+
+    /// An active site that starts in the future crashes the next site change.
+    @Test func futureStartIsSkippedBeyondClockSkew() throws {
+        let csv = """
+        date,location,duration_hours,note
+        2024-01-15T10:30:00Z,L Abdomen (Front),72.0,
+        2024-01-18T10:34:00Z,R Abdomen (Front),,
+        2024-01-18T10:36:00Z,L Thigh,,
+        """
+        let plan = try CSVImporter.makePlan(csv: csv, now: fixedDate(date2))
+        #expect(plan.entries.map(\.locationName) == ["L Abdomen (Front)", "R Abdomen (Front)"])
+        #expect(plan.skippedRows == [
+            CSVImporter.SkippedRow(rowNumber: 4, reason: "date '2024-01-18T10:36:00Z' is in the future")
+        ])
+    }
+
+    /// A trailing blank line must not show up as a row that "will be skipped".
+    @Test func blankLinesAreIgnored() throws {
+        let csv = "date,location,duration_hours,note\n2024-01-15T10:30:00Z,L Abdomen (Front),72.0,\n\n , ,,\n\n"
+        let plan = try CSVImporter.makePlan(csv: csv)
+        #expect(plan.entries.map(\.locationName) == ["L Abdomen (Front)"])
+        #expect(plan.skippedRows.isEmpty)
+    }
+
+    /// The exporter writes a blank location for an entry whose location was
+    /// lost; it must not come back attached to a new blank-named site.
+    @Test func blankLocationImportsAsNoLocation() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let csv = """
+        date,location,duration_hours,note
+        2024-01-15T10:30:00Z,,72.0,orphan
+        2024-01-18T10:30:00Z,  ,,
+        """
+        let result = try CSVImporter.importCSV(from: writeTemp(csv), context: context)
+        #expect(result.importedCount == 2)
+
+        let fresh = ModelContext(container)
+        let entries = try fresh.fetch(FetchDescriptor<SiteChangeEntry>())
+        #expect(entries.count == 2)
+        #expect(entries.allSatisfy { $0.location == nil })
+        #expect(try fresh.fetchCount(FetchDescriptor<Location>()) == 0)
+    }
+
+    @Test func unreadableFileKeepsTheUnderlyingError() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".csv")
+        // 0xE9 on its own ("é" in Latin-1) is not valid UTF-8.
+        try Data([0x64, 0x61, 0x74, 0x65, 0xE9, 0x0A]).write(to: url)
+        do {
+            _ = try CSVImporter.makePlan(fromFileAt: url)
+            Issue.record("Expected .unreadableFile to be thrown")
+        } catch CSVImporter.ImportError.unreadableFile(let underlying) {
+            #expect((underlying as NSError).domain == NSCocoaErrorDomain)
+        }
+    }
+
     @Test func describeListsFirstFiveSkippedRows() {
         let skipped = (2...8).map { CSVImporter.SkippedRow(rowNumber: $0, reason: "bad") }
         #expect(CSVImporter.describe(skipped) == """
@@ -146,7 +217,9 @@ struct CSVImporterValidationTests {
 
     // MARK: - Replacing
 
-    @Test func importSavesReplacementInOneStep() throws {
+    /// Checks only the saved end state. Forcing a save to fail, to test the
+    /// rollback, isn't practical with an in-memory store.
+    @Test func importPersistsTheReplacement() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
         let existing = Location(bodyPart: "Old Zone", isEnabled: true, isCustom: true, sortOrder: 0)

@@ -20,7 +20,9 @@ struct CSVImporter {
         let startTime: Date
         let endTime: Date?
         let note: String?
-        let locationName: String
+        /// Nil when the location field is blank, which the exporter writes for
+        /// an entry whose location was lost.
+        let locationName: String?
         let problemNames: [String]
     }
 
@@ -35,16 +37,27 @@ struct CSVImporter {
         let skippedRows: [SkippedRow]
     }
 
-    enum ImportError: LocalizedError {
-        case unreadableFile
+    enum ImportError: LocalizedError, CustomNSError {
+        /// `underlying` is the error from reading the file. Alerts show its
+        /// domain and code rather than this wrapper's (CLAUDE.md rule 9).
+        case unreadableFile(underlying: any Error)
         case invalidHeader
         /// The file has no data rows, or none of them is valid.
         case noValidEntries(skippedRows: [SkippedRow])
 
+        /// Fixed codes, so the "Error: <domain> <code>" in an alert keeps its meaning.
+        var errorCode: Int {
+            switch self {
+            case .unreadableFile: return 1
+            case .invalidHeader: return 2
+            case .noValidEntries: return 3
+            }
+        }
+
         var errorDescription: String? {
             switch self {
-            case .unreadableFile:
-                return "The file could not be read."
+            case .unreadableFile(let underlying):
+                return "The file could not be read. " + underlying.localizedDescription
             case .invalidHeader:
                 return "The file does not appear to be a valid SiteCycle CSV export."
             case .noValidEntries(let skippedRows):
@@ -58,6 +71,15 @@ struct CSVImporter {
     /// How many skipped rows `describe` lists before summarizing the rest.
     static let maxListedSkippedRows = 5
 
+    /// The longest duration a row may have: ten years. A site left open across
+    /// a long break can last far longer than a normal one, but anything beyond
+    /// this is a damaged value such as "1e300".
+    static let maxDurationHours: Double = 24 * 365 * 10
+
+    /// How far in the future a row may start, to allow for clock skew. An active
+    /// site that starts in the future breaks the next site change's time picker.
+    static let futureStartTolerance: TimeInterval = 5 * 60
+
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.sitecycle.app", category: "CSVImporter")
 
     /// Reads, validates and applies a file without asking. The app's UI uses
@@ -68,8 +90,8 @@ struct CSVImporter {
     }
 
     /// Reads and validates a file. Never touches the store.
-    static func makePlan(fromFileAt url: URL) throws -> ImportPlan {
-        try makePlan(csv: readFile(at: url))
+    static func makePlan(fromFileAt url: URL, now: Date = Date()) throws -> ImportPlan {
+        try makePlan(csv: readFile(at: url), now: now)
     }
 
     /// Bullet lines for skipped rows, listing at most `maxListedSkippedRows`.
@@ -91,7 +113,7 @@ struct CSVImporter {
             csv = try String(contentsOf: url, encoding: .utf8)
         } catch {
             logger.error("Could not read the file: \(String(describing: error))")
-            throw ImportError.unreadableFile
+            throw ImportError.unreadableFile(underlying: error)
         }
         return csv.hasPrefix("\u{FEFF}") ? String(csv.dropFirst()) : csv
     }
@@ -103,7 +125,7 @@ extension CSVImporter {
 
     /// Parses and validates the whole file. Throws if the header is wrong or
     /// no row is valid; otherwise returns the rows to import and the rows to skip.
-    static func makePlan(csv: String) throws -> ImportPlan {
+    static func makePlan(csv: String, now: Date = Date()) throws -> ImportPlan {
         let rows = parseCSV(csv)
         guard let header = rows.first else {
             throw ImportError.invalidHeader
@@ -124,11 +146,14 @@ extension CSVImporter {
         dateFormatter.formatOptions = [.withInternetDateTime]
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
 
+        let latestStart = now.addingTimeInterval(futureStartTolerance)
         var entries: [ParsedEntry] = []
         var skipped: [SkippedRow] = []
         for (index, row) in rows.dropFirst().enumerated() {
             let rowNumber = index + 2
-            switch parseRow(row, hasProblemsColumn: hasProblemsColumn, dateFormatter: dateFormatter) {
+            // Blank lines, such as an extra newline at the end, hold no data.
+            if row.allSatisfy({ $0.trimmingCharacters(in: .whitespaces).isEmpty }) { continue }
+            switch parseRow(row, hasProblemsColumn: hasProblemsColumn, dateFormatter: dateFormatter, latestStart: latestStart) {
             case .success(let entry):
                 entries.append(entry)
             case .failure(let error):
@@ -150,7 +175,7 @@ extension CSVImporter {
     /// Column 5 is only read as problems when the header declares it, so a stray
     /// extra field under the legacy header can't turn into bogus problems.
     private static func parseRow(
-        _ row: [String], hasProblemsColumn: Bool, dateFormatter: ISO8601DateFormatter
+        _ row: [String], hasProblemsColumn: Bool, dateFormatter: ISO8601DateFormatter, latestStart: Date
     ) -> Result<ParsedEntry, RowError> {
         guard row.count >= 4 else {
             return .failure(RowError(reason: "too few columns (\(row.count) found, 4 required)"))
@@ -158,25 +183,33 @@ extension CSVImporter {
         guard let startTime = dateFormatter.date(from: row[0].trimmingCharacters(in: .whitespaces)) else {
             return .failure(RowError(reason: "unrecognized date '\(row[0])'"))
         }
+        guard startTime <= latestStart else {
+            return .failure(RowError(reason: "date '\(row[0])' is in the future"))
+        }
 
-        // Empty means the active site. Anything else must be a finite number of
-        // hours: "72h" or "nan" is a damaged row, not a site that is still active.
+        // Empty means the active site. Anything else must be a number of hours
+        // in range: "72h" or "nan" is a damaged row, not a site that is still active.
         let durationField = row[2].trimmingCharacters(in: .whitespaces)
         var endTime: Date?
         if !durationField.isEmpty {
-            guard let hours = Double(durationField), (hours * 3600).isFinite else {
+            guard let hours = Double(durationField), hours.isFinite else {
                 return .failure(RowError(reason: "unrecognized duration '\(row[2])'"))
+            }
+            guard (0...maxDurationHours).contains(hours) else {
+                let range = "0 to \(Int(maxDurationHours)) hours"
+                return .failure(RowError(reason: "duration '\(row[2])' is out of range (\(range))"))
             }
             endTime = startTime.addingTimeInterval(hours * 3600)
         }
 
+        let locationName = row[1].trimmingCharacters(in: .whitespaces)
         let note = row[3]
         let problemsField = hasProblemsColumn && row.count >= 5 ? row[4] : ""
         return .success(ParsedEntry(
             startTime: startTime,
             endTime: endTime,
             note: note.isEmpty ? nil : note,
-            locationName: row[1],
+            locationName: locationName.isEmpty ? nil : locationName,
             problemNames: problemNames(in: problemsField)
         ))
     }
@@ -226,23 +259,28 @@ extension CSVImporter {
     ) {
         var locations: [String: Location] = [:]
         for parsed in entries {
-            let location: Location
-            if let cached = locations[parsed.locationName] {
-                location = cached
-            } else {
-                location = makeLocation(from: parsed.locationName, sortOrder: locations.count)
-                context.insert(location)
-                locations[parsed.locationName] = location
-            }
             let entry = SiteChangeEntry(
                 startTime: parsed.startTime,
                 endTime: parsed.endTime,
                 note: parsed.note,
-                location: location,
+                location: location(named: parsed.locationName, cache: &locations, context: context),
                 problems: problemResolver.resolveAll(parsed.problemNames, context: context)
             )
             context.insert(entry)
         }
+    }
+
+    /// The location for a display name, created the first time the name is seen.
+    @MainActor
+    private static func location(
+        named name: String?, cache: inout [String: Location], context: ModelContext
+    ) -> Location? {
+        guard let name else { return nil }
+        if let cached = cache[name] { return cached }
+        let location = makeLocation(from: name, sortOrder: cache.count)
+        context.insert(location)
+        cache[name] = location
+        return location
     }
 
     /// Resolves CSV problem names. Problems are configuration, not history, so

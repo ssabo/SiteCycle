@@ -136,9 +136,31 @@ struct CSVImportViewModelTests {
         #expect(alert.title == "Import Failed")
         #expect(alert.message.contains("• Row 2: unrecognized date '1/15/2024 10:30'"))
         #expect(alert.message.contains("Your existing data has not been changed."))
-        #expect(alert.message.contains("\n\nError: SiteCycle.CSVImporter.ImportError "))
+        #expect(alert.message.hasSuffix("\n\nError: SiteCycle.CSVImporter.ImportError 3"))
         let entries = try ModelContext(container).fetch(FetchDescriptor<SiteChangeEntry>())
         #expect(entries.map(\.id) == [existing.id])
+    }
+
+    @Test func unreadableFileAlertShowsTheUnderlyingError() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let flow = CSVImportViewModel(origin: .settings)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".csv")
+        try Data([0x64, 0x61, 0x74, 0x65, 0xE9, 0x0A]).write(to: url)
+
+        flow.prepare(fileAt: url, context: context)
+
+        let alert = try #require(flow.alert)
+        #expect(alert.title == "Import Failed")
+        #expect(alert.message.contains("\n\nError: \(NSCocoaErrorDomain) "))
+    }
+
+    /// If the store can't be counted, onboarding must not assume it is empty.
+    @Test func onboardingRefusalFailsClosedWhenEntriesCannotBeCounted() {
+        let alert = CSVImportViewModel.onboardingRefusal(entryCount: .failure(NSError(domain: "TestStore", code: 7)))
+        #expect(alert?.title == "Import Failed")
+        #expect(alert?.message.hasSuffix("\n\nError: TestStore 7") == true)
+        #expect(CSVImportViewModel.onboardingRefusal(entryCount: .success(0)) == nil)
     }
 
     // MARK: - Confirming

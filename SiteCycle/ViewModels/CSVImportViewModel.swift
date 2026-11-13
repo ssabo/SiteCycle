@@ -58,7 +58,8 @@ final class CSVImportViewModel {
     func prepare(fileAt url: URL, context: ModelContext) {
         do {
             let plan = try CSVImporter.makePlan(fromFileAt: url)
-            pendingConfirmation = makeConfirmation(for: plan, existingEntryCount: Self.entryCount(context: context))
+            let existingEntryCount = try Self.entryCount(context: context)
+            pendingConfirmation = makeConfirmation(for: plan, existingEntryCount: existingEntryCount)
         } catch {
             alert = Self.failureAlert(for: error)
         }
@@ -95,11 +96,23 @@ final class CSVImportViewModel {
 
     private func onboardingRefusal(context: ModelContext) -> Alert? {
         guard origin == .onboarding else { return nil }
-        let existing = Self.entryCount(context: context)
+        return Self.onboardingRefusal(entryCount: Result { try Self.entryCount(context: context) })
+    }
+
+    /// Fails closed: if the entries can't be counted, refuse rather than risk
+    /// restoring over history that is already there.
+    static func onboardingRefusal(entryCount: Result<Int, any Error>) -> Alert? {
+        let existing: Int
+        switch entryCount {
+        case .success(let count):
+            existing = count
+        case .failure(let error):
+            return failureAlert(for: error)
+        }
         guard existing > 0 else { return nil }
         return Alert(
             title: "History Already on This Device",
-            message: "This device already has \(Self.siteChanges(existing)), probably from iCloud, "
+            message: "This device already has \(siteChanges(existing)), probably from iCloud, "
                 + "so there's nothing to restore. Tap Skip to start using them.\n\n"
                 + "To replace them with a backup, use Import Data from CSV in Settings."
         )
@@ -146,17 +159,23 @@ final class CSVImportViewModel {
         return Alert(title: "Import Successful", message: message)
     }
 
-    static func failureAlert(for error: Error) -> Alert {
-        let nsError = error as NSError
+    static func failureAlert(for error: any Error) -> Alert {
+        // Name the real cause rather than the wrapper, so a screenshot is enough to diagnose it.
+        let diagnostic: NSError
+        if case .unreadableFile(let underlying) = error as? CSVImporter.ImportError {
+            diagnostic = underlying as NSError
+        } else {
+            diagnostic = error as NSError
+        }
         return Alert(
             title: "Import Failed",
             message: "\(error.localizedDescription)\n\nYour existing data has not been changed."
-                + "\n\nError: \(nsError.domain) \(nsError.code)"
+                + "\n\nError: \(diagnostic.domain) \(diagnostic.code)"
         )
     }
 
-    private static func entryCount(context: ModelContext) -> Int {
-        (try? context.fetchCount(FetchDescriptor<SiteChangeEntry>())) ?? 0
+    private static func entryCount(context: ModelContext) throws -> Int {
+        try context.fetchCount(FetchDescriptor<SiteChangeEntry>())
     }
 
     private static func siteChanges(_ count: Int) -> String {
