@@ -227,10 +227,14 @@ Settings live in UserDefaults via `@AppStorage`. They are stored per device, not
 
 ### Import
 
-`CSVImporter.importCSV` **replaces all entries and locations**. It is used from Settings, behind a "Replace All Data?" confirmation, and from onboarding's "Restore from CSV backup".
+Import **replaces all entries and locations**, and CloudKit syncs that to every device. So nothing is deleted until the whole file has been validated and the user has confirmed. Settings ("Import Data from CSV") and onboarding ("Restore from CSV backup") share the same flow, `CSVImportViewModel`, which holds only the flow's state and takes the `ModelContext` per call.
 
+1. **Validate.** After the file is picked, `CSVImporter.makePlan` parses every row into values (an `ImportPlan`) without touching the store. If the header is wrong or no row is valid, it throws, and the alert lists the first bad rows.
+2. **Confirm.** The confirmation says how many entries the file holds and which rows will be skipped, and only then offers to replace the data.
+3. **Replace.** `CSVImporter.apply` deletes the old entries and locations and inserts the new ones in a single save. It saves any unrelated pending edits first, so that on an error it can `rollback()` and leave the store as it was.
+
+- **Rows that are skipped:** fewer than 4 columns, a date that isn't ISO 8601, or a duration that is neither empty nor a finite number. An empty duration means the active site, so a damaged one such as "72h" is skipped rather than imported as active.
+- **Onboarding refuses to restore over existing history.** Onboarding appears on every new device and reinstall, often while iCloud is still downloading the user's history. So if the device already has any entries, both when the button is tapped and again on confirm, it explains and points to Settings instead. Its confirmation also tells iCloud users to skip rather than restore.
 - **Headers:** it accepts the header with or without `problems`. Column 5 is read only when the header declares it.
 - **Locations** are recreated from their display names.
 - **Problems** are kept, because they are configuration rather than history. Names are matched ignoring case, and unknown names are created as custom problems.
-- **Known issue:** it deletes and saves *before* validating the rows, so a file in which every row is invalid erases all history.
-- **Known issue:** onboarding's restore asks for no confirmation.

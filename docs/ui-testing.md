@@ -65,9 +65,11 @@ app bug. Diagnose it on a Mac using the crash log from the xcresult bundle.
 Likely cause, from the November 2026 review (§2.5 of
 [`reviews/2026-11-12-adversarial-review.md`](reviews/2026-11-12-adversarial-review.md)):
 
-- `SiteCycleApp` injects `PhoneConnectivityManager` into `ContentView` only, inside
-  `.fullScreenCover`.
-- So `OnboardingView`, and the `LocationConfigView` it embeds, have no
-  `PhoneConnectivityManager` in their environment.
+- `SiteCycleApp` injected `PhoneConnectivityManager` into `ContentView` only, so the
+  `.fullScreenCover` holding `OnboardingView`, and the `LocationConfigView` it embeds,
+  had no `PhoneConnectivityManager` in their environment.
 - `LocationConfigView` declares that environment object as non-optional, so using it
   is fatal.
+- The cover now injects the manager too (it was needed for the onboarding CSV restore).
+  Nobody has yet re-run onboarding to confirm that this was the crash. Once someone
+  has, delete this section.

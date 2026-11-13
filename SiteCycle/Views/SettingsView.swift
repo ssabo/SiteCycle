@@ -20,9 +20,7 @@ struct SettingsView: View {
     private var watchShowAllLocations: Bool = true
     @State private var csvFileURL: URL?
     @State private var showingShareSheet = false
-    @State private var showingImportWarning = false
-    @State private var showingImportPicker = false
-    @State private var importResult: ImportResultAlert?
+    @State private var importFlow = CSVImportViewModel(origin: .settings)
 
     var body: some View {
         Form { formSections }
@@ -44,26 +42,10 @@ struct SettingsView: View {
                     if showingShareSheet, let csvFileURL {
                         ActivityPresenter(url: csvFileURL, isPresented: $showingShareSheet)
                     }
-                    if showingImportPicker {
-                        DocumentPickerView(
-                            onPickURL: { url in importCSV(from: url) },
-                            isPresented: $showingImportPicker
-                        )
-                    }
                 }
             )
-            .alert("Replace All Data?", isPresented: $showingImportWarning) {
-                Button("Import", role: .destructive) { showingImportPicker = true }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("Importing a CSV file will permanently delete all existing site history and locations. This cannot be undone.")
-            }
-            .alert(item: $importResult) { result in
-                Alert(
-                    title: Text(result.title),
-                    message: Text(result.message),
-                    dismissButton: .default(Text("OK"))
-                )
+            .csvImportFlow(importFlow) {
+                connectivityManager.pushCurrentState()
             }
     }
 
@@ -170,7 +152,7 @@ struct SettingsView: View {
             }
 
             Button(role: .destructive) {
-                showingImportWarning = true
+                importFlow.start(context: modelContext)
             } label: {
                 Label("Import Data from CSV", systemImage: "square.and.arrow.down")
             }
@@ -246,42 +228,11 @@ struct SettingsView: View {
         showingShareSheet = true
     }
 
-    private func importCSV(from url: URL) {
-        do {
-            let result = try CSVImporter.importCSV(from: url, context: modelContext)
-            let count = result.importedCount
-            let noun = count == 1 ? "entry" : "entries"
-            var message = "Imported \(count) site change \(noun)."
-            if !result.skippedRows.isEmpty {
-                let lines = result.skippedRows.map { "• Row \($0.rowNumber): \($0.reason)" }.joined(separator: "\n")
-                message += "\n\n\(result.skippedRows.count) rows were skipped:\n\(lines)"
-            }
-            connectivityManager.pushCurrentState()
-            importResult = ImportResultAlert(
-                title: "Import Successful",
-                message: message
-            )
-        } catch {
-            importResult = ImportResultAlert(
-                title: "Import Failed",
-                message: error.localizedDescription
-            )
-        }
-    }
-
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(version) (\(build))"
     }
-}
-
-// MARK: - Import Result Alert
-
-private struct ImportResultAlert: Identifiable {
-    let id = UUID()
-    let title: String
-    let message: String
 }
 
 // MARK: - Activity Presenter

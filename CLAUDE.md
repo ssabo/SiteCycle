@@ -170,7 +170,7 @@ Each rule says what enforces it. "Prose only" means nothing does yet, so take ex
    - *Enforced by:* `WatchAppStateTests` (missing-key decode).
 6. **The watch is a thin client.** It never stores data or computes recommendations: the iPhone sends state, and the watch sends commands. Read `docs/watch-and-widgets.md` before changing either side.
 7. **After any change to data or to a setting the watch or widgets display, call `connectivityManager.pushCurrentState()`.** It writes the App Group state, reloads the widgets and updates the watch.
-   - *Prose only.* Each call site does this by hand, and some are missed; the location on/off toggle and the onboarding CSV import currently don't call it.
+   - *Prose only.* Each call site does this by hand, and some are missed; the location on/off toggle currently doesn't call it.
 8. **Soft-delete anything with history.**
    - A location or custom problem that has entries gets `isEnabled = false`. Hard-delete it only if it has no history.
    - Default problems are never deleted (seeding would re-add them), only disabled.
