@@ -4,7 +4,7 @@ This documents how to configure SiteCycle's Xcode Cloud workflows — the **acti
 
 `ci.yml`, `ui-tests.yml`, and `testflight.yml` are **disabled** (`gh workflow disable` — kept in the repo, not removed, in case a rollback is ever needed). `stale-branch-cleanup.yml` is unrelated to build/test/publish and stays enabled. `lint.yml` (SwiftLint) also stays enabled permanently, by design — Xcode Cloud has no built-in lint step, so this is the one piece of CI that isn't migrating.
 
-There are two Xcode Cloud workflows: **"CI"** (unit tests, watch build, and a signing-verification archive, as three parallel actions in one workflow) and **"TestFlight"** (archive + upload, plus the UI smoke test). They were originally set up as five separate workflows (one per action); see "Why one combined CI workflow" below for why that changed.
+There are two Xcode Cloud workflows: **"CI"** (unit tests, the UI smoke test, watch build, and a signing-verification archive, as four parallel actions in one workflow) and **"TestFlight"** (archive + upload, plus the UI smoke test). They were originally set up as five separate workflows (one per action); see "Why one combined CI workflow" below for why that changed.
 
 | Workflow | Replaces | Trigger |
 |---|---|---|
@@ -30,11 +30,12 @@ This flow starts in the Xcode app, hands off to a browser partway through for th
 
 ## Workflow: "CI"
 
-One workflow, three actions — Xcode Cloud only ever runs actions within a workflow in parallel (there's no sequential option), so all three run concurrently on every PR.
+One workflow, four actions — Xcode Cloud only ever runs actions within a workflow in parallel (there's no sequential option), so all four run concurrently on every PR.
 
 | Action | Scheme | Type | Test Plan / Config |
 |---|---|---|---|
 | Unit Tests | `SiteCycle` | Test | `SiteCycleUnitTests` (repo root — `SiteCycleTests` target only) |
+| UI Tests | `SiteCycle` | Test | `SiteCycleUITests` (the single smoke test) |
 | Watch Build | `SiteCycleWatch` | Build | — (no test target exists for the watch app) |
 | Archive Check | `SiteCycle` | Archive | Release configuration, no post-action (signing/export verification only, never distributed) |
 
@@ -47,8 +48,7 @@ One workflow, three actions — Xcode Cloud only ever runs actions within a work
 This was originally four separate workflows (Unit Tests, UI Tests, Watch Build, Archive Check), each with its own start condition — `ui-tests.yml`'s path filter (skip docs-only PRs) was mirrored onto the standalone UI Tests workflow, for instance. It's since been consolidated into one "CI" workflow with parallel actions instead, deliberately:
 
 - **Build numbers are a single counter shared across the whole app in Xcode Cloud**, not per-workflow (see "Build numbering" below). Four separate workflows all triggering on the same PR meant four separate builds consuming four slots in that shared counter per PR. One combined workflow with four actions is one build, consuming far fewer numbers over time.
-- **UI Tests later moved to the TestFlight workflow.** Once the UI suite was cut to a single smoke test (see [`ui-testing.md`](ui-testing.md)), running it on every PR, docs-only ones included, wasn't worth the compute hours. It now runs post-merge alongside the TestFlight archive, so it uses no extra build numbers.
-  - **Observed November 2026:** PR #83's CI run *also* included a `SiteCycleUITests - iOS` action, so the CI workflow in App Store Connect still seems to have a UI Tests action. Remove it there, or update this section.
+- **The UI smoke test runs in both workflows.** It runs on every PR as a CI action, and post-merge alongside the TestFlight archive. The UI suite is a single smoke test (see [`ui-testing.md`](ui-testing.md)), so it adds one action, not a separate build.
 
 ### Known gaps carried over from the original per-workflow setup
 

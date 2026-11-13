@@ -25,7 +25,6 @@ This target holds exactly **one** XCUITest smoke test: `SmokeTests.testLogSiteCh
 
 ## Where it runs
 
-- **Xcode Cloud.** The `SiteCycleUITests` test plan ran in the **CI** workflow on PR #83, as the check `SiteCycle | CI | SiteCycleUITests - iOS (SiteCycle)`.
+- **Xcode Cloud:** the **CI** workflow runs the `SiteCycleUITests` test plan on every pull request, as the check `SiteCycle | CI | SiteCycleUITests - iOS (SiteCycle)`. Treat a red check as a real failure.
 - **Locally,** run `xcodebuild test … -testPlan SiteCycleUITests`.
-- **Doc mismatch:** `docs/xcode-cloud-setup.md` says it runs only in the TestFlight workflow, after merge. Treat a red UI-test check on a PR as real.
 - **Onboarding:** the smoke test skips onboarding, so it doesn't exercise the known onboarding crash (review §2.5).

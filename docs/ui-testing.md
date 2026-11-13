@@ -51,14 +51,9 @@ Reviewed in October 2026, after 15 tests across 6 files had shipped (PRs #67–6
 
 ## Where it runs
 
-The UI test plan (`SiteCycleUITests.xctestplan`) was meant to run as a Test action
-in the Xcode Cloud **"TestFlight"** workflow (on merges to `main`), not on every PR.
-See [`xcode-cloud-setup.md`](xcode-cloud-setup.md).
-
-But on PR #83 (November 2026), the **CI** workflow also ran it, as
-`SiteCycle | CI | SiteCycleUITests - iOS (SiteCycle)`. So either the CI workflow in
-App Store Connect still has a UI Tests action, or this doc is out of date. Decide
-which, then fix the other.
+The UI test plan (`SiteCycleUITests.xctestplan`) runs as a Test action in the
+Xcode Cloud **"CI"** workflow on every pull request, and in the **"TestFlight"**
+workflow on merges to `main`. See [`xcode-cloud-setup.md`](xcode-cloud-setup.md).
 
 ## Known app bug (not a testing task)
 
