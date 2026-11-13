@@ -63,12 +63,11 @@ The App Group write does not depend on the watch session, so the iPhone widget u
   - a History edit
   - adding, deleting or reordering a location
   - a settings change
-  - a CSV import from Settings
+  - a CSV import, from Settings or onboarding
 
 **Known issue:** it is *not* called:
 
 - after the location on/off toggle
-- after the onboarding CSV import
 - after CloudKit imports changes from another device
 
 #### `configure(modelContext:)`

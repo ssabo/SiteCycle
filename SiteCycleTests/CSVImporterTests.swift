@@ -103,8 +103,8 @@ struct CSVImporterTests {
         do {
             _ = try CSVImporter.importCSV(from: writeTemp(csv), context: context)
             Issue.record("Expected .noValidEntries to be thrown")
-        } catch CSVImporter.ImportError.noValidEntries {
-            // Expected
+        } catch CSVImporter.ImportError.noValidEntries(let skippedRows) {
+            #expect(skippedRows.isEmpty)
         }
     }
 

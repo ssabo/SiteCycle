@@ -40,8 +40,8 @@ private struct WelcomePage: View {
     let onNext: () -> Void
     let onImportComplete: () -> Void
     @Environment(\.modelContext) private var modelContext
-    @State private var showingImportPicker = false
-    @State private var importResult: String?
+    @Environment(PhoneConnectivityManager.self) private var connectivityManager
+    @State private var importFlow = CSVImportViewModel(origin: .onboarding)
 
     var body: some View {
         VStack(spacing: 24) {
@@ -76,7 +76,7 @@ private struct WelcomePage: View {
             .accessibilityIdentifier("onboarding.welcome.getStarted")
 
             Button {
-                showingImportPicker = true
+                importFlow.start(context: modelContext)
             } label: {
                 Text("Restore from CSV backup")
                     .font(.subheadline)
@@ -84,32 +84,9 @@ private struct WelcomePage: View {
             .padding(.bottom, 48)
             .accessibilityIdentifier("onboarding.welcome.restoreCSV")
         }
-        .background(
-            Group {
-                if showingImportPicker {
-                    DocumentPickerView(
-                        onPickURL: { url in handleImport(from: url) },
-                        isPresented: $showingImportPicker
-                    )
-                }
-            }
-        )
-        .alert("Import Failed", isPresented: .init(
-            get: { importResult != nil },
-            set: { if !$0 { importResult = nil } }
-        )) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            if let msg = importResult { Text(msg) }
-        }
-    }
-
-    private func handleImport(from url: URL) {
-        do {
-            _ = try CSVImporter.importCSV(from: url, context: modelContext)
+        .csvImportFlow(importFlow) {
+            connectivityManager.pushCurrentState()
             onImportComplete()
-        } catch {
-            importResult = error.localizedDescription
         }
     }
 }
@@ -197,5 +174,6 @@ private struct ReadyPage: View {
 
 #Preview {
     OnboardingView()
+        .environment(PhoneConnectivityManager())
         .modelContainer(for: [Location.self, SiteChangeEntry.self, SiteProblem.self], inMemory: true)
 }

@@ -95,7 +95,9 @@ struct SiteCycleApp: App {
                     get: { !hasCompletedOnboarding },
                     set: { newValue in hasCompletedOnboarding = !newValue }
                 )) {
+                    // The `.environment` above reaches only ContentView, not this cover.
                     OnboardingView()
+                        .environment(connectivityManager)
                 }
         }
         .modelContainer(sharedModelContainer)
