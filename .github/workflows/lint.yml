@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Catches .swift files missing from their target, reused object IDs and
+      # references to deleted files: easy mistakes when hand-editing project.pbxproj.
+      - name: Check Xcode project file
+        run: python3 scripts/check_project.py
+
       - name: Install SwiftLint
         run: brew install swiftlint
 

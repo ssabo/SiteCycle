@@ -48,6 +48,7 @@ This was originally four separate workflows (Unit Tests, UI Tests, Watch Build, 
 
 - **Build numbers are a single counter shared across the whole app in Xcode Cloud**, not per-workflow (see "Build numbering" below). Four separate workflows all triggering on the same PR meant four separate builds consuming four slots in that shared counter per PR. One combined workflow with four actions is one build, consuming far fewer numbers over time.
 - **UI Tests later moved to the TestFlight workflow.** Once the UI suite was cut to a single smoke test (see [`ui-testing.md`](ui-testing.md)), running it on every PR, docs-only ones included, wasn't worth the compute hours. It now runs post-merge alongside the TestFlight archive, so it uses no extra build numbers.
+  - **Observed November 2026:** PR #83's CI run *also* included a `SiteCycleUITests - iOS` action, so the CI workflow in App Store Connect still seems to have a UI Tests action. Remove it there, or update this section.
 
 ### Known gaps carried over from the original per-workflow setup
 
@@ -104,7 +105,7 @@ xcodebuild test -scheme SiteCycle -project SiteCycle.xcodeproj \
 
 (swap `-testPlan SiteCycleUITests` to check the UI-tests scope instead)
 
-Parity is confirmed and `ci.yml`, `ui-tests.yml`, and `testflight.yml` are disabled (not removed — see the note at the top of this doc and `CLAUDE.md`'s "CI / CD" section).
+Parity is confirmed and `ci.yml`, `ui-tests.yml`, and `testflight.yml` are disabled (not removed — see the note at the top of this doc; `CLAUDE.md`'s "Layout" section tells agents to ignore them).
 
 ## Not done yet
 

@@ -51,9 +51,14 @@ Reviewed in October 2026, after 15 tests across 6 files had shipped (PRs #67–6
 
 ## Where it runs
 
-The UI test plan (`SiteCycleUITests.xctestplan`) runs as a Test action in the
-Xcode Cloud **"TestFlight"** workflow (on merges to `main`), not on every PR.
+The UI test plan (`SiteCycleUITests.xctestplan`) was meant to run as a Test action
+in the Xcode Cloud **"TestFlight"** workflow (on merges to `main`), not on every PR.
 See [`xcode-cloud-setup.md`](xcode-cloud-setup.md).
+
+But on PR #83 (November 2026), the **CI** workflow also ran it, as
+`SiteCycle | CI | SiteCycleUITests - iOS (SiteCycle)`. So either the CI workflow in
+App Store Connect still has a UI Tests action, or this doc is out of date. Decide
+which, then fix the other.
 
 ## Known app bug (not a testing task)
 
@@ -61,3 +66,13 @@ The Welcome → Configure transition in `OnboardingView`'s paged `TabView` has
 been seen to terminate the app during UI-test runs (Xcode 26 / iPhone 16 Pro
 simulator). It was found while writing UI tests and still needs a fix as an
 app bug. Diagnose it on a Mac using the crash log from the xcresult bundle.
+
+Likely cause, from the November 2026 review (§2.5 of
+[`reviews/2026-11-12-adversarial-review.md`](reviews/2026-11-12-adversarial-review.md)):
+
+- `SiteCycleApp` injects `PhoneConnectivityManager` into `ContentView` only, inside
+  `.fullScreenCover`.
+- So `OnboardingView`, and the `LocationConfigView` it embeds, have no
+  `PhoneConnectivityManager` in their environment.
+- `LocationConfigView` declares that environment object as non-optional, so using it
+  is fatal.

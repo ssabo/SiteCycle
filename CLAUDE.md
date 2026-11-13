@@ -1,246 +1,207 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+SiteCycle is an iPhone app, with an Apple Watch companion and widgets, that tracks insulin-pump infusion-site rotation and recommends the next site. Every target builds in the Swift 6 language mode.
 
-## Project Overview
+- **Stack:** SwiftUI, SwiftData with CloudKit sync, and Swift Charts. Apple frameworks only, no third-party dependencies.
+- **Minimum OS:** iOS 18.0 and watchOS 11.0.
+- **No user accounts:** the iPhone is the single source of truth.
 
-SiteCycle is an iOS app for insulin pump users to track infusion site rotation. It recommends optimal pump site placement based on usage history to prevent lipohypertrophy and scarring. The app is pump-agnostic and requires no user account.
+Where to look:
 
-## Tech Stack
+- **How it works:** the data model, recommendation engine, site problems and statistics are in [`docs/architecture.md`](docs/architecture.md).
+- **Watch, connectivity and widgets:** see [`docs/watch-and-widgets.md`](docs/watch-and-widgets.md).
+- **Known bugs and the improvement backlog:** see [`docs/reviews/2026-11-12-adversarial-review.md`](docs/reviews/2026-11-12-adversarial-review.md). Check it before working in an area, so you don't rediscover or re-introduce a listed bug.
 
-- **Language:** Swift 6.0, targeting iOS 18.0+ and watchOS 11.0+
-- **UI:** SwiftUI
-- **Persistence:** SwiftData with CloudKit sync (container: `iCloud.com.sitecycle.app`)
-- **Charts:** Swift Charts framework (for statistics views)
-- **Architecture:** MVVM — Models/, ViewModels/, Views/, Utilities/
-- **Watch App:** Companion watchOS app with WidgetKit complications
-- **No external dependencies** — uses only Apple frameworks
+## Layout
 
-## Build Commands
+| Path | Target | Notes |
+|---|---|---|
+| `SiteCycle/` | SiteCycle (iOS app) | MVVM: `Models/` (SwiftData `@Model`s), `ViewModels/`, `Views/`, `Utilities/`, `Connectivity/` |
+| `SiteCycle/Connectivity/WatchAppState.swift` | **SiteCycle, SiteCycleWatch, SiteCycleWatchWidgets, SiteCycleWidgets** | The only file compiled into several targets: the Codable phone↔watch payload and the App Group constants. It must not use anything that exists only in the iOS app. |
+| `SiteCycleWatch/` | SiteCycleWatch | Thin client: no SwiftData, no CloudKit |
+| `SiteCycleWatchWidgets/` | SiteCycleWatchWidgets | Watch complications |
+| `SiteCycleWidgets/` | SiteCycleWidgets | iPhone widgets. Its main file has the same name as the watch widget's (`SiteCycleWidgets.swift`), so match on path, not file name. |
+| `SiteCycleTests/` | SiteCycleTests | Swift Testing unit tests, hosted by the app. Read [`SiteCycleTests/CLAUDE.md`](SiteCycleTests/CLAUDE.md). |
+| `SiteCycleUITests/` | SiteCycleUITests | One XCUITest smoke test. Read [`SiteCycleUITests/CLAUDE.md`](SiteCycleUITests/CLAUDE.md). |
+| `scripts/check_project.py` | — | Project-file checker that runs on Linux |
 
-This is an Xcode project (no SPM Package.swift at the root). Build and test via `xcodebuild`:
+**CI is Xcode Cloud** (see [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md)), plus SwiftLint in `.github/workflows/lint.yml`.
+
+Ignore these files; they describe the disabled GitHub Actions setup and are stale:
+
+- `CI.md`
+- `docs/testflight-setup.md`
+- `ExportOptions.plist`
+- `.github/workflows/ci.yml`, `ui-tests.yml` and `testflight.yml`
+
+## Working without Xcode (cloud sessions)
+
+Cloud sessions run on Linux, with no `swift`, no `xcodebuild` and no simulator, so you cannot compile or run tests there.
+
+- **Before pushing:**
+  - Run `python3 scripts/check_project.py`.
+  - Run `swiftlint lint --strict` if `swiftlint` is installed.
+  - Re-read your diff against the compile gotchas below, because nothing else will catch them before CI.
+- **Xcode Cloud is the compile and test gate.** Its results appear as GitHub check runs on the PR:
+  - `SiteCycle | CI | SiteCycleUnitTests - iOS (SiteCycle)`
+  - `… | SiteCycleUITests - iOS (SiteCycle)`
+  - `… | Build - watchOS`
+  - `… | Archive - iOS`
+- **Logs live in App Store Connect,** which you can't read. If a check fails, say which one, and ask the owner for the error output instead of guessing.
+- **In the PR description,** state that the change was not compiled locally.
+
+## Definition of done
+
+- **Logic is tested.** Logic lives in a ViewModel or a utility, not a View, and has a unit test that fails without the change.
+- **The project file is right.** New files are registered (see "Adding a Swift file"), and `scripts/check_project.py` passes.
+- **SwiftLint is clean** in `--strict` mode.
+- **Docs match the code.** If you change a rule here, or a fact in `docs/architecture.md` or `docs/watch-and-widgets.md`, update the doc in the same PR.
+- **No feature narration here.** Put "how it works" text in `docs/` or in a comment next to the code.
+
+## Commands (macOS, Xcode 26+)
 
 ```bash
-# Build iOS app for Simulator (requires Xcode 26)
-xcodebuild build -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
-
-# Build Watch app for Simulator
+xcodebuild build -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=<installed iPhone>'
 xcodebuild build -scheme SiteCycleWatch -project SiteCycle.xcodeproj -destination 'generic/platform=watchOS Simulator'
-
-# Run tests (iOS only)
-xcodebuild test -scheme SiteCycle -project SiteCycle.xcodeproj -destination 'platform=iOS Simulator,name=iPhone 16'
-
-# CI builds (no code signing)
-xcodebuild build-for-testing \
-  -scheme SiteCycle -project SiteCycle.xcodeproj \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
-  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+xcodebuild test -scheme SiteCycle -project SiteCycle.xcodeproj -testPlan SiteCycleUnitTests -destination 'platform=iOS Simulator,name=<installed iPhone>'
+swiftlint lint --strict
+python3 scripts/check_project.py
 ```
 
-## Architecture
+- `xcrun simctl list devices available` lists the simulator names.
+- Without `-testPlan`, `test` uses the scheme's default plan, `SiteCycle.xctestplan`, which also runs the UI test.
 
-### Data Models (SwiftData)
+## Hard rules
 
-Three `@Model` classes in `Models/`:
+Each rule says what enforces it. "Prose only" means nothing does yet, so take extra care.
 
-- **Location** — body location for site placement. Fields: `id`, `zone`, `side` (optional "left"/"right"), `isEnabled`, `isCustom`, `sortOrder`. Has a computed `displayName` (e.g., "Left Front Abdomen"). One-to-many relationship with `SiteChangeEntry` (delete rule: nullify).
-- **SiteChangeEntry** — a single site change event. Fields: `id`, `startTime`, `endTime` (nil if active), `note`, `location` (relationship), `problems` (many-to-many with `SiteProblem` — why the site ended early; several can apply, empty means none). `safeProblems` returns them sorted by `sortOrder`; `hasProblems`. Computed `durationHours`.
-- **SiteProblem** — a reason for an early site change. Fields: `id`, `name`, `emoji`, `isEnabled`, `isCustom`, `sortOrder`, `defaultKey` (stable key for seeded defaults, nil for custom). Many-to-many with `SiteChangeEntry` via `entries` (delete rule: nullify).
+1. **SwiftData models stay CloudKit-compatible.**
+   - Every stored property is optional or has a default.
+   - Every relationship is optional and has an inverse.
+   - No `@Attribute(.unique)`.
+   - Changes are additive only: never rename or remove a stored property or relationship, because the production CloudKit schema can't drop fields and older app versions keep syncing.
+   - New fields and types must be deployed to the CloudKit Production schema (CloudKit Console) before release.
+   - *Enforced by:* a violation makes the CloudKit container fail to load, which falls back silently to local storage (rule 2). Nothing fails visibly.
+2. **Keep the CloudKit → local `ModelContainer` fallback** in `SiteCycleApp.makeModelContainer`.
+   - Why it's needed: Xcode Cloud's Test and Build actions don't sign, so there are no CloudKit entitlements, and the app must still launch because it hosts the unit tests.
+   - The catch: the fallback also hides real schema failures in production, as happened in #38. When you touch this code, surface the error; don't just `print` it.
+   - *Prose only.*
+3. **Dedup keepers must be the same on every device.**
+   - Why: seeding and dedup run on each device before CloudKit has synced, so devices dedup the same duplicates independently. If they keep different copies, each deletes the other's, and both are gone.
+   - Choose the keeper from synced record properties only:
+     - For problems: a customized default first, then an enabled custom problem, then the lowest `id`.
+     - For entries: the lowest `id`.
+   - Never decide by fetch order, entry counts or `sortOrder` ties.
+   - Move relationships onto the keeper before deleting the duplicates.
+   - *Partly enforced:* `SiteProblemTests` pins the problem keeper, but no test pins the location keeper, and `deduplicateLocations` currently breaks this rule (review §2.2).
+4. **Never change a persisted identifier.** That covers:
+   - `DefaultProblem.key`
+   - `@AppStorage` and UserDefaults key strings
+   - enum raw values stored in UserDefaults: `RecommendationStrategy`, `StatsTimeWindow`, `HomeStatMetric`
+   - `WatchAppState` and `WatchSiteChangeCommand` coding keys
 
-### App Initialization
+   Add new cases instead of renaming old ones. *Prose only.*
+5. **Keep the watch payloads backward compatible.** The iPhone and watch can run different app versions, since watch installs lag behind.
+   - Decode new fields with `decodeIfPresent` and a default in `init(from:)`, following `showAllLocations`.
+   - Never make an existing field required, and never rename one.
+   - *Enforced by:* `WatchAppStateTests` (missing-key decode).
+6. **The watch is a thin client.** It never stores data or computes recommendations: the iPhone sends state, and the watch sends commands. Read `docs/watch-and-widgets.md` before changing either side.
+7. **After any change to data or to a setting the watch or widgets display, call `connectivityManager.pushCurrentState()`.** It writes the App Group state, reloads the widgets and updates the watch.
+   - *Prose only.* Each call site does this by hand, and some are missed; the location on/off toggle and the onboarding CSV import currently don't call it.
+8. **Soft-delete anything with history.**
+   - A location or custom problem that has entries gets `isEnabled = false`. Hard-delete it only if it has no history.
+   - Default problems are never deleted (seeding would re-add them), only disabled.
+9. **User-visible error text includes the technical error.**
+   - Append `"\n\nError: <domain> <code>"` (from the `NSError`) to every error alert and every `.error(...)` state string, so failures can be diagnosed from a screenshot.
+   - *Prose only.* Some call sites still miss it.
+10. **Settings live in UserDefaults, with each key as a constant.**
+    - Declare the key (and default and range, if it has them) as `static let`s on the type that owns the setting, as `EarlyChange.thresholdPercentKey` / `defaultThresholdPercent` do. Use those constants everywhere; don't add new string-literal keys.
+    - Code outside Views reads settings through a `load(from defaults: UserDefaults = .standard)` function, so tests can pass a private suite.
+    - `"targetDurationHours"`, `"absorptionAlertThreshold"` and `"hasCompletedOnboarding"` are still literals in several files. Migrate them when you touch them.
+11. **No `#available` branches.** A feature must work at the deployment target, or the deployment target is raised. CI only runs the newest OS, so an old-OS branch would never be tested.
+12. **Exactly one UI test.** Don't add UI tests for business logic. Move the logic into a ViewModel and unit-test it there (see `docs/ui-testing.md`).
 
-`SiteCycleApp.swift` configures the `ModelContainer` with CloudKit (`.automatic` mode) and falls back to local-only storage (`.none`) if CloudKit is unavailable (e.g., CI without code signing entitlements). Seeds 14 default locations (7 zones x left/right) on first launch via `seedDefaultLocations()` in `Utilities/DefaultLocations.swift`. Seeds default problems via `seedDefaultProblems()` in `Utilities/DefaultProblems.swift` (inserts any default whose `defaultKey` is missing, so a new default added in a later version reaches existing users), then `deduplicateProblems()` merges defaults sharing a `defaultKey` and custom problems sharing a `SiteProblem.nameKey` (both created when two devices act before CloudKit syncs). Every dedup keeper must be identical on every device — otherwise two devices deduplicating before syncing can each delete the copy the other kept — so keepers are picked from synced record properties only, never fetch order or entry counts: for problems, a customized default (renamed, new emoji, disabled, or moved from its seeded index) first, then for custom problems an enabled one, then lowest `id`; for entries, lowest `id`. `deduplicateSiteChangeEntries()` merges a duplicate's `problems` into the keeper's.
+## Change recipes
 
-Onboarding state is tracked via `@AppStorage("hasCompletedOnboarding")`.
+### Adding a Swift file
 
-### Navigation Structure
+The project uses classic groups (`objectVersion = 60`), so every new file must be registered in `SiteCycle.xcodeproj/project.pbxproj` by hand, in four places.
 
-Tab-based: Home, History, Statistics. Settings is accessible via a gear icon in the navigation bar. Site change logging is presented as a modal sheet from the Home tab.
+1. **PBXFileReference section:**
+   `<FID> /* Foo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Foo.swift; sourceTree = "<group>"; };`
+2. **PBXGroup:** add `<FID> /* Foo.swift */,` to `children` of the group whose `path` is the file's folder.
+3. **PBXBuildFile section:**
+   `<BID> /* Foo.swift in Sources */ = {isa = PBXBuildFile; fileRef = <FID> /* Foo.swift */; };`
+4. **The target's PBXSourcesBuildPhase:** add `<BID> /* Foo.swift in Sources */,` to its `files`. The phase IDs are:
 
-### Recommendation Engine (core logic)
+   | Target | Sources phase |
+   |---|---|
+   | SiteCycle | `…0301` |
+   | SiteCycleTests | `…0310` |
+   | SiteCycleWatch | `…0320` |
+   | SiteCycleWatchWidgets | `…0330` |
+   | SiteCycleUITests | `…0340` |
+   | SiteCycleWidgets | `…0350` |
 
-The site selection sheet shows two sections — **Recommended** and **All Locations**:
-- **Recommended section:** depends on the `RecommendationStrategy` setting (`@AppStorage("recommendationStrategy")`, default `bySite`):
-  - **By Site** (default): 3 least recently used / never-used locations (most recovery time)
-  - **By Body Part:** locations are grouped by (bodyPart, side); the 3 least recently used groups are chosen (group recency = most recent use across its sites; never-used groups sort as oldest), and the least recently used site within each group is recommended (never-used sites first, ties by lowest `sortOrder`). The point of this mode is to give an entire body part a cooling-off period between uses even when the specific sites differ — e.g. it prevents "L Thigh (Front)" being used immediately after "L Thigh (Side)", which by-site rotation would allow
-  - **Body Part Cooldown:** per-site least-recently-used, but any site whose (bodyPart, side) group was used within the last N site changes (`@AppStorage("bodyPartCooldownCount")`, default 2, range 1–10; the Settings stepper is only visible in this mode) sorts below all sites from groups that were not. Hot sites are deprioritized, never excluded, so recommendations never go empty; when every group is hot the ordering degrades gracefully to By Site. Note: a never-used site in a hot group sorts below used sites from cool groups (the partition dominates the never-used-first rule). Rationale: By Body Part rotates groups evenly, so a body part with 1 site gets used 3x as often per-site as one with 3 sites; cooldown keeps the rest period without that per-site overuse
-- **All Locations section:** Every enabled location sorted by most-recent-use, with inline badges — orange warning for the 3 most recently used (avoid), green checkmark for recommended
-- The avoid list is always site-based (3 most recently used individual sites) in all strategies; avoid and recommended never overlap
-- Never-used locations sort as oldest (always recommended until used)
-- `SiteChangeViewModel.computeRecommendations(locations:strategy:cooldownCount:)` is a pure static function; callers (`refresh()`, `PhoneConnectivityManager.buildWatchAppState`) read the settings from UserDefaults via `RecommendationStrategy.load()` / `RecommendationStrategy.loadCooldownCount()`
+**Getting IDs:**
 
-### Site Problems (early change reasons)
+- Get them from `python3 scripts/check_project.py --next-ids`, and count upward for each additional file.
+- Never pick IDs by hand or by pattern. The build-file ID is not "file ID + 0x100" everywhere, and IDs quoted in older docs are already taken.
 
-- Defaults (`DefaultProblems.all`): Painful 🤕, Leaking 💧, Fell Off / Ripped Off 🩹, Occlusion 🚫, Unexplained Highs 📈, Bleeding 🩸. Never change a default's `key` — it is persisted.
-- Users manage them in Settings → Manage Problems (`ProblemConfigView`): rename, change emoji, enable/disable, reorder, add custom. Defaults can be disabled but never deleted (so seeding never re-adds them); custom problems with history are soft-deleted (`isEnabled = false`), without history hard-deleted — same rule as locations. Names are validated by `SiteProblem.nameError`: non-empty, unique case-insensitively, and free of `;` (`SiteProblem.csvSeparator`), because CSV identifies problems by name. Emoji input goes through `SiteProblem.sanitizeEmoji` (keeps the last emoji character, drops anything else); an empty emoji displays `SiteProblem.fallbackEmoji`.
-- Picked with `ProblemChips` (one-tap multi-select chip grid, shared by `SiteChangeConfirmationSheet` and `HistoryEditView`); it shows enabled problems plus the entry's original ones even if disabled.
-- **Confirmation sheet:** the "Closing" section (closing site, "31h of 72h", chips, note on that site) comes right after Time, before the new site's note. When the closing site lasted under the early-change threshold — a percentage of the target duration, `@AppStorage("earlyChangeThresholdPercent")`, default 75, adjustable in Settings in 5% steps (`EarlyChange.isEarly`), the header reads "Closing · Changed Early?" and the chips are shown; otherwise they're behind a "Record a Problem" button so routine changes stay fast. Problems and note go to `logSiteChange(previousProblems:previousEntry:)` and apply to the `previousEntry` the sheet showed, not whatever is active at confirm time (a watch command may have logged a change meanwhile). The sheet sends `.replace` only for values the user actually edited, and `logSiteChange` writes only differing values and skips an entry deleted while the sheet was open, so confirming never clobbers an edit synced from another device. Once the chip grid has been shown it stays shown for the life of the sheet. Durations on the sheet and in History use `DurationFormat.hoursMinutes` ("31h 24m"); Statistics keeps one decimal ("31.4h") for aggregates.
-- **History:** rows show all problem emojis; `HistoryEditView` edits them (`HistoryViewModel.setProblems`); a Problem filter (`HistoryProblemFilter`: all / any problem / a specific problem) sits with the location and date filters.
-- **Statistics:** a Problems section (`StatisticsViewModel.summarizeProblems`) shows the any-problem rate and per-problem counts over the time window. A site with several problems counts once toward "any" and once toward each. The denominator is completed sites plus an active site only if it already has a problem. Each location's stats carry the same `ProblemSummary` and show a rate plus per-type breakdown ("Problems: 3 of 9 · 33%  💧2 🤕1") — a rate, because locations are used different numbers of times.
-- CSV export adds a trailing `problems` column (names joined by `;`) only when some entry has a problem, so problem-free exports still import into older app versions. Import accepts headers with or without it (column 5 is only read when the header declares `problems`), keeps existing problems (they are configuration, not history), matches names case-insensitively, and creates unknown names as custom problems.
+**Checking:** re-run `python3 scripts/check_project.py`. It fails until all four entries are right.
 
-### Statistics Time Window & Duration Percentile
+**A file compiled into more than one target** needs one PBXBuildFile and one Sources entry per target. Also add it to `SHARED_SOURCES` in the script and to the Layout table above.
 
-- The Statistics tab has a segmented time-window filter (All / 9mo / 3mo / 1mo / 14d, `StatsTimeWindow`, persisted in `@AppStorage("statisticsTimeWindow")`). Entries count when their `startTime` is in the window. Counts, durations, usage distribution and absorption flags respect the window; last-used / site rest time always use full history.
-- Duration stats (median and percentile) **always skip the active site** (no `endTime`) and run through `filterAnomalies` first. `StatisticsViewModel.summarize(_:)` / `completedDurations(of:since:)` are the shared static helpers.
-- The percentile is **P25** (`StatisticsViewModel.durationPercentile`): with site changes every ~1.5–3 days, a 14-day window has only ~5–9 sites, so a tail percentile like P10 collapses to the minimum while P25 stays stable ("1 in 4 sites ended before X" = how often sites fail early). It's omitted below 4 samples.
-- Home shows a small `QuickStatBadge` at the top-right of the progress ring: median or P25 (`@AppStorage("homeStatMetric")`) over a window (`@AppStorage("homeStatTimeWindow")`, default 1mo), configured in Settings → Home Screen Stat. Computed by `HomeViewModel.refreshQuickStat()` with the same helpers so it matches the Statistics tab.
+Converting the groups to synchronized folders, which the owner will do in Xcode, will make this recipe unnecessary. **Do not hand-write that conversion.**
 
-## CI / CD
+### Adding a setting
 
-**Active CI is a mix of Xcode Cloud and one GitHub Actions workflow:**
+1. **Constants:** add the key and default as constants (rule 10).
+2. **UI:** add the control in `SettingsView`. If the watch or widgets depend on the setting, call `pushCurrentState()` from `.onChange`, and refresh any ViewModel that caches the value.
+3. **Reads:** code outside Views reads it through `load(from:)`. Test with `UserDefaults(suiteName:)`, never `.standard`.
+4. **Watch:** if the watch needs it:
+   - add a `WatchAppState` field (rule 5);
+   - fill it in `PhoneConnectivityManager.buildWatchAppState`;
+   - add a test that decodes a payload without the key.
 
-- Xcode Cloud handles build/test/publish via two workflows: **"CI"** (unit tests, watch build, and a signing-verification archive — all as parallel actions in one workflow, triggered on every PR to `main`) and **"TestFlight"** (archive + upload plus the single UI smoke test, both manually startable and automatic on `main` changes). See [`docs/xcode-cloud-setup.md`](docs/xcode-cloud-setup.md) for the full configuration.
-- `.github/workflows/lint.yml` — runs SwiftLint `--strict` on PRs to `main` (paths-ignored for docs/images/`*.py`, same filter as the disabled `ci.yml` had). Kept on GitHub Actions deliberately: **Xcode Cloud has no built-in linting step**, and lint enforcement on every PR matters enough not to drop it during the migration. The `.swiftlint.yml` `included:` list already covers `SiteCycleWidgets/` alongside the existing target directories.
+### Changing a `@Model`
 
-The GitHub Actions workflows below are **disabled** (`gh workflow disable`, not removed — kept in the repo and documented here for reference/rollback), now that Xcode Cloud covers what they did:
+- **Additive only** (rule 1). Give new properties default values in the declaration.
+- **New model type:** add it to the `Schema` in `SiteCycleApp` and to every test container.
+- **Other code paths:** check whether seeding, dedup, and CSV import and export need the new field.
+- **Non-additive changes:** there is no `VersionedSchema` yet, so stop and ask the owner.
 
-- `.github/workflows/ci.yml` — ran on every push and PR. Jobs (SwiftLint has since moved to `lint.yml` above and was removed from this file):
-  1. **Build & Test** — builds on `macos-15`, auto-selects the latest Xcode 26 and an available iPhone simulator, builds with code signing disabled, and runs all unit tests (`SiteCycleTests`).
-  2. **Build Watch App** — builds the `SiteCycleWatch` scheme for the watchOS Simulator with code signing disabled.
-  3. **Archive (TestFlight dry run)** — see `docs/testflight-setup.md`.
-- `.github/workflows/ui-tests.yml` — ran on PRs only, **paths-filtered** to app / UI-test / project-file / workflow changes, so docs-only PRs didn't burn CI minutes. Ran the `SiteCycleUITests` target serially on a single simulator; its non-obvious xcodebuild flags (`-parallel-testing-enabled NO`, `-disable-concurrent-destination-testing`, redirecting output before `xcpretty`) are worth keeping if it is ever re-enabled.
-- `.github/workflows/testflight.yml` — see `docs/testflight-setup.md`.
+### Adding a default problem or location
 
-Key CI considerations (apply to both the disabled GitHub Actions workflows and their Xcode Cloud equivalents, since Xcode Cloud's Automatic signing runs full builds — no signing bypass needed there):
-- The GitHub Actions workflows disabled code signing (`CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_REQUIRED=NO`), so CloudKit entitlements were absent there. Both the iOS and Watch app's `ModelContainer` init have a fallback from `.automatic` to `.none` to handle this — **do not remove the fallbacks**, since Xcode Cloud's non-Archive (Test/Build) actions don't sign either.
-- The test target (`SiteCycleTests`) is **hosted by the app** (`TEST_HOST` is set in the Xcode project). The app must launch successfully for tests to run.
+- **Problems:** append to `DefaultProblems.all` with a new key that has never been used. Seeding inserts any missing keys, including on existing installs.
+- **Locations:** default locations are only seeded into an empty store, so a new default never reaches existing users. Ask the owner before relying on one.
 
-## Testing
+## Compile gotchas (invisible until CI)
 
-### Unit tests (`SiteCycleTests/`)
+- **Accent colour:** `.foregroundStyle(.accent)` doesn't compile. Use `.tint`.
+- **`@Observable` needs `import Observation`.** SwiftData doesn't re-export it; only SwiftUI does.
+- **Modifiers that take two or more closures** (for example `.sheet(isPresented:onDismiss:content:)`) need a label on every closure; don't use trailing-closure syntax. This is also a lint rule.
+- **Swift Testing:** a test that uses `try #require(...)` must be marked `throws`.
+- **Main-actor isolation:**
+  - ViewModels, and utility functions that take a `ModelContext`, are `@MainActor`, so test suites that use them must be `@MainActor` too.
+  - `WCSessionDelegate` methods are `nonisolated`. They hop to the main actor with `Task { @MainActor in … }`, capturing only Sendable values.
+  - A closure created inside a `@MainActor` method and passed to a callback-based Apple API inherits main-actor isolation, and crashes if the API calls it on a background queue (`_dispatch_assert_queue_fail`). Create such closures in a `nonisolated` context.
+- **Narrow targets:** the watch, watch-widget and iPhone-widget targets compile only their own folder plus `WatchAppState.swift`. `Location`, `SiteChangeEntry`, the ViewModels and `DurationFormat` don't exist there.
 
-Tests are in `SiteCycleTests/` using the **Swift Testing** framework (`import Testing`, `@Test`, `#expect`, `#require`).
+## SwiftLint
 
-#### Writing tests — important patterns
+CI runs SwiftLint with `--strict`, so every warning fails the build. The config is `.swiftlint.yml`. It covers every source folder except `SiteCycleUITests/`, which isn't linted yet.
 
-- **Swift Testing `throws` requirement:** Any test function using `try #require(...)` must be marked `throws`. Omitting it causes a compilation error.
-- **SwiftData in tests:** Tests that need a `ModelContainer` should create an in-memory container with CloudKit disabled:
-  ```swift
-  private func makeContainer() throws -> ModelContainer {
-      let schema = Schema([Location.self, SiteChangeEntry.self])
-      let config = ModelConfiguration(
-          schema: schema,
-          isStoredInMemoryOnly: true,
-          cloudKitDatabase: .none
-      )
-      return try ModelContainer(for: schema, configurations: [config])
-  }
-  ```
-- **Model instantiation without a container:** Simple `Location` and `SiteChangeEntry` objects can be created without a `ModelContainer` for basic property tests. A container is only needed when using `ModelContext` operations (insert, fetch, save).
-- **`@MainActor` on test structs:** Test structs that create ViewModels or use `ModelContext` must be annotated with `@MainActor` because the ViewModels and utility functions are `@MainActor`-isolated (Swift 6 strict concurrency).
+The rules agents hit most:
 
-### UI tests (`SiteCycleUITests/`)
+- **`force_unwrapping`:** no `!`. In tests, use `try #require(...)`. Implicitly unwrapped optionals are banned too (`implicitly_unwrapped_optional`).
+- **`empty_count`:** use `.isEmpty`, not `.count == 0`.
+- **`large_tuple`:** at most 2 members; use a struct instead.
+- **`identifier_name`:** names need at least 2 characters (`id` and `i` are exempt).
+- **Length limits:**
+  - `line_length` 150
+  - `function_body_length` 50
+  - `type_body_length` 300
+  - `file_length` 500
 
-There is deliberately **one** XCUITest smoke test (`SmokeTests.testLogSiteChangesEndToEnd`): log two site changes, check that Home and History update. It covers wiring only (sheets present, confirm saves, `@Query` views refresh). **Do not add UI tests for business logic.** Put the logic in a ViewModel and unit-test it. See `docs/ui-testing.md` for why the broader suite was removed.
-
-- **Launch arguments** (parsed in `SiteCycleApp`): `-uiTestMode` forces in-memory SwiftData + `cloudKitDatabase: .none`; `-completeOnboarding` skips onboarding. `SiteCycleUITestCase` passes both.
-- **Page objects:** `HomeScreen`, `SiteSelectionScreen`, `SiteChangeConfirmationScreen`, `HistoryScreen`.
-- **Accessibility identifiers** follow `<screen>.<element>` (e.g. `home.allLocations`, `siteSelection.row.<fullDisplayName>`, `history.row.<uuid>`). Keep the existing ones; they also help VoiceOver tooling.
-- **Waits:** use `waitForExistence(timeout:)` or `XCTNSPredicateExpectation`, never `Thread.sleep`.
-- **Runs in** the Xcode Cloud "TestFlight" workflow (merges to `main`), not on every PR.
-- **Known app bug:** the Welcome → Configure transition in `OnboardingView`'s paged `TabView` has crashed the app during UI-test runs. It's an app bug to fix separately, not a testing task.
-
-## SwiftUI Pitfalls
-
-- `.foregroundStyle(.accent)` does not compile — `ShapeStyle` has no `.accent` member. Use `.tint` for accent color styling.
-- **`@Observable` needs `import Observation`** — `SwiftData` does NOT re-export the `Observation` framework. ViewModels that use `@Observable` without importing `SwiftUI` must explicitly `import Observation`.
-- **Multiple closures:** When a SwiftUI modifier takes 2+ closure arguments (e.g., `.sheet(isPresented:onDismiss:content:)`), use explicit parameter labels for all closures — do NOT use trailing closure syntax.
-
-## SwiftLint Rules (CI-enforced)
-
-SwiftLint runs in CI (`.github/workflows/lint.yml`) with `--strict` mode (all warnings are errors). Key rules:
-- `large_tuple`: Tuples may have at most 2 members. Use a struct instead.
-- `empty_count` (opt-in, enabled): Use `.isEmpty` instead of `.count == 0`.
-- `force_unwrapping`: Never use `!` to force-unwrap. In tests, use `try #require(value)`.
-- `multiple_closures_with_trailing_closure`: When passing 2+ closures, use explicit labels for all.
-- `function_body_length`: Function bodies must be <=50 lines. Extract helper methods.
-- `file_length`: Files must be <=500 lines. Split large files if needed.
-- `type_body_length`: Struct/class bodies must be <=300 lines.
-
-## Adding Files to the Xcode Project
-
-When creating a new Swift file, it must be registered in `SiteCycle.xcodeproj/project.pbxproj` in three places:
-1. **PBXFileReference** — declares the file
-2. **PBXGroup** — adds it to the correct folder group
-3. **PBXSourcesBuildPhase** — adds it to the correct target's compile sources (via a PBXBuildFile entry)
-
-Use sequential hex IDs following the existing pattern (e.g., `8A0000000000000000000013` for the file ref, `8A0000000000000000000113` for the build file).
-
-## Swift 6 Concurrency
-
-The project uses Swift 6 language mode with strict concurrency checking:
-
-- **ViewModels** are all `@MainActor`-isolated because they hold a `ModelContext` and drive UI state.
-- **Utility functions** that accept `ModelContext` are `@MainActor`.
-- **Views** inherit main actor isolation from SwiftUI.
-- **Models** — isolation is handled by SwiftData's `@Model` macro.
-
-## Apple Watch App
-
-### Targets
-
-| Target | Bundle ID | Platform |
-|--------|-----------|----------|
-| `SiteCycleWatch` | `com.sitecycle.app.watchkitapp` | watchOS 11+ |
-| `SiteCycleWatchWidgets` | `com.sitecycle.app.watchkitapp.widgets` | watchOS 11+ |
-| `SiteCycleWidgets` | `com.sitecycle.app.widgets` | iOS 18+ |
-
-### Shared Files (dual target membership)
-
-Only one source file is compiled into multiple targets:
-- `SiteCycle/Connectivity/WatchAppState.swift` — shared `Codable` types (`WatchAppState`, `WatchSiteChangeCommand`, `LocationInfo`, `LocationCategory`) and app group constants. Compiled into iOS, watchOS, watch widget, and iPhone widget extension targets. The `appGroupIdentifier` helper strips `.watchkitapp[.widgets]` and `.widgets` suffixes off the bundle ID so all four targets resolve to `group.<prefix>.app`.
-
-The watch app does **not** include `Location.swift`, `SiteChangeEntry.swift`, `SiteProblem.swift`, `DefaultLocations.swift`, `HomeViewModel.swift`, or `SiteChangeViewModel.swift` — it operates as a thin client.
-
-### Data Sync — Thin Client Architecture
-
-The watch is a **thin client**: the iPhone is the single source of truth. The watch has no `ModelContainer`, no SwiftData, and no CloudKit.
-
-- **Watch → Phone:** `WCSession.transferUserInfo` — guaranteed delivery, queued when phone is unreachable. Sends `WatchSiteChangeCommand`.
-- **Phone → Watch:** `WCSession.updateApplicationContext` — latest-wins dictionary. Sends `WatchAppState` (active site, recommendations, all locations, target duration).
-- **Complications:** Watch writes received state to app group `UserDefaults` for the widget extension.
-
-Key classes: `PhoneConnectivityManager` (iOS), `WatchConnectivityManager` (watchOS) — both `@MainActor @Observable`, delegate methods dispatch to main actor.
-
-`pushCurrentState()` is called: on session activation, app launch, scene `.active`, after site changes/history edits/location config changes/settings changes/CSV import. The App Group write is **unconditional** (does not depend on WCSession activation) so the iPhone widget receives data even when no Apple Watch is paired. `WidgetCenter.shared.reloadAllTimelines()` is invoked at the same time so widgets refresh promptly after a site change.
-
-### Watch Views
-
-- **WatchHomeView** — current site status with progress ring, elapsed time, "Syncing with iPhone..." empty state when no data received
-- **WatchContentView** — horizontal paged `TabView` (`.page`): Home on the left, site picker on the right
-- **WatchSiteSelectionView** — recommended-first location list, tap to send command via connectivity manager. The "All Locations" section is shown only when `WatchAppState.showAllLocations` is true — set on the iPhone in Settings → Watch Settings → Show All Locations (`@AppStorage("watchShowAllLocations")`, default on). `WatchAppState` decodes a missing `showAllLocations` key as `true` so older cached/sent state still decodes
-- **WatchLocationRow** — compact row using `LocationInfo` (not `Location` model)
-
-### Watch ViewModels
-
-- **WatchHomeViewModel** — reads from `WatchAppState` via `WatchConnectivityManager`. Provides `currentLocationName`, `elapsedHours()`, `progressFraction()`
-- **WatchSiteChangeViewModel** — reads recommendations from `WatchAppState`. `logSiteChange()` sends command via connectivity manager
-
-### Complications (WidgetKit)
-
-The `SiteCycleWatchWidgets` extension provides watch face complications:
-- **AccessoryRectangular** — location name + elapsed time
-- **AccessoryCircular** — progress ring with abbreviated time
-- **AccessoryInline** — single line: "L Abdomen (Front) · 2h 15m"
-
-Timeline refreshes every 15 minutes with entries for the next 2 hours.
-
-## iPhone Widgets (`SiteCycleWidgets/`)
-
-The `SiteCycleWidgets` extension provides iPhone widgets that mirror the watch's circular complication. Two families:
-- **systemSmall** (Home Screen, 2x2) — full-color heat ring (green/yellow/red) with elapsed hours centered.
-- **accessoryCircular** (Lock Screen / StandBy / Smart Stack, 1x1) — tinted ring with abbreviated time.
-
-Reads the same `WatchAppState` from the App Group `UserDefaults` that the watch widget uses; no separate sync path. Tap-to-open is the default `StaticConfiguration` behavior — no `widgetURL` set. The heat color helper (`progressColor(for:)`) is currently duplicated across `HomeView.swift`, the watch app, the watch widget, and the iPhone widget — consolidate into shared code as a follow-up.
-
-**Lock-screen rendering note:** iOS renders `accessoryCircular` in vibrant monochrome on the Lock Screen, so the heat color collapses to the system tint. Full color is preserved on the Home Screen `systemSmall` and StandBy color mode.
-
-## Key Design Decisions
-
-- Settings values (target duration (6h steps), early-change threshold, absorption alert threshold, recommendation strategy, body part cooldown count) use `@AppStorage` (UserDefaults), not SwiftData.
-- Logging a new site change automatically closes the previous active entry by setting its `endTime`.
-- Soft-delete for locations and custom problems with history (set `isEnabled = false`); hard-delete only if no history exists.
-- CloudKit sync is transparent — no account creation, works offline, syncs when connectivity returns.
-- Watch app is a thin client — no SwiftData, no CloudKit, no onboarding, no settings, no history editing. Communicates with iPhone via WatchConnectivity.
-- Error indicators must always include the technical error details (domain and code) alongside any user-friendly message. Format: append `"\n\nError: <domain> <code>"` to every `.error(...)` state string. This ensures sync failures are diagnosable from screenshots or user reports.
+  `HomeView`, `SettingsView`, `StatisticsViewModel.swift` and `SiteChangeViewModel.swift` are close to these limits. Split them into extensions, subviews or new files rather than compressing code.

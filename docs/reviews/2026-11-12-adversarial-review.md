@@ -526,6 +526,12 @@ Each step ships on its own.
 4. **Single-active-entry PR.** §2.7 close all open entries, repair pass, `EntryDraft` diffing (§3); T7, T8, T11.
 5. **Repo hygiene PR.** Stale-branch workflow safety, privacy manifests, signing leftovers, versions into the xcconfig, SwiftLint pin and UI-test inclusion, `scripts/check_project.py`, delete the dead workflows and CI.md, fix README and custom-bundle-id.md.
 6. **CLAUDE.md rewrite** (§5), with nested CLAUDE.md files and `TestSupport.swift`.
+   - **Done first, in PR #83:**
+     - the new `CLAUDE.md`
+     - `docs/architecture.md` and `docs/watch-and-widgets.md`
+     - `SiteCycleTests/CLAUDE.md` and `SiteCycleUITests/CLAUDE.md`
+     - `scripts/check_project.py`, also run in `lint.yml`
+   - **Still to do:** `TestSupport.swift` moves to the test work in step 1, since it replaces the 20 copies of `makeContainer()`.
 7. **Owner, in Xcode.** Convert to synchronized folders.
 8. **`SiteStore` + `ChangeMonitor` + typed `AppSettings`.** Delete the view-level push calls and the `lastWatchCommandDate` workaround.
 9. **`SiteCycleCore` phase 1.** Pure maths, formatting, `WatchAppState`, CSV parsing; Linux `swift test` job; make the checks required.
