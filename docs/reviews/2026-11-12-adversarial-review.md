@@ -47,7 +47,7 @@ The serious problems are concentrated in three places.
 | ☑ | 2 | Make the location dedup keeper deterministic, stop OR-ing `isEnabled`, and run migration before dedup | ✅ Two devices can each delete the other's copy, orphaning history; dedup re-enables sites the user disabled |
 | ☐ | 3 | Fix the crash paths: confirmation-sheet `ClosedRange`, `DurationFormat` on non-finite values, onboarding missing environment | ✅ Release-build traps reachable from user data |
 | ☐ | 4 | Honour `WatchSiteChangeCommand.requestedAt`, add a command ID, and activate WCSession at launch | ✅ Queued watch changes are logged hours late or out of order, which corrupts durations and stats |
-| ☐ | 5 | Enforce a single active entry (close all open entries; add a repair pass) | ✅ Multiple "Active" entries are reachable from History, CSV and two devices |
+| ☑ | 5 | Enforce a single active entry (close all open entries; add a repair pass) | ✅ Multiple "Active" entries are reachable from History, CSV and two devices |
 | ☐ | 6 | Make `stale-branch-cleanup.yml` never delete a branch with an open PR, and default `dry_run` to true | ✅ It can delete live agent branches and close their PRs |
 | ☐ | 7 | Add `PrivacyInfo.xcprivacy` to all 4 bundles (UserDefaults reasons) | ✅ Missing; App Store Connect requires it |
 | ☐ | 8 | Device-check whether PR #70's App Group entitlement moved the SwiftData store | ❓ It may have orphaned the pre-August store |

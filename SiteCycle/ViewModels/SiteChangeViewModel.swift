@@ -320,9 +320,16 @@ final class SiteChangeViewModel {
         // A past time backdates a change the user forgot to log.
         let changeTime = changeTime ?? Date()
 
-        // Close the previous active entry
-        let activeEntry = SiteChangeEntry.fetchActive(in: modelContext)
-        activeEntry?.endTime = changeTime
+        var activeEntry = SiteChangeEntry.fetchActive(in: modelContext)
+        if let previousEntry, removeChangesLoggedAfter(changeTime, whileShowing: previousEntry) {
+            activeEntry = previousEntry
+        }
+
+        // Close the previous active entry. One that started after the change
+        // stays open, and the repair below ends the new entry where it began.
+        if let activeEntry, activeEntry.startTime <= changeTime {
+            activeEntry.endTime = changeTime
+        }
 
         // The note and problems belong to the entry the user saw on the
         // confirmation sheet (`previousEntry`). It can differ from the active
@@ -339,6 +346,38 @@ final class SiteChangeViewModel {
         )
         modelContext.insert(newEntry)
 
+        // Any other open entries (from History, CSV or another device) are
+        // closed too, so only the newest site is active.
+        SiteChangeEntry.closeSupersededActiveEntries(in: modelContext)
+
         try? modelContext.save()
+    }
+}
+
+extension SiteChangeViewModel {
+    /// The confirmation sheet showed `shown`, the site that was active when it
+    /// opened. If the user backdated the change, and a watch command or
+    /// another device logged a change after that time while the sheet was
+    /// open, the phone's change wins: the other is the same change logged
+    /// twice, so it is deleted, and `shown` is active again until `changeTime`.
+    /// Keeping both would overlap them, counting that time twice (review §2.7).
+    ///
+    /// Returns whether it deleted anything. Doesn't save.
+    private func removeChangesLoggedAfter(_ changeTime: Date, whileShowing shown: SiteChangeEntry) -> Bool {
+        guard !shown.isDeleted, shown.modelContext != nil else { return false }
+        let shownID = shown.id
+        let shownStart = shown.startTime
+        let descriptor = FetchDescriptor<SiteChangeEntry>(
+            predicate: #Predicate<SiteChangeEntry> {
+                $0.id != shownID && $0.startTime > changeTime && $0.startTime > shownStart
+            }
+        )
+        guard let loggedMeanwhile = try? modelContext.fetch(descriptor), !loggedMeanwhile.isEmpty else {
+            return false
+        }
+        for entry in loggedMeanwhile {
+            modelContext.delete(entry)
+        }
+        return true
     }
 }

@@ -86,7 +86,7 @@ struct SiteCycleApp: App {
                     connectivityManager.configure(modelContext: context)
                     connectivityManager.pushCurrentState()
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .storeDidSeedDefaults)) { _ in
+                .onReceive(NotificationCenter.default.publisher(for: .storeMaintenanceDidChangeData)) { _ in
                     connectivityManager.pushCurrentState()
                 }
                 .environment(connectivityManager)

@@ -47,7 +47,7 @@ struct HistoryEditView: View {
                 .accessibilityIdentifier("historyEdit.locationPicker")
             }
 
-            Section("Timing") {
+            Section {
                 DatePicker(
                     "Start Time",
                     selection: $startTime
@@ -64,6 +64,14 @@ struct HistoryEditView: View {
                         in: startTime...
                     )
                     .accessibilityIdentifier("historyEdit.endTime")
+                }
+            } header: {
+                Text("Timing")
+            } footer: {
+                if !keepsActiveSiteNewest {
+                    Text(hasEndTime
+                        ? "Only the most recent site can be active, so this can't start after the active site."
+                        : "Only the most recent site can be active, so this can't start before another entry.")
                 }
             }
 
@@ -90,6 +98,7 @@ struct HistoryEditView: View {
                     connectivityManager.pushCurrentState()
                     dismiss()
                 }
+                .disabled(!keepsActiveSiteNewest)
                 .accessibilityIdentifier("historyEdit.save")
             }
         }
@@ -104,6 +113,12 @@ struct HistoryEditView: View {
         } footer: {
             Text("Why this site was changed early, if it was. Tap to select any that apply.")
         }
+    }
+
+    /// Re-checked as the form changes, so moving the start time or toggling
+    /// the end time updates it (review §2.7).
+    private var keepsActiveSiteNewest: Bool {
+        viewModel.keepsActiveSiteNewest(entry, startTime: startTime, isActive: !hasEndTime)
     }
 
     private func saveChanges() {
@@ -124,16 +139,7 @@ struct HistoryEditView: View {
                 note: newNote
             )
         } else if entry.endTime != nil {
-            viewModel.clearEndTime(entry)
-            if newLocation != nil || newStart != nil || newNote != nil {
-                viewModel.updateEntry(
-                    entry,
-                    location: newLocation,
-                    startTime: newStart,
-                    endTime: nil,
-                    note: newNote
-                )
-            }
+            viewModel.reopen(entry, location: newLocation, startTime: newStart, note: newNote)
         } else {
             viewModel.updateEntry(
                 entry,

@@ -27,6 +27,7 @@
 		8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000012 /* DefaultLocationsTests.swift */; };
 		8A00000000000000000001A1 /* DeduplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A1 /* DeduplicationTests.swift */; };
 		8A00000000000000000001A5 /* StoreMaintenanceCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A5 /* StoreMaintenanceCoordinatorTests.swift */; };
+		8A00000000000000000001A6 /* ActiveEntryRepairTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A6 /* ActiveEntryRepairTests.swift */; };
 		8A0000000000000000000113 /* LocationConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000013 /* LocationConfigTests.swift */; };
 		8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000014 /* HomeViewModelTests.swift */; };
 		8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000016 /* SiteChangeViewModelTests.swift */; };
@@ -193,6 +194,7 @@
 		8A0000000000000000000012 /* DefaultLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocationsTests.swift; sourceTree = "<group>"; };
 		8A00000000000000000000A1 /* DeduplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeduplicationTests.swift; sourceTree = "<group>"; };
 		8A00000000000000000000A5 /* StoreMaintenanceCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreMaintenanceCoordinatorTests.swift; sourceTree = "<group>"; };
+		8A00000000000000000000A6 /* ActiveEntryRepairTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveEntryRepairTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000013 /* LocationConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000014 /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000015 /* SiteCycleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteCycleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -456,6 +458,7 @@
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
 				8A00000000000000000000A1 /* DeduplicationTests.swift */,
 				8A00000000000000000000A5 /* StoreMaintenanceCoordinatorTests.swift */,
+				8A00000000000000000000A6 /* ActiveEntryRepairTests.swift */,
 				8A0000000000000000000013 /* LocationConfigTests.swift */,
 				8A0000000000000000000014 /* HomeViewModelTests.swift */,
 				8A0000000000000000000017 /* HistoryViewModelTests.swift */,
@@ -808,6 +811,7 @@
 				8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */,
 				8A00000000000000000001A1 /* DeduplicationTests.swift in Sources */,
 				8A00000000000000000001A5 /* StoreMaintenanceCoordinatorTests.swift in Sources */,
+				8A00000000000000000001A6 /* ActiveEntryRepairTests.swift in Sources */,
 				8A0000000000000000000113 /* LocationConfigTests.swift in Sources */,
 				8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */,
 				8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */,
