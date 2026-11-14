@@ -47,6 +47,7 @@ extension Notification.Name {
 final class StoreMaintenanceCoordinator {
     private let fallbackDelay: Duration?
     private let sleep: @Sendable (Duration) async throws -> Void
+    private let notificationCenter: NotificationCenter
     private var context: ModelContext?
     private var importObserver: NSObjectProtocol?
     private var importHasSucceeded = false
@@ -61,13 +62,17 @@ final class StoreMaintenanceCoordinator {
     ///     starts listening here, before its store exists, so it can't miss
     ///     the first one. Tests turn it off and call `importDidSucceed()`.
     ///   - sleep: waits for a duration; tests pass one that returns at once.
+    ///   - notificationCenter: where `.storeDidSeedDefaults` is posted. Tests
+    ///     pass their own, so the host app doesn't react to a test's seeding.
     init(
         fallbackDelay: Duration? = .seconds(10),
         observesCloudKit: Bool = true,
-        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
+        notificationCenter: NotificationCenter = .default
     ) {
         self.fallbackDelay = fallbackDelay
         self.sleep = sleep
+        self.notificationCenter = notificationCenter
         if observesCloudKit {
             importObserver = Self.observeSuccessfulImports { [weak self] in
                 Task { @MainActor [weak self] in
@@ -115,7 +120,7 @@ final class StoreMaintenanceCoordinator {
         hasSeeded = true
         fallbackTask?.cancel()
         seedStore(context: context)
-        NotificationCenter.default.post(name: .storeDidSeedDefaults, object: self)
+        notificationCenter.post(name: .storeDidSeedDefaults, object: self)
     }
 
     /// Calls `handler` each time a CloudKit import succeeds, on the queue that

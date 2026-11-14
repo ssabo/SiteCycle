@@ -242,7 +242,7 @@ Converting the groups to synchronized folders, which the owner will do in Xcode,
 
 - **Problems:** append to `DefaultProblems.all` with a new key that has never been used. Seeding inserts any missing keys, including on existing installs.
 - **Locations:** default locations are only seeded into a store with no default locations, so a new default never reaches existing users. Ask the owner before relying on one.
-  - Only ever append to the zones in `DefaultLocations`. Dedup reads a default's index as its seeded `sortOrder`, so reordering, inserting or removing a zone corrupts the merge.
+  - Only ever append to the zones in `DefaultLocations`. Dedup reads a default's index as its seeded `sortOrder`, so reordering, inserting or removing a zone corrupts the merge. `DeduplicationTests.existingDefaultsKeepTheirSeededIndexes` pins the existing order.
 
 ## Compile gotchas (invisible until CI)
 

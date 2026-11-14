@@ -32,8 +32,10 @@ struct StoreMaintenanceCoordinatorTests {
 
     /// A coordinator that never hears real CloudKit events and has no
     /// fallback timer, so a test drives it only through `importDidSucceed()`.
+    /// It posts to its own notification center, so the host app doesn't
+    /// react to the test's seeding.
     private func makeCoordinator() -> StoreMaintenanceCoordinator {
-        StoreMaintenanceCoordinator(fallbackDelay: nil, observesCloudKit: false)
+        StoreMaintenanceCoordinator(fallbackDelay: nil, observesCloudKit: false, notificationCenter: NotificationCenter())
     }
 
     private func locationCount(_ container: ModelContainer) throws -> Int {
@@ -110,7 +112,8 @@ struct StoreMaintenanceCoordinatorTests {
         let coordinator = StoreMaintenanceCoordinator(
             fallbackDelay: .seconds(10),
             observesCloudKit: false,
-            sleep: { _ in }
+            sleep: { _ in },
+            notificationCenter: NotificationCenter()
         )
 
         coordinator.start(context: ModelContext(container), isCloudKitEnabled: true)

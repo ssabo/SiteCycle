@@ -215,6 +215,24 @@ struct DeduplicationTests {
         #expect(survivors.first?.sortOrder == 20)
     }
 
+    /// Dedup reads a default's index in `DefaultLocations.all` as its seeded
+    /// `sortOrder`, so existing defaults must never move. New ones may only be
+    /// appended, which this allows.
+    @Test func existingDefaultsKeepTheirSeededIndexes() {
+        let seeded = DefaultLocations.all.prefix(14).map { location in
+            [location.side, location.bodyPart, location.subArea].compactMap { $0 }.joined(separator: " ")
+        }
+        #expect(seeded == [
+            "left Abdomen Front", "right Abdomen Front",
+            "left Abdomen Side", "right Abdomen Side",
+            "left Abdomen Back", "right Abdomen Back",
+            "left Thigh Front", "right Thigh Front",
+            "left Thigh Side", "right Thigh Side",
+            "left Arm Back", "right Arm Back",
+            "left Buttock", "right Buttock",
+        ])
+    }
+
     // MARK: - Legacy rows
 
     /// Builds a row as it was before the `bodyPart` migration: only `zone` is set.
