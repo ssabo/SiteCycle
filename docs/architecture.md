@@ -77,22 +77,38 @@ A reason a site was changed early.
 
 `SiteCycleApp.makeModelContainer()` tries CloudKit (`.automatic`) first and falls back to a local store (`.none`). The fallback exists for unsigned CI; see CLAUDE.md rule 2. The `-uiTestMode` launch argument forces an in-memory store with no CloudKit.
 
-The first time `ContentView` appears in each launch, it runs these steps in order:
+The first time `ContentView` appears, `SiteCycleApp` calls `StoreMaintenanceCoordinator.start`, then `PhoneConnectivityManager.configure(modelContext:)` and `pushCurrentState()`. Later appearances don't re-run maintenance.
 
-1. `seedDefaultLocations`: 7 zones × left/right = 14 locations. Seeds only when the store has no locations at all.
-2. `deduplicateLocations`: merges non-custom locations with the same `(bodyPart, subArea, side)`.
-   - **Known issue:** it chooses the keeper by entry count, which breaks rule 3. It also re-enables the keeper if any duplicate is enabled.
-3. `deduplicateSiteChangeEntries`: merges entries with the same start, end, location and note. The keeper is the lowest `id`, and the duplicates' problems are merged into it.
-4. `migrateLocationBodyParts`: fills `bodyPart` and `subArea` from the legacy `zone` string.
-   - **Known issue:** this runs *after* location dedup, so unmigrated legacy rows all share an empty `bodyPart` and get merged together.
-5. `seedDefaultProblems`: inserts every default whose `defaultKey` is missing, so a default added in a later version reaches existing users.
-6. `deduplicateProblems`:
+### Store maintenance
+
+`prepareStore(context:)` runs once per launch, before any screen holds a record:
+
+1. `migrateLocationBodyParts`: fills `bodyPart` and `subArea` from the legacy `zone` string. It must run before location dedup: unmigrated rows all share an empty `bodyPart`, so dedup skips them rather than merging every legacy left site into one.
+2. `deduplicateLocations`:
+   - **Groups:** non-custom locations with the same `(bodyPart, subArea, side)`. Defaults can't be renamed, so these fields identify a default as `defaultKey` does for problems.
+   - **Keeper:** the lowest `id`.
+   - **Merge:** entries on the duplicates are moved onto the keeper. The user's settings are judged against how each copy was seeded, and copied onto the keeper:
+     - `isEnabled`: a disabled copy wins, because defaults are always seeded enabled.
+     - `sortOrder`: the keeper's if it differs from its seeded index (the user moved it, or a CSV restore renumbered it), otherwise the first such duplicate's. The seeded index is the position in `DefaultLocations.all`, so that list is append-only.
+3. `deduplicateSiteChangeEntries`: merges entries with the same start, end, location and note. The keeper is the lowest `id`, and the duplicates' problems are merged into it. It runs after location dedup, because two copies of an entry match only once both point at the location keeper.
+4. `deduplicateProblems`:
    - **Groups:** defaults are grouped by `defaultKey`, and custom problems by `SiteProblem.nameKey` (trimmed and lowercased).
    - **Keeper:** a customized default comes first, meaning one that is renamed, has a new emoji, is disabled, or has moved from its seeded index. Next comes an enabled custom problem, then the lowest `id`.
    - **Merge:** entries on the duplicates are moved onto the keeper.
-7. `PhoneConnectivityManager.configure(modelContext:)`, then `pushCurrentState()`.
 
-Duplicates come from two devices seeding (or adding the same custom problem) before CloudKit has synced. Dedup runs only at launch, not after imports.
+`seedStore(context:)` adds the defaults the store doesn't have:
+
+- `seedDefaultLocations`: the 14 locations in `DefaultLocations.all` (7 zones × left/right), each seeded with its index as `sortOrder`. It seeds whenever the store has no default locations, so a custom zone added first doesn't block them; custom zones move after the defaults.
+- `seedDefaultProblems`: inserts every default whose `defaultKey` is missing, so a default added in a later version reaches existing users.
+
+#### When seeding runs
+
+- **Local-only store:** at launch, before `prepareStore`.
+- **iCloud store:** after the first successful CloudKit import, or 10 seconds after launch if none succeeds (offline, no iCloud account). Home then refreshes, and the watch and widgets are updated.
+  - **Why:** a new phone that seeded at launch would get its own copy of every default. Merging those with the user's real ones, which a later launch does, can delete the copy whose history hasn't downloaded yet, and those entries lose their location on every device (review §2.3). Seeding after the download means a new phone finds the user's sites and creates no duplicates.
+  - **Cost:** a brand-new user sees an empty site list for a few seconds at first launch. Onboarding's list is a live `@Query`, so it fills in when seeding runs.
+
+Duplicates still come from two devices seeding at the same time, or adding the same custom problem, before CloudKit has synced. They are merged at the next launch.
 
 `@AppStorage("hasCompletedOnboarding")` controls the onboarding cover. It is stored per device, so onboarding appears again on every new device or reinstall.
 

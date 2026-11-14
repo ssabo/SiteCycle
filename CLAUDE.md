@@ -155,10 +155,12 @@ Each rule says what enforces it. "Prose only" means nothing does yet, so take ex
    - Why: seeding and dedup run on each device before CloudKit has synced, so devices dedup the same duplicates independently. If they keep different copies, each deletes the other's, and both are gone.
    - Choose the keeper from synced record properties only:
      - For problems: a customized default first, then an enabled custom problem, then the lowest `id`.
-     - For entries: the lowest `id`.
+     - For entries and locations: the lowest `id`.
    - Never decide by fetch order, entry counts or `sortOrder` ties.
    - Move relationships onto the keeper before deleting the duplicates.
-   - *Partly enforced:* `SiteProblemTests` pins the problem keeper, but no test pins the location keeper, and `deduplicateLocations` currently breaks this rule (review §2.2).
+   - Locations also merge the user's settings onto the keeper, from synced fields. Never OR `isEnabled` there: a freshly seeded copy is always enabled, so OR-ing turns back on a site the user disabled. Problems don't merge settings yet; they keep the preferred copy's, so a second customized copy's changes are lost.
+   - **When:** dedup runs once per launch, before any screen holds a record, so it never deletes a record a screen is showing. On an iCloud store, seeding waits for the first CloudKit download, so a new phone doesn't create duplicates of the user's sites before their history arrives. `StoreMaintenanceCoordinator` is the only caller of `prepareStore` and `seedStore`; don't seed or dedup from anywhere else. See "Store maintenance" in `docs/architecture.md`.
+   - *Enforced by:* `DeduplicationTests` pins all three keepers across every insertion order, and the location settings merge. `SiteProblemTests` pins the problem keeper's preferences. `StoreMaintenanceCoordinatorTests` pins when seeding and dedup run.
 4. **Never change a persisted identifier.** That covers:
    - `DefaultProblem.key`
    - `@AppStorage` and UserDefaults key strings
@@ -239,7 +241,8 @@ Converting the groups to synchronized folders, which the owner will do in Xcode,
 ### Adding a default problem or location
 
 - **Problems:** append to `DefaultProblems.all` with a new key that has never been used. Seeding inserts any missing keys, including on existing installs.
-- **Locations:** default locations are only seeded into an empty store, so a new default never reaches existing users. Ask the owner before relying on one.
+- **Locations:** default locations are only seeded into a store with no default locations, so a new default never reaches existing users. Ask the owner before relying on one.
+  - Only ever append to the zones in `DefaultLocations`. Dedup reads a default's index as its seeded `sortOrder`, so reordering, inserting or removing a zone corrupts the merge. `DeduplicationTests.existingDefaultsKeepTheirSeededIndexes` pins the existing order.
 
 ## Compile gotchas (invisible until CI)
 

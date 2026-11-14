@@ -56,6 +56,7 @@ The App Group write does not depend on the watch session, so the iPhone widget u
 #### When it's called
 
 - at launch (`ContentView.onAppear`)
+- after an iCloud store's defaults are seeded, which happens after launch (`docs/architecture.md`, "Store maintenance")
 - when the scene becomes `.active`
 - when session activation completes
 - by the View or code that made a change, after:

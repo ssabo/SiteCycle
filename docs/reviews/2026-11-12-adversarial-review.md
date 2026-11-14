@@ -44,7 +44,7 @@ The serious problems are concentrated in three places.
 | Done | # | Action | Why |
 |---|---|---|---|
 | ☑ | 1 | Make CSV import validate rows before deleting anything, and confirm before restoring during onboarding | ✅ An all-invalid file, such as one re-saved in Excel, wipes all history on all devices |
-| ☐ | 2 | Make the location dedup keeper deterministic, stop OR-ing `isEnabled`, and run migration before dedup | ✅ Two devices can each delete the other's copy, orphaning history; dedup re-enables sites the user disabled |
+| ☑ | 2 | Make the location dedup keeper deterministic, stop OR-ing `isEnabled`, and run migration before dedup | ✅ Two devices can each delete the other's copy, orphaning history; dedup re-enables sites the user disabled |
 | ☐ | 3 | Fix the crash paths: confirmation-sheet `ClosedRange`, `DurationFormat` on non-finite values, onboarding missing environment | ✅ Release-build traps reachable from user data |
 | ☐ | 4 | Honour `WatchSiteChangeCommand.requestedAt`, add a command ID, and activate WCSession at launch | ✅ Queued watch changes are logged hours late or out of order, which corrupts durations and stats |
 | ☐ | 5 | Enforce a single active entry (close all open entries; add a repair pass) | ✅ Multiple "Active" entries are reachable from History, CSV and two devices |

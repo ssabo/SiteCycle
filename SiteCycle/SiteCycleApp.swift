@@ -9,6 +9,7 @@ struct SiteCycleApp: App {
     let sharedModelContainer: ModelContainer
     let isCloudKitEnabled: Bool
     @State private var connectivityManager = PhoneConnectivityManager()
+    @State private var storeMaintenance = StoreMaintenanceCoordinator()
 
     init() {
         Self.applyUITestLaunchArguments()
@@ -81,13 +82,11 @@ struct SiteCycleApp: App {
             ContentView(isCloudKitEnabled: isCloudKitEnabled)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
-                    seedDefaultLocations(context: context)
-                    deduplicateLocations(context: context)
-                    deduplicateSiteChangeEntries(context: context)
-                    migrateLocationBodyParts(context: context)
-                    seedDefaultProblems(context: context)
-                    deduplicateProblems(context: context)
+                    storeMaintenance.start(context: context, isCloudKitEnabled: isCloudKitEnabled)
                     connectivityManager.configure(modelContext: context)
+                    connectivityManager.pushCurrentState()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .storeDidSeedDefaults)) { _ in
                     connectivityManager.pushCurrentState()
                 }
                 .environment(connectivityManager)

@@ -14,6 +14,7 @@
 		8A0000000000000000000104 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000004 /* ContentView.swift */; };
 		8A0000000000000000000105 /* DefaultLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000005 /* DefaultLocations.swift */; };
 		8A0000000000000000000195 /* DefaultProblems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000095 /* DefaultProblems.swift */; };
+		8A00000000000000000001A0 /* StoreMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A0 /* StoreMaintenance.swift */; };
 		8A000000000000000000019B /* DurationFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000009B /* DurationFormat.swift */; };
 		8A000000000000000000019C /* CSVImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000009C /* CSVImportViewModel.swift */; };
 		8A000000000000000000019D /* CSVImportFlowModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000009D /* CSVImportFlowModifier.swift */; };
@@ -24,6 +25,8 @@
 		8A000000000000000000019A /* SiteProblemWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A000000000000000000009A /* SiteProblemWorkflowTests.swift */; };
 		8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000011 /* SiteChangeEntryTests.swift */; };
 		8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000012 /* DefaultLocationsTests.swift */; };
+		8A00000000000000000001A1 /* DeduplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A1 /* DeduplicationTests.swift */; };
+		8A00000000000000000001A5 /* StoreMaintenanceCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A5 /* StoreMaintenanceCoordinatorTests.swift */; };
 		8A0000000000000000000113 /* LocationConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000013 /* LocationConfigTests.swift */; };
 		8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000014 /* HomeViewModelTests.swift */; };
 		8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000016 /* SiteChangeViewModelTests.swift */; };
@@ -175,6 +178,7 @@
 		8A0000000000000000000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8A0000000000000000000005 /* DefaultLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocations.swift; sourceTree = "<group>"; };
 		8A0000000000000000000095 /* DefaultProblems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultProblems.swift; sourceTree = "<group>"; };
+		8A00000000000000000000A0 /* StoreMaintenance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreMaintenance.swift; sourceTree = "<group>"; };
 		8A000000000000000000009B /* DurationFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationFormat.swift; sourceTree = "<group>"; };
 		8A000000000000000000009C /* CSVImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImportViewModel.swift; sourceTree = "<group>"; };
 		8A000000000000000000009D /* CSVImportFlowModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImportFlowModifier.swift; sourceTree = "<group>"; };
@@ -187,6 +191,8 @@
 		8A000000000000000000009A /* SiteProblemWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteProblemWorkflowTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000011 /* SiteChangeEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteChangeEntryTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000012 /* DefaultLocationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultLocationsTests.swift; sourceTree = "<group>"; };
+		8A00000000000000000000A1 /* DeduplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeduplicationTests.swift; sourceTree = "<group>"; };
+		8A00000000000000000000A5 /* StoreMaintenanceCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreMaintenanceCoordinatorTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000013 /* LocationConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationConfigTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000014 /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
 		8A0000000000000000000015 /* SiteCycleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SiteCycleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -396,6 +402,7 @@
 				8A0000000000000000000005 /* DefaultLocations.swift */,
 				8A0000000000000000000095 /* DefaultProblems.swift */,
 				8A000000000000000000009B /* DurationFormat.swift */,
+				8A00000000000000000000A0 /* StoreMaintenance.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -447,6 +454,8 @@
 				8A000000000000000000009A /* SiteProblemWorkflowTests.swift */,
 				8A0000000000000000000011 /* SiteChangeEntryTests.swift */,
 				8A0000000000000000000012 /* DefaultLocationsTests.swift */,
+				8A00000000000000000000A1 /* DeduplicationTests.swift */,
+				8A00000000000000000000A5 /* StoreMaintenanceCoordinatorTests.swift */,
 				8A0000000000000000000013 /* LocationConfigTests.swift */,
 				8A0000000000000000000014 /* HomeViewModelTests.swift */,
 				8A0000000000000000000017 /* HistoryViewModelTests.swift */,
@@ -759,6 +768,7 @@
 				8A0000000000000000000104 /* ContentView.swift in Sources */,
 				8A0000000000000000000105 /* DefaultLocations.swift in Sources */,
 				8A0000000000000000000195 /* DefaultProblems.swift in Sources */,
+				8A00000000000000000001A0 /* StoreMaintenance.swift in Sources */,
 				8A000000000000000000019B /* DurationFormat.swift in Sources */,
 				8A000000000000000000019C /* CSVImportViewModel.swift in Sources */,
 				8A000000000000000000019D /* CSVImportFlowModifier.swift in Sources */,
@@ -796,6 +806,8 @@
 				8A000000000000000000019A /* SiteProblemWorkflowTests.swift in Sources */,
 				8A0000000000000000000111 /* SiteChangeEntryTests.swift in Sources */,
 				8A0000000000000000000112 /* DefaultLocationsTests.swift in Sources */,
+				8A00000000000000000001A1 /* DeduplicationTests.swift in Sources */,
+				8A00000000000000000001A5 /* StoreMaintenanceCoordinatorTests.swift in Sources */,
 				8A0000000000000000000113 /* LocationConfigTests.swift in Sources */,
 				8A0000000000000000000114 /* HomeViewModelTests.swift in Sources */,
 				8A0000000000000000000116 /* SiteChangeViewModelTests.swift in Sources */,
