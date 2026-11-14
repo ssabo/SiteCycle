@@ -56,6 +56,7 @@ The App Group write does not depend on the watch session, so the iPhone widget u
 #### When it's called
 
 - at launch (`ContentView.onAppear`)
+- after each store maintenance pass (`.storeMaintenanceDidRun`), which on a CloudKit store follows every successful import (`docs/architecture.md`, "Store maintenance")
 - when the scene becomes `.active`
 - when session activation completes
 - by the View or code that made a change, after:
@@ -65,10 +66,7 @@ The App Group write does not depend on the watch session, so the iPhone widget u
   - a settings change
   - a CSV import, from Settings or onboarding
 
-**Known issue:** it is *not* called:
-
-- after the location on/off toggle
-- after CloudKit imports changes from another device
+**Known issue:** it is *not* called after the location on/off toggle.
 
 #### `configure(modelContext:)`
 

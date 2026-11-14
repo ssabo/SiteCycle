@@ -3,7 +3,7 @@ import SwiftData
 
 /// A location the app seeds. Its index in `DefaultLocations.all` is the
 /// `sortOrder` it is seeded with.
-struct DefaultLocation: Sendable, Equatable {
+struct DefaultLocation: Sendable {
     let bodyPart: String
     let subArea: String?
     let side: String?
@@ -17,6 +17,9 @@ enum DefaultLocations {
         }
     }
 
+    /// Append new zones at the end; never reorder, insert or remove one. Dedup
+    /// compares each copy's `sortOrder` with its index here to tell whether it
+    /// was moved, so shifting an existing index makes untouched copies look moved.
     private static let zones: [(bodyPart: String, subArea: String?)] = [
         ("Abdomen", "Front"),
         ("Abdomen", "Side"),
@@ -37,12 +40,14 @@ enum DefaultLocations {
     }
 }
 
-/// Seeds the default body locations into the SwiftData context on first launch.
-/// Seeds only into a store with no locations at all.
+/// Seeds the default body locations. Seeds only into a store with no
+/// locations at all.
 @MainActor
 func seedDefaultLocations(context: ModelContext) {
-    let existingCount = (try? context.fetchCount(FetchDescriptor<Location>())) ?? 0
-    guard existingCount == 0 else { return }
+    // A failed count must not look like an empty store, or this would seed
+    // duplicates into the user's data.
+    guard let existingCount = try? context.fetchCount(FetchDescriptor<Location>()),
+          existingCount == 0 else { return }
 
     for (index, location) in DefaultLocations.all.enumerated() {
         context.insert(Location(
@@ -68,9 +73,12 @@ func seedDefaultLocations(context: ModelContext) {
 /// links sync separately and can differ between devices meanwhile, and seeded
 /// copies all tie on `sortOrder`.
 ///
+/// Only entries already on this device can be moved, so on a CloudKit store
+/// this must run only after an import (see `StoreMaintenancePolicy`).
+///
 /// The user's settings are then merged onto the keeper (see
-/// `mergeUserSettings(from:into:)`), so keeping a freshly seeded copy doesn't
-/// undo them.
+/// `mergeUserSettings(from:into:disabledWins:)`), so keeping a freshly seeded
+/// copy doesn't undo them.
 ///
 /// Rows that `migrateLocationBodyParts` hasn't filled in yet (empty `bodyPart`)
 /// are skipped: they can't be told apart, so grouping them would merge every
@@ -85,25 +93,27 @@ func deduplicateLocations(context: ModelContext) {
         groups[key, default: []].append(location)
     }
 
-    var didChange = false
-    for (_, group) in groups where group.count > 1 {
-        let sorted = group.sorted { $0.id.uuidString < $1.id.uuidString }
-        guard let keeper = sorted.first else { continue }
-        let duplicates = Array(sorted.dropFirst())
+    // Each group in id order, so its first copy is the keeper.
+    let merges = groups.values
+        .filter { $0.count > 1 }
+        .map { copies in copies.sorted { $0.id.uuidString < $1.id.uuidString } }
+    guard !merges.isEmpty else { return }
 
-        mergeUserSettings(from: duplicates, into: keeper)
+    let disabledWins = disabledCopiesCanWin(merges: merges, allLocations: allLocations)
+    for copies in merges {
+        guard let keeper = copies.first else { continue }
+        let duplicates = Array(copies.dropFirst())
+
+        mergeUserSettings(from: duplicates, into: keeper, disabledWins: disabledWins)
         for duplicate in duplicates {
             for entry in duplicate.safeEntries {
                 entry.location = keeper
             }
             context.delete(duplicate)
         }
-        didChange = true
     }
 
-    if didChange {
-        try? context.save()
-    }
+    try? context.save()
 }
 
 private struct LocationKey: Hashable {
@@ -112,20 +122,36 @@ private struct LocationKey: Hashable {
     let side: String?
 }
 
-/// Copies onto the keeper any setting the user changed on a duplicate, judged
-/// against how the copy was seeded. Reads only synced fields, so every device
-/// merging the same copies gets the same result.
+/// Whether a disabled copy may win the `isEnabled` merge. It may, unless that
+/// would leave no enabled location at all, which happens when devices disabled
+/// different sites before syncing. `LocationConfigView` never lets the user
+/// turn off the last enabled site, so dedup mustn't either.
+private func disabledCopiesCanWin(merges: [[Location]], allLocations: [Location]) -> Bool {
+    let merged = Set(merges.joined().map { ObjectIdentifier($0) })
+    let otherEnabled = allLocations.contains { !merged.contains(ObjectIdentifier($0)) && $0.isEnabled }
+    return otherEnabled || merges.contains { copies in copies.allSatisfy(\.isEnabled) }
+}
+
+/// Copies onto the keeper any setting changed on a duplicate, judged against
+/// how the copy was seeded. Reads only synced fields, so every device merging
+/// the same copies gets the same result.
 ///
 /// - `isEnabled`: a disabled copy wins. Defaults are always seeded enabled, so
 ///   a disabled copy records the user turning the site off (for example,
 ///   because of lipohypertrophy), and a fresh device's copy must not turn it
-///   back on.
-/// - `sortOrder`: the keeper's, if the user moved it from its seeded position;
-///   otherwise the first moved duplicate's, so a reordered list survives a new
-///   device's seed.
-private func mergeUserSettings(from duplicates: [Location], into keeper: Location) {
-    if duplicates.contains(where: { !$0.isEnabled }) {
-        keeper.isEnabled = false
+///   back on. The exception is when `disabledWins` is false: then an enabled
+///   copy wins, so at least one site stays enabled.
+/// - `sortOrder`: the keeper's, if it differs from its seeded index (the user
+///   moved it, or a CSV restore renumbered it); otherwise the first such
+///   duplicate's, so a reordered list survives a new device's seed. Values can
+///   then tie with sites that had no duplicate, which affects only display order.
+private func mergeUserSettings(from duplicates: [Location], into keeper: Location, disabledWins: Bool) {
+    if disabledWins {
+        if duplicates.contains(where: { !$0.isEnabled }) {
+            keeper.isEnabled = false
+        }
+    } else if duplicates.contains(where: \.isEnabled) {
+        keeper.isEnabled = true
     }
 
     if let seeded = DefaultLocations.seededSortOrder(of: keeper),

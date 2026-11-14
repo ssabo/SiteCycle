@@ -7,7 +7,7 @@ Keep this doc factual. When the code changes how something below works, update i
 ## Shape of the app
 
 - **Pattern:** MVVM.
-  - Views create their ViewModel in `onAppear`, from the environment's `modelContext`, and refresh it by hand: on appear, on sheet dismissal, on settings `onChange`, and when `PhoneConnectivityManager.lastWatchCommandDate` changes.
+  - Views create their ViewModel in `onAppear`, from the environment's `modelContext`, and refresh it by hand: on appear, on sheet dismissal, on settings `onChange`, and when `PhoneConnectivityManager.lastWatchCommandDate` changes. Home also refreshes on `.storeMaintenanceDidRun` (see "Store maintenance").
   - ViewModels are `@MainActor @Observable`. They hold the `ModelContext`, and they contain the pure algorithms as `static` functions, so those algorithms can be tested with plain model objects.
 - **Navigation:**
   - A `TabView` with three tabs: Home, History and Statistics.
@@ -18,7 +18,7 @@ Keep this doc factual. When the code changes how something below works, update i
   - History edits go through `HistoryViewModel`.
   - `LocationConfigView` and `ProblemConfigView` write to the context directly.
   - After a write, the caller must call `PhoneConnectivityManager.pushCurrentState()` (CLAUDE.md rule 7).
-  - **Known issue:** nothing refreshes Views, the watch or widgets after a CloudKit import from another device.
+  - **Known issue:** after a CloudKit import from another device, only Home, the watch and widgets refresh, through the store maintenance pass that follows the import. History and Statistics stay stale until they next appear.
 
 ## Data model (SwiftData, `SiteCycle/Models/`)
 
@@ -77,25 +77,42 @@ A reason a site was changed early.
 
 `SiteCycleApp.makeModelContainer()` tries CloudKit (`.automatic`) first and falls back to a local store (`.none`). The fallback exists for unsigned CI; see CLAUDE.md rule 2. The `-uiTestMode` launch argument forces an in-memory store with no CloudKit.
 
-The first time `ContentView` appears in each launch, it runs these steps in order. Steps 1–6 are `prepareStore(context:)`.
+When `ContentView` first appears, `SiteCycleApp` calls `PhoneConnectivityManager.configure(modelContext:)`, starts `StoreMaintenanceCoordinator`, then calls `pushCurrentState()`.
 
-1. `seedDefaultLocations`: the 14 locations in `DefaultLocations.all` (7 zones × left/right), each seeded with its index as `sortOrder`. Seeds only when the store has no locations at all.
+### Store maintenance
+
+`prepareStore(context:)` runs these steps in order:
+
+1. `seedDefaultLocations`: the 14 locations in `DefaultLocations.all` (7 zones × left/right), each seeded with its index as `sortOrder`. Seeds only when the store has no locations at all, and not if counting them fails.
 2. `migrateLocationBodyParts`: fills `bodyPart` and `subArea` from the legacy `zone` string. It must run before location dedup: unmigrated rows all share an empty `bodyPart`, so dedup skips them rather than merging every legacy left site into one.
 3. `deduplicateLocations`:
    - **Groups:** non-custom locations with the same `(bodyPart, subArea, side)`. Defaults can't be renamed, so these fields identify a default as `defaultKey` does for problems.
    - **Keeper:** the lowest `id`.
    - **Merge:** entries on the duplicates are moved onto the keeper. The user's settings are judged against how each copy was seeded, and copied onto the keeper:
-     - `isEnabled`: a disabled copy wins, because defaults are always seeded enabled.
-     - `sortOrder`: the keeper's if the user moved it from its seeded index, otherwise the first moved duplicate's.
+     - `isEnabled`: a disabled copy wins, because defaults are always seeded enabled. The exception is when that would leave no enabled location (devices disabled different sites before syncing); then an enabled copy wins.
+     - `sortOrder`: the keeper's if it differs from its seeded index (the user moved it, or a CSV restore renumbered it), otherwise the first such duplicate's. The seeded index is the position in `DefaultLocations.all`, so that list is append-only.
 4. `deduplicateSiteChangeEntries`: merges entries with the same start, end, location and note. The keeper is the lowest `id`, and the duplicates' problems are merged into it. It runs after location dedup, because two copies of an entry match only once both point at the location keeper.
 5. `seedDefaultProblems`: inserts every default whose `defaultKey` is missing, so a default added in a later version reaches existing users.
 6. `deduplicateProblems`:
    - **Groups:** defaults are grouped by `defaultKey`, and custom problems by `SiteProblem.nameKey` (trimmed and lowercased).
    - **Keeper:** a customized default comes first, meaning one that is renamed, has a new emoji, is disabled, or has moved from its seeded index. Next comes an enabled custom problem, then the lowest `id`.
    - **Merge:** entries on the duplicates are moved onto the keeper.
-7. `PhoneConnectivityManager.configure(modelContext:)`, then `pushCurrentState()`.
 
-Duplicates come from two devices seeding (or adding the same custom problem) before CloudKit has synced. Dedup runs only at launch, not after imports.
+`seedStore(context:)` runs only the steps that never delete anything: 1, 2 and 5.
+
+Duplicates come from two devices seeding (or adding the same custom problem) before CloudKit has synced.
+
+#### When it runs
+
+`StoreMaintenanceCoordinator` decides, following the rules in `StoreMaintenancePolicy`:
+
+- **Local-only store:** `prepareStore` runs once, at launch.
+- **CloudKit store:** nothing runs at launch. `prepareStore` runs after each successful CloudKit import, once no other import has started for 3 seconds.
+  - **Why:** dedup moves a duplicate's entries onto the keeper before deleting it, but it can move only the entries already on this device. On a new phone still downloading the user's history, dedup at launch deleted copies whose entries hadn't arrived, and those entries lost their location on every device (review §2.3). Waiting for the import also means a new device finds the user's sites instead of seeding duplicates of them.
+  - **Fallback:** if CloudKit setup fails, or no import has succeeded 10 seconds after launch and none is in progress, `seedStore` runs once. A device that is offline or signed out of iCloud still gets its default sites, and any duplicates it creates are merged after its next successful import.
+- **After each pass,** the coordinator posts `.storeMaintenanceDidRun`. `SiteCycleApp` then calls `pushCurrentState()`, and Home refreshes its ViewModels, which may hold a duplicate the pass just deleted.
+
+**Known issue:** a device that deletes a duplicate can still orphan entries another device hasn't exported yet, for example from an old phone that was offline. Tombstones (`mergedInto: UUID?`) instead of hard deletes would let those late links be re-pointed (review §2.3).
 
 `@AppStorage("hasCompletedOnboarding")` controls the onboarding cover. It is stored per device, so onboarding appears again on every new device or reinstall.
 

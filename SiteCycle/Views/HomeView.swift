@@ -49,6 +49,11 @@ struct HomeView: View {
             viewModel?.refreshActiveSite()
             siteChangeViewModel?.refresh()
         }
+        // A maintenance pass may have deleted a duplicate that a ViewModel holds.
+        .onReceive(NotificationCenter.default.publisher(for: .storeMaintenanceDidRun)) { _ in
+            viewModel?.refreshActiveSite()
+            siteChangeViewModel?.refresh()
+        }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {
             viewModel?.refreshActiveSite()
             siteChangeViewModel?.refresh()
