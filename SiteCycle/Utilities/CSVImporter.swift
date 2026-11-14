@@ -244,6 +244,8 @@ extension CSVImporter {
             for entry in oldEntries { context.delete(entry) }
             for location in oldLocations { context.delete(location) }
             insert(plan.entries, problemResolver: &problemResolver, context: context)
+            // A backup can hold several rows with no duration; only the newest stays active.
+            SiteChangeEntry.closeSupersededActiveEntries(in: context)
             try context.save()
         } catch {
             context.rollback()

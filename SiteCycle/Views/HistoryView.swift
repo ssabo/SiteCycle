@@ -36,6 +36,9 @@ struct HistoryView: View {
         .onChange(of: allProblems.map(\.id)) {
             resetProblemFilterIfStale()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .storeMaintenanceDidChangeData)) { _ in
+            viewModel?.storeDidChange()
+        }
     }
 
     /// A filter on a deleted problem would leave the picker with no matching

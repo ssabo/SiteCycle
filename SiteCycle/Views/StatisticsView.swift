@@ -39,6 +39,9 @@ struct StatisticsView: View {
             viewModel?.timeWindow = timeWindow
             viewModel?.refresh()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .storeMaintenanceDidChangeData)) { _ in
+            viewModel?.refresh()
+        }
     }
 
     private var timeWindow: StatsTimeWindow {

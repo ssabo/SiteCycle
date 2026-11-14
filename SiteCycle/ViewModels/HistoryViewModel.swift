@@ -34,8 +34,13 @@ final class HistoryViewModel {
     var startDate: Date?
     var endDate: Date?
     var problemFilter: HistoryProblemFilter = .all
+    /// Bumped when the store changes outside this screen, such as store
+    /// maintenance closing an entry after a CloudKit download, so the list
+    /// re-fetches.
+    private(set) var storeRevision = 0
 
     var filteredEntries: [SiteChangeEntry] {
+        _ = storeRevision
         let descriptor = FetchDescriptor<SiteChangeEntry>(
             sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
         )
@@ -69,31 +74,36 @@ final class HistoryViewModel {
         self.modelContext = modelContext
     }
 
+    func storeDidChange() {
+        storeRevision += 1
+    }
+
     func deleteEntry(_ entry: SiteChangeEntry) {
         modelContext.delete(entry)
         try? modelContext.save()
     }
 
+    /// Applies the edits in one save. Returns false, changing nothing, if the
+    /// edit would leave the active site behind another entry (see
+    /// `keepsActiveSiteNewest`).
+    @discardableResult
     func updateEntry(
         _ entry: SiteChangeEntry,
         location: Location?,
         startTime: Date?,
         endTime: Date?,
         note: String?
-    ) {
-        if let location = location {
-            entry.location = location
+    ) -> Bool {
+        let isActive = endTime == nil && entry.endTime == nil
+        guard keepsActiveSiteNewest(entry, startTime: startTime ?? entry.startTime, isActive: isActive) else {
+            return false
         }
-        if let startTime = startTime {
-            entry.startTime = startTime
-        }
+        apply(to: entry, location: location, startTime: startTime, note: note)
         if let endTime = endTime {
             entry.endTime = endTime
         }
-        if let note = note {
-            entry.note = note
-        }
         try? modelContext.save()
+        return true
     }
 
     /// Replaces why the site was changed early; an empty array clears it.
@@ -104,8 +114,64 @@ final class HistoryViewModel {
         try? modelContext.save()
     }
 
-    func clearEndTime(_ entry: SiteChangeEntry) {
+    /// "One active site": only the newest entry may be open (review §2.7).
+    /// Says whether saving `entry` with this start time, active or not, keeps
+    /// that true:
+    /// - an active entry may not start before any other entry;
+    /// - a closed entry may not start after an open one.
+    func keepsActiveSiteNewest(_ entry: SiteChangeEntry, startTime: Date, isActive: Bool) -> Bool {
+        let entryID = entry.id
+        let conflicts: Predicate<SiteChangeEntry>
+        if isActive {
+            conflicts = #Predicate<SiteChangeEntry> { $0.id != entryID && $0.startTime > startTime }
+        } else {
+            conflicts = #Predicate<SiteChangeEntry> {
+                $0.id != entryID && $0.endTime == nil && $0.startTime < startTime
+            }
+        }
+        let descriptor = FetchDescriptor<SiteChangeEntry>(predicate: conflicts)
+        return ((try? modelContext.fetchCount(descriptor)) ?? 0) == 0
+    }
+
+    /// Whether the entry, at its current start time, can be made active again.
+    func canClearEndTime(_ entry: SiteChangeEntry) -> Bool {
+        keepsActiveSiteNewest(entry, startTime: entry.startTime, isActive: true)
+    }
+
+    /// Makes the entry active again, with any other edits, in one save, and
+    /// closes any older open entry. Returns false, changing nothing, if the
+    /// entry wouldn't be the newest.
+    @discardableResult
+    func reopen(
+        _ entry: SiteChangeEntry,
+        location: Location? = nil,
+        startTime: Date? = nil,
+        note: String? = nil
+    ) -> Bool {
+        guard keepsActiveSiteNewest(entry, startTime: startTime ?? entry.startTime, isActive: true) else {
+            return false
+        }
+        apply(to: entry, location: location, startTime: startTime, note: note)
         entry.endTime = nil
+        SiteChangeEntry.closeSupersededActiveEntries(in: modelContext)
         try? modelContext.save()
+        return true
+    }
+
+    func clearEndTime(_ entry: SiteChangeEntry) {
+        reopen(entry)
+    }
+
+    /// Sets each non-nil value.
+    private func apply(to entry: SiteChangeEntry, location: Location?, startTime: Date?, note: String?) {
+        if let location = location {
+            entry.location = location
+        }
+        if let startTime = startTime {
+            entry.startTime = startTime
+        }
+        if let note = note {
+            entry.note = note
+        }
     }
 }
