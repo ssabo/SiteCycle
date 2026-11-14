@@ -49,6 +49,8 @@ struct SiteSelectionSheet: View {
                 )
             }
         }
+        // The list's locations must outlive a maintenance pass until a choice is made.
+        .holdsStoreMaintenance()
     }
 
     private func locationList(viewModel: SiteChangeViewModel) -> some View {

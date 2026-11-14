@@ -36,6 +36,21 @@ struct HistoryView: View {
         .onChange(of: allProblems.map(\.id)) {
             resetProblemFilterIfStale()
         }
+        .onStoreMaintenancePass {
+            resetLocationFilterIfMerged()
+            viewModel?.refresh()
+        }
+    }
+
+    /// A pass can delete the filtered location as a duplicate. Compared by
+    /// `persistentModelID`, not a stored property, which a deleted model may
+    /// no longer be able to read.
+    private func resetLocationFilterIfMerged() {
+        guard let filtered = selectedLocation,
+              !allLocations.contains(where: { $0.persistentModelID == filtered.persistentModelID })
+        else { return }
+        selectedLocation = nil
+        viewModel?.locationFilter = nil
     }
 
     /// A filter on a deleted problem would leave the picker with no matching

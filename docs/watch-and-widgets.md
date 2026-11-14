@@ -55,8 +55,8 @@ The App Group write does not depend on the watch session, so the iPhone widget u
 
 #### When it's called
 
-- at launch (`ContentView.onAppear`)
-- after each store maintenance pass (`.storeMaintenanceDidRun`), which on a CloudKit store follows every successful import (`docs/architecture.md`, "Store maintenance")
+- after each store maintenance pass (`.storeMaintenanceDidRun`): on a local store that is at launch, and on a CloudKit store it follows every successful import (`docs/architecture.md`, "Store maintenance")
+- at launch on a CloudKit store (`ContentView.onAppear`), whose first pass waits for an import
 - when the scene becomes `.active`
 - when session activation completes
 - by the View or code that made a change, after:

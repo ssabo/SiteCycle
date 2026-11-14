@@ -46,23 +46,19 @@ struct HomeView: View {
             siteChangeViewModel?.refresh()
         }
         .onChange(of: connectivityManager.lastWatchCommandDate) {
-            viewModel?.refreshActiveSite()
-            siteChangeViewModel?.refresh()
+            refreshViewModels()
         }
         // A maintenance pass may have deleted a duplicate that a ViewModel holds.
-        .onReceive(NotificationCenter.default.publisher(for: .storeMaintenanceDidRun)) { _ in
-            viewModel?.refreshActiveSite()
-            siteChangeViewModel?.refresh()
+        .onStoreMaintenancePass {
+            refreshViewModels()
         }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {
-            viewModel?.refreshActiveSite()
-            siteChangeViewModel?.refresh()
+            refreshViewModels()
         }, content: {
             SiteSelectionSheet()
         })
         .sheet(item: $quickLogLocation, onDismiss: {
-            viewModel?.refreshActiveSite()
-            siteChangeViewModel?.refresh()
+            refreshViewModels()
         }, content: { location in
             SiteChangeConfirmationSheet(
                 targetLocation: location,
@@ -80,6 +76,11 @@ struct HomeView: View {
                 }
             )
         })
+    }
+
+    private func refreshViewModels() {
+        viewModel?.refreshActiveSite()
+        siteChangeViewModel?.refresh()
     }
 
     private func setupViewModel() {

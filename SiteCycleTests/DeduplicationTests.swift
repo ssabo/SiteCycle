@@ -154,8 +154,9 @@ struct DeduplicationTests {
 
     /// Each device turned off a different site before they synced. A disabled
     /// copy winning both merges would leave no site to recommend, which the
-    /// settings screen never allows, so an enabled copy wins instead.
-    @Test func locationDedupNeverDisablesEverySite() throws {
+    /// settings screen never allows. So exactly one site is re-enabled, the
+    /// lowest-id keeper that some copy had enabled, and the other stays off.
+    @Test func locationDedupKeepsExactlyOneSiteEnabled() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
         let ids = try fixedIDs()
@@ -178,7 +179,7 @@ struct DeduplicationTests {
         let fresh = ModelContext(container)
         let survivors = try fetchLocations(fresh)
         #expect(survivors.map(\.id) == [ids[0], lowRightID])
-        #expect(survivors.map(\.isEnabled) == [true, true])
+        #expect(survivors.map(\.isEnabled) == [true, false])
     }
 
     /// L Arm (Back) is seeded at sortOrder 10. The keeper (lowest id) either

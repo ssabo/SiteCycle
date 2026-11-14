@@ -160,7 +160,8 @@ Each rule says what enforces it. "Prose only" means nothing does yet, so take ex
    - Move relationships onto the keeper before deleting the duplicates.
    - Locations also merge the user's settings onto the keeper, from synced fields. Never OR `isEnabled` there: a freshly seeded copy is always enabled, so OR-ing turns back on a site the user disabled. Problems don't merge settings yet; they keep the preferred copy's, so a second customized copy's changes are lost.
    - **When:** on a CloudKit store, dedup runs only after a successful import, because it can move only the entries already on the device. `StoreMaintenanceCoordinator` is the only caller of `prepareStore` and `seedStore`; don't call them or a dedup function from anywhere else. See "Store maintenance" in `docs/architecture.md`.
-   - *Enforced by:* `DeduplicationTests` pins all three keepers across every insertion order, and the location settings merge. `SiteProblemTests` pins the problem keeper's preferences. `StoreMaintenancePolicyTests` pins when dedup may run.
+   - **Screens that keep records:** a pass can delete a duplicate mid-session. A sheet or editor that keeps a record across user interaction must use `.holdsStoreMaintenance()`, and a view whose ViewModel caches records must refresh in `.onStoreMaintenancePass`. *Prose only.*
+   - *Enforced by:* `DeduplicationTests` pins all three keepers across every insertion order, and the location settings merge. `SiteProblemTests` pins the problem keeper's preferences. `StoreMaintenancePolicyTests` and `StoreMaintenanceCoordinatorTests` pin when dedup may run.
 4. **Never change a persisted identifier.** That covers:
    - `DefaultProblem.key`
    - `@AppStorage` and UserDefaults key strings
@@ -241,7 +242,7 @@ Converting the groups to synchronized folders, which the owner will do in Xcode,
 ### Adding a default problem or location
 
 - **Problems:** append to `DefaultProblems.all` with a new key that has never been used. Seeding inserts any missing keys, including on existing installs.
-- **Locations:** default locations are only seeded into an empty store, so a new default never reaches existing users. Ask the owner before relying on one.
+- **Locations:** default locations are only seeded into a store with no default locations, so a new default never reaches existing users. Ask the owner before relying on one.
   - Only ever append to the zones in `DefaultLocations`. Dedup reads a default's index as its seeded `sortOrder`, so reordering, inserting or removing a zone corrupts the merge.
 
 ## Compile gotchas (invisible until CI)

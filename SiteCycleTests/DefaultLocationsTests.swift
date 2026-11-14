@@ -153,6 +153,29 @@ struct DefaultLocationsTests {
         #expect(locations.first?.bodyPart == "Custom Zone")
     }
 
+    /// On a CloudKit store, onboarding can show the location list before the
+    /// first maintenance pass seeds it, and the user can add a custom zone then.
+    @Test func seedsDefaultsWhenOnlyCustomZonesExist() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let left = Location(bodyPart: "Hip", side: "left", isCustom: true, sortOrder: 0)
+        let right = Location(bodyPart: "Hip", side: "right", isCustom: true, sortOrder: 1)
+        context.insert(left)
+        context.insert(right)
+        try context.save()
+
+        seedDefaultLocations(context: context)
+
+        let fresh = ModelContext(container)
+        let locations = try fresh.fetch(FetchDescriptor<Location>(sortBy: [SortDescriptor(\.sortOrder)]))
+        #expect(locations.count == 16)
+        // The defaults keep their seeded indexes; the custom zone moves after them.
+        #expect(locations.prefix(14).allSatisfy { !$0.isCustom })
+        #expect(locations.map(\.sortOrder) == Array(0..<16))
+        #expect(locations.suffix(2).map(\.id) == [left.id, right.id])
+    }
+
     // MARK: - Deduplication Tests
 
     @Test func deduplicateLocationsMergesDuplicates() throws {

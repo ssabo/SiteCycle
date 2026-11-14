@@ -38,29 +38,35 @@ func seedStore(context: ModelContext) {
 /// copy whose entries haven't arrived yet, and those entries lose their
 /// location on every device. So:
 /// - The full pass (`prepareStore`) runs only after a successful import, once
-///   no other import has started for a quiet period.
-/// - Seeding waits for that first import too, so a new device picks up the
-///   user's sites instead of creating duplicates of them. If no import can
-///   succeed (offline, signed out of iCloud, setup failed), a fallback runs
-///   `seedStore` once, so the device still gets its default sites. Duplicates
-///   it creates are merged after the next successful import.
+///   no import is in progress and none has started for a quiet period.
+/// - It also waits while a hold is active: a sheet or editor that keeps a
+///   record across user interaction, which the pass could delete under it.
+/// - Seeding waits for the first import too, so a new device picks up the
+///   user's sites instead of creating duplicates of them. If no full pass can
+///   run (offline, signed out of iCloud, setup or import failed), a fallback
+///   runs `seedStore` once, so the device still gets its default sites.
+///   Duplicates it creates are merged by the next full pass.
 ///
 /// This is pure state, so the rules can be unit-tested without CloudKit.
 struct StoreMaintenancePolicy {
-    enum Event: Equatable {
-        case importStarted
-        case importFinished(succeeded: Bool)
+    enum Event: Equatable, Sendable {
+        case importStarted(UUID)
+        case importFinished(UUID, succeeded: Bool)
         case setupFailed
         case fallbackDelayElapsed
+        case holdsChanged(active: Bool)
+        case fullPassRan
 
-        /// Maps a CloudKit event's fields. Nil for events maintenance ignores:
-        /// exports, and setups that started or succeeded.
-        init?(type: NSPersistentCloudKitContainer.EventType, endDate: Date?, succeeded: Bool) {
-            switch type {
+        /// Maps a CloudKit event. Nil for events maintenance ignores: exports,
+        /// and setups that started or succeeded.
+        init?(_ info: CloudKitEventInfo) {
+            switch info.type {
             case .import:
-                self = endDate == nil ? .importStarted : .importFinished(succeeded: succeeded)
+                self = info.endDate == nil
+                    ? .importStarted(info.identifier)
+                    : .importFinished(info.identifier, succeeded: info.succeeded)
             case .setup:
-                guard endDate != nil, !succeeded else { return nil }
+                guard info.endDate != nil, !info.succeeded else { return nil }
                 self = .setupFailed
             default:
                 return nil
@@ -70,49 +76,62 @@ struct StoreMaintenancePolicy {
 
     enum Action: Equatable {
         case none
-        /// Another import started: cancel a full pass waiting out its quiet period.
+        /// Cancel a full pass waiting out its quiet period.
         case cancelPendingPass
-        /// Run `prepareStore` once no import has started for the quiet period.
+        /// Run `prepareStore` once the quiet period passes with no import started.
         case scheduleFullPass
         /// Run `seedStore` now.
         case seedOnly
     }
 
-    private var importInProgress = false
-    private var hasImported = false
+    /// Keyed by event identifier, in case CloudKit ever overlaps imports.
+    private var importsInProgress: Set<UUID> = []
+    /// The latest import to finish succeeded, and no full pass has run since.
+    private var passDue = false
+    private var held = false
     private var fallbackDue = false
+    private var fullPassHasRun = false
     private var hasSeeded = false
 
     mutating func handle(_ event: Event) -> Action {
         switch event {
-        case .importStarted:
-            importInProgress = true
+        case .importStarted(let id):
+            importsInProgress.insert(id)
             return .cancelPendingPass
-        case .importFinished(let succeeded):
-            importInProgress = false
-            guard succeeded else {
-                // A failed import may have applied only part of the changes, so
-                // a pass cancelled by its start waits for the next success.
-                return seedIfDue()
-            }
-            hasImported = true
-            return .scheduleFullPass
+        case .importFinished(let id, let succeeded):
+            importsInProgress.remove(id)
+            // A failed import may have applied only part of its changes, so
+            // the pass waits for the next success.
+            passDue = succeeded
+            return passDue ? passIfReady() : seedIfDue()
+        case .holdsChanged(let active):
+            held = active
+            return active ? .cancelPendingPass : passIfReady()
         case .setupFailed, .fallbackDelayElapsed:
             fallbackDue = true
             return seedIfDue()
+        case .fullPassRan:
+            passDue = false
+            fullPassHasRun = true
+            return .none
         }
     }
 
+    private func passIfReady() -> Action {
+        passDue && importsInProgress.isEmpty && !held ? .scheduleFullPass : .none
+    }
+
     private mutating func seedIfDue() -> Action {
-        guard fallbackDue, !importInProgress, !hasImported, !hasSeeded else { return .none }
+        guard fallbackDue, importsInProgress.isEmpty, !fullPassHasRun, !hasSeeded else { return .none }
         hasSeeded = true
         return .seedOnly
     }
 }
 
 extension Notification.Name {
-    /// Posted after each maintenance pass. A pass can delete duplicates that a
-    /// ViewModel still holds, so views that cache models refresh on it.
+    /// Posted after each maintenance pass, with the coordinator as the object.
+    /// A pass can delete duplicates that a ViewModel still holds, so views
+    /// that cache models refresh on it (`onStoreMaintenancePass`).
     static let storeMaintenanceDidRun = Notification.Name("StoreMaintenanceDidRun")
 }
 
@@ -120,19 +139,49 @@ extension Notification.Name {
 /// local-only store, and driven by CloudKit's events on a synced one.
 @MainActor
 final class StoreMaintenanceCoordinator {
-    /// How long no import may start before a full pass runs.
-    static let quietPeriod: Duration = .seconds(3)
-    /// How long to wait for an import before seeding without one.
-    static let fallbackDelay: Duration = .seconds(10)
-
+    private let quietPeriod: Duration
+    private let fallbackDelay: Duration?
+    private let sleep: @Sendable (Duration) async throws -> Void
     private var policy = StoreMaintenancePolicy()
     private var context: ModelContext?
-    private var eventTask: Task<Void, Never>?
+    private var cloudKitObserver: NSObjectProtocol?
+    private var holds: Set<UUID> = []
+    /// A pass the policy asked for before `start` supplied the context.
+    private var waitingForStart: StoreMaintenancePolicy.Action?
     private var fallbackTask: Task<Void, Never>?
-    private var pendingPass: Task<Void, Never>?
+    /// The full pass waiting out its quiet period, if any.
+    private(set) var scheduledPass: Task<Void, Never>?
 
-    /// Starts maintenance for this launch. Calls after the first do nothing,
-    /// so it is safe to call from `onAppear`.
+    /// - Parameters:
+    ///   - quietPeriod: how long no import may start before a full pass runs.
+    ///   - fallbackDelay: how long to wait for an import before seeding
+    ///     without one; nil turns the fallback timer off.
+    ///   - observesCloudKit: whether to listen for CloudKit's events. The app
+    ///     starts listening here, before its store exists, so it can't miss
+    ///     the first import starting. Tests turn it off and send events
+    ///     with `handle(_:)`.
+    ///   - sleep: waits for a duration; tests pass one that returns at once.
+    init(
+        quietPeriod: Duration = .seconds(3),
+        fallbackDelay: Duration? = .seconds(10),
+        observesCloudKit: Bool = true,
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
+    ) {
+        self.quietPeriod = quietPeriod
+        self.fallbackDelay = fallbackDelay
+        self.sleep = sleep
+        if observesCloudKit {
+            cloudKitObserver = CloudKitEvents.observe { [weak self] info in
+                guard let event = StoreMaintenancePolicy.Event(info) else { return }
+                Task { @MainActor [weak self] in
+                    self?.handle(event)
+                }
+            }
+        }
+    }
+
+    /// Supplies the store and starts maintenance for this launch. Calls after
+    /// the first do nothing, so it is safe to call from `onAppear`.
     func start(context: ModelContext, isCloudKitEnabled: Bool) {
         guard self.context == nil else { return }
         self.context = context
@@ -142,52 +191,78 @@ final class StoreMaintenanceCoordinator {
             return
         }
 
-        eventTask = Task { [weak self] in
-            for await notification in NotificationCenter.default.notifications(
-                named: NSPersistentCloudKitContainer.eventChangedNotification
-            ) {
-                guard let event = notification.userInfo?[
-                    NSPersistentCloudKitContainer.eventNotificationUserInfoKey
-                ] as? NSPersistentCloudKitContainer.Event,
-                    let policyEvent = StoreMaintenancePolicy.Event(
-                        type: event.type,
-                        endDate: event.endDate,
-                        succeeded: event.succeeded
-                    ) else { continue }
-                self?.handle(policyEvent)
+        if let waiting = waitingForStart {
+            waitingForStart = nil
+            if waiting == .scheduleFullPass {
+                runFullPass()
+            } else {
+                runSeedOnly()
             }
         }
-        fallbackTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.fallbackDelay)
-            guard !Task.isCancelled else { return }
-            self?.handle(.fallbackDelayElapsed)
+        if let fallbackDelay {
+            let sleep = self.sleep
+            fallbackTask = Task { [weak self] in
+                try? await sleep(fallbackDelay)
+                guard !Task.isCancelled else { return }
+                self?.handle(.fallbackDelayElapsed)
+            }
         }
     }
 
-    private func handle(_ event: StoreMaintenancePolicy.Event) {
+    /// Called by `holdsStoreMaintenance()` when a view that keeps records
+    /// appears. The full pass waits until every hold has ended.
+    func beginHold(_ token: UUID) {
+        let wasHeld = !holds.isEmpty
+        holds.insert(token)
+        if !wasHeld {
+            handle(.holdsChanged(active: true))
+        }
+    }
+
+    func endHold(_ token: UUID) {
+        guard holds.remove(token) != nil, holds.isEmpty else { return }
+        handle(.holdsChanged(active: false))
+    }
+
+    func handle(_ event: StoreMaintenancePolicy.Event) {
         switch policy.handle(event) {
         case .none:
             break
         case .cancelPendingPass:
-            pendingPass?.cancel()
-            pendingPass = nil
+            scheduledPass?.cancel()
+            scheduledPass = nil
         case .scheduleFullPass:
-            pendingPass?.cancel()
-            pendingPass = Task { [weak self] in
-                try? await Task.sleep(for: Self.quietPeriod)
+            scheduledPass?.cancel()
+            let sleep = self.sleep
+            let quietPeriod = self.quietPeriod
+            scheduledPass = Task { [weak self] in
+                try? await sleep(quietPeriod)
                 guard !Task.isCancelled else { return }
                 self?.runFullPass()
             }
         case .seedOnly:
-            guard let context else { return }
-            seedStore(context: context)
-            NotificationCenter.default.post(name: .storeMaintenanceDidRun, object: nil)
+            runSeedOnly()
         }
     }
 
     private func runFullPass() {
-        guard let context else { return }
+        guard let context else {
+            waitingForStart = .scheduleFullPass
+            return
+        }
         prepareStore(context: context)
-        NotificationCenter.default.post(name: .storeMaintenanceDidRun, object: nil)
+        _ = policy.handle(.fullPassRan)
+        NotificationCenter.default.post(name: .storeMaintenanceDidRun, object: self)
+    }
+
+    private func runSeedOnly() {
+        guard let context else {
+            if waitingForStart == nil {
+                waitingForStart = .seedOnly
+            }
+            return
+        }
+        seedStore(context: context)
+        NotificationCenter.default.post(name: .storeMaintenanceDidRun, object: self)
     }
 }

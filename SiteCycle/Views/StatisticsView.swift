@@ -35,6 +35,10 @@ struct StatisticsView: View {
                 viewModel = vm
             }
         }
+        // A maintenance pass can delete duplicates the statistics were built from.
+        .onStoreMaintenancePass {
+            viewModel?.refresh()
+        }
         .onChange(of: timeWindowRaw) {
             viewModel?.timeWindow = timeWindow
             viewModel?.refresh()

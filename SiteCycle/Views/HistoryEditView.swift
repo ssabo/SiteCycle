@@ -93,6 +93,9 @@ struct HistoryEditView: View {
                 .accessibilityIdentifier("historyEdit.save")
             }
         }
+        // The entry, location and problems being edited must outlive a
+        // maintenance pass until Save or Cancel.
+        .holdsStoreMaintenance()
     }
 
     private var problemSection: some View {
