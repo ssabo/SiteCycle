@@ -48,8 +48,8 @@ struct HomeView: View {
         .onChange(of: connectivityManager.lastWatchCommandDate) {
             refreshViewModels()
         }
-        // A maintenance pass may have deleted a duplicate that a ViewModel holds.
-        .onStoreMaintenancePass {
+        // On an iCloud store the default sites can be seeded after launch.
+        .onReceive(NotificationCenter.default.publisher(for: .storeDidSeedDefaults)) { _ in
             refreshViewModels()
         }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {

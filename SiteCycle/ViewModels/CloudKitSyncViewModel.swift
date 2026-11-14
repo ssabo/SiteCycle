@@ -223,7 +223,7 @@ enum CloudKitSyncState: Equatable {
     )
     private let isCloudKitEnabled: Bool
     private var networkMonitor: NWPathMonitor?
-    private var cloudKitObserver: NSObjectProtocol?
+    private var cloudKitEventTask: Task<Void, Never>?
     private var accountTask: Task<Void, Never>?
     private var accountObserver: NSObjectProtocol?
 
@@ -258,7 +258,7 @@ enum CloudKitSyncState: Equatable {
 
     private func startMonitoring() {
         startNetworkMonitor()
-        observeCloudKitEvents()
+        cloudKitEventTask = observeCloudKitEvents()
         accountTask = Task { await checkAccountStatus() }
         observeAccountChanges()
     }
@@ -266,10 +266,8 @@ enum CloudKitSyncState: Equatable {
     private func stopMonitoring() {
         networkMonitor?.cancel()
         networkMonitor = nil
-        if let observer = cloudKitObserver {
-            NotificationCenter.default.removeObserver(observer)
-            cloudKitObserver = nil
-        }
+        cloudKitEventTask?.cancel()
+        cloudKitEventTask = nil
         accountTask?.cancel()
         accountTask = nil
         if let observer = accountObserver {
@@ -290,15 +288,24 @@ enum CloudKitSyncState: Equatable {
         monitor.start(queue: DispatchQueue.global(qos: .utility))
     }
 
-    private func observeCloudKitEvents() {
-        cloudKitObserver = CloudKitEvents.observe { [weak self] event in
-            Task { @MainActor [weak self] in
-                self?.applyEvent(event)
+    private func observeCloudKitEvents() -> Task<Void, Never> {
+        Task { [weak self] in
+            for await notification in NotificationCenter.default.notifications(
+                named: NSPersistentCloudKitContainer.eventChangedNotification
+            ) {
+                self?.handleCloudKitEvent(notification)
             }
         }
     }
 
-    private func applyEvent(_ event: CloudKitEventInfo) {
+    private func handleCloudKitEvent(_ notification: Notification) {
+        guard let event = notification.userInfo?[
+            NSPersistentCloudKitContainer.eventNotificationUserInfoKey
+        ] as? NSPersistentCloudKitContainer.Event else { return }
+        applyEvent(event)
+    }
+
+    private func applyEvent(_ event: NSPersistentCloudKitContainer.Event) {
         let typeName = Self.eventTypeName(event.type)
         let store = event.storeIdentifier
         if event.endDate == nil {

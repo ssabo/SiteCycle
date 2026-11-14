@@ -159,9 +159,8 @@ Each rule says what enforces it. "Prose only" means nothing does yet, so take ex
    - Never decide by fetch order, entry counts or `sortOrder` ties.
    - Move relationships onto the keeper before deleting the duplicates.
    - Locations also merge the user's settings onto the keeper, from synced fields. Never OR `isEnabled` there: a freshly seeded copy is always enabled, so OR-ing turns back on a site the user disabled. Problems don't merge settings yet; they keep the preferred copy's, so a second customized copy's changes are lost.
-   - **When:** on a CloudKit store, dedup runs only after a successful import, because it can move only the entries already on the device. `StoreMaintenanceCoordinator` is the only caller of `prepareStore` and `seedStore`; don't call them or a dedup function from anywhere else. See "Store maintenance" in `docs/architecture.md`.
-   - **Screens that keep records:** a pass can delete a duplicate mid-session. A sheet or editor that keeps a record across user interaction must use `.holdsStoreMaintenance()`, and a view whose ViewModel caches records must refresh in `.onStoreMaintenancePass`. *Prose only.*
-   - *Enforced by:* `DeduplicationTests` pins all three keepers across every insertion order, and the location settings merge. `SiteProblemTests` pins the problem keeper's preferences. `StoreMaintenancePolicyTests` and `StoreMaintenanceCoordinatorTests` pin when dedup may run.
+   - **When:** dedup runs once per launch, before any screen holds a record, so it never deletes a record a screen is showing. On an iCloud store, seeding waits for the first CloudKit download, so a new phone doesn't create duplicates of the user's sites before their history arrives. `StoreMaintenanceCoordinator` is the only caller of `prepareStore` and `seedStore`; don't seed or dedup from anywhere else. See "Store maintenance" in `docs/architecture.md`.
+   - *Enforced by:* `DeduplicationTests` pins all three keepers across every insertion order, and the location settings merge. `SiteProblemTests` pins the problem keeper's preferences. `StoreMaintenanceCoordinatorTests` pins when seeding and dedup run.
 4. **Never change a persisted identifier.** That covers:
    - `DefaultProblem.key`
    - `@AppStorage` and UserDefaults key strings

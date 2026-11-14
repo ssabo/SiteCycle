@@ -82,19 +82,14 @@ struct SiteCycleApp: App {
             ContentView(isCloudKitEnabled: isCloudKitEnabled)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
-                    connectivityManager.configure(modelContext: context)
                     storeMaintenance.start(context: context, isCloudKitEnabled: isCloudKitEnabled)
-                    // A local store's pass just ran and pushed (below). A
-                    // CloudKit store's first pass waits for an import.
-                    if isCloudKitEnabled {
-                        connectivityManager.pushCurrentState()
-                    }
+                    connectivityManager.configure(modelContext: context)
+                    connectivityManager.pushCurrentState()
                 }
-                .onStoreMaintenancePass {
+                .onReceive(NotificationCenter.default.publisher(for: .storeDidSeedDefaults)) { _ in
                     connectivityManager.pushCurrentState()
                 }
                 .environment(connectivityManager)
-                .environment(\.storeMaintenance, storeMaintenance)
                 .fullScreenCover(isPresented: Binding(
                     get: { !hasCompletedOnboarding },
                     set: { newValue in hasCompletedOnboarding = !newValue }

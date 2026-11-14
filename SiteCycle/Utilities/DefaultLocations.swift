@@ -42,9 +42,9 @@ enum DefaultLocations {
 
 /// Seeds the default body locations into a store that has none.
 ///
-/// Custom zones don't count: on a CloudKit store, onboarding can show the
-/// location list before the first maintenance pass, and a custom zone added
-/// then must not stop the defaults from ever being seeded. The user can only
+/// Custom zones don't count: on an iCloud store, seeding waits for the first
+/// download, so onboarding can show the location list before it runs, and a
+/// custom zone added then must not stop the defaults from ever being seeded. The user can only
 /// disable a default, not delete it, so this normally seeds once per store;
 /// a CSV restore that names no default site brings the defaults back.
 @MainActor
@@ -83,8 +83,10 @@ func seedDefaultLocations(context: ModelContext) {
 /// links sync separately and can differ between devices meanwhile, and seeded
 /// copies all tie on `sortOrder`.
 ///
-/// Only entries already on this device can be moved, so on a CloudKit store
-/// this must run only after an import (see `StoreMaintenancePolicy`).
+/// Only entries already on this device can be moved. That is why an iCloud
+/// store doesn't seed its defaults until its first download (see
+/// `StoreMaintenanceCoordinator`): a new phone's own copies would otherwise be
+/// merged with the user's before their history arrived.
 ///
 /// The user's settings are then merged onto the keeper (see
 /// `mergeUserSettings(from:into:)`), so keeping a freshly seeded copy doesn't
@@ -109,7 +111,6 @@ func deduplicateLocations(context: ModelContext) {
         .map { copies in copies.sorted { $0.id.uuidString < $1.id.uuidString } }
     guard !merges.isEmpty else { return }
 
-    let fallback = siteToKeepEnabled(merges: merges, allLocations: allLocations)
     for copies in merges {
         guard let keeper = copies.first else { continue }
         let duplicates = Array(copies.dropFirst())
@@ -122,7 +123,6 @@ func deduplicateLocations(context: ModelContext) {
             context.delete(duplicate)
         }
     }
-    fallback?.isEnabled = true
 
     try? context.save()
 }
@@ -133,25 +133,6 @@ private struct LocationKey: Hashable {
     let side: String?
 }
 
-/// The keeper to re-enable if disabled copies winning every merge would leave
-/// no enabled location at all. That happens when devices disabled different
-/// sites before syncing, and `LocationConfigView` never lets the user turn
-/// off the last enabled site, so dedup mustn't either.
-///
-/// Only one site is re-enabled, so the user's other choices stand. It is the
-/// lowest-id keeper among the merged sites that some copy has enabled, so
-/// every device picks the same one. Nil when no re-enable is needed.
-private func siteToKeepEnabled(merges: [[Location]], allLocations: [Location]) -> Location? {
-    let merged = Set(merges.joined().map { ObjectIdentifier($0) })
-    let otherEnabled = allLocations.contains { !merged.contains(ObjectIdentifier($0)) && $0.isEnabled }
-    let staysEnabled = merges.contains { copies in copies.allSatisfy(\.isEnabled) }
-    guard !otherEnabled, !staysEnabled else { return nil }
-    return merges
-        .filter { copies in copies.contains(where: \.isEnabled) }
-        .compactMap(\.first)
-        .min { $0.id.uuidString < $1.id.uuidString }
-}
-
 /// Copies onto the keeper any setting changed on a duplicate, judged against
 /// how the copy was seeded. Reads only synced fields, so every device merging
 /// the same copies gets the same result.
@@ -159,7 +140,7 @@ private func siteToKeepEnabled(merges: [[Location]], allLocations: [Location]) -
 /// - `isEnabled`: a disabled copy wins. Defaults are always seeded enabled, so
 ///   a disabled copy records the user turning the site off (for example,
 ///   because of lipohypertrophy), and a fresh device's copy must not turn it
-///   back on. (`siteToKeepEnabled` handles the one exception.)
+///   back on.
 /// - `sortOrder`: the keeper's, if it differs from its seeded index (the user
 ///   moved it, or a CSV restore renumbered it); otherwise the first such
 ///   duplicate's, so a reordered list survives a new device's seed. Values can

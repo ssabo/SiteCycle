@@ -34,12 +34,8 @@ final class HistoryViewModel {
     var startDate: Date?
     var endDate: Date?
     var problemFilter: HistoryProblemFilter = .all
-    /// Bumped by `refresh()`. `filteredEntries` reads it, so a view showing
-    /// the list re-renders and refetches.
-    private var revision = 0
 
     var filteredEntries: [SiteChangeEntry] {
-        _ = revision
         let descriptor = FetchDescriptor<SiteChangeEntry>(
             sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
         )
@@ -71,12 +67,6 @@ final class HistoryViewModel {
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
-    }
-
-    /// Refetches after a store maintenance pass, which can delete duplicate
-    /// entries the list is showing.
-    func refresh() {
-        revision += 1
     }
 
     func deleteEntry(_ entry: SiteChangeEntry) {

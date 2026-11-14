@@ -99,9 +99,6 @@ struct SiteChangeConfirmationSheet: View {
                 }
             }
         }
-        // `targetLocation`, `previousEntry` and the chosen problems must
-        // outlive a maintenance pass until Confirm or Cancel.
-        .holdsStoreMaintenance()
     }
 
     /// Only edits the user made are sent, so confirming never writes the

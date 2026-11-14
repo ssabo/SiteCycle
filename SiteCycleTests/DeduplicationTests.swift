@@ -139,47 +139,14 @@ struct DeduplicationTests {
                 sortOrder: 9
             ))
         }
-        // Another site stays enabled, so disabling this one leaves one to use.
-        let other = Location(bodyPart: "Arm", subArea: "Back", side: "left", sortOrder: 10)
-        context.insert(other)
         try context.save()
 
         deduplicateLocations(context: context)
 
         let fresh = ModelContext(container)
         let survivors = try fetchLocations(fresh)
-        #expect(survivors.map(\.id) == [ids[0], other.id])
-        #expect(survivors.map(\.isEnabled) == [false, true])
-    }
-
-    /// Each device turned off a different site before they synced. A disabled
-    /// copy winning both merges would leave no site to recommend, which the
-    /// settings screen never allows. So exactly one site is re-enabled, the
-    /// lowest-id keeper that some copy had enabled, and the other stays off.
-    @Test func locationDedupKeepsExactlyOneSiteEnabled() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let ids = try fixedIDs()
-        let lowRightID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000003"))
-        let highRightID = try #require(UUID(uuidString: "FFFFFFFF-0000-0000-0000-000000000001"))
-
-        // L and R Abdomen (Front), seeded at 0 and 1.
-        context.insert(Location(id: ids[0], bodyPart: "Abdomen", subArea: "Front", side: "left", sortOrder: 0))
-        context.insert(Location(
-            id: ids[2], bodyPart: "Abdomen", subArea: "Front", side: "left", isEnabled: false, sortOrder: 0
-        ))
-        context.insert(Location(
-            id: lowRightID, bodyPart: "Abdomen", subArea: "Front", side: "right", isEnabled: false, sortOrder: 1
-        ))
-        context.insert(Location(id: highRightID, bodyPart: "Abdomen", subArea: "Front", side: "right", sortOrder: 1))
-        try context.save()
-
-        deduplicateLocations(context: context)
-
-        let fresh = ModelContext(container)
-        let survivors = try fetchLocations(fresh)
-        #expect(survivors.map(\.id) == [ids[0], lowRightID])
-        #expect(survivors.map(\.isEnabled) == [true, false])
+        #expect(survivors.map(\.id) == [ids[0]])
+        #expect(survivors.first?.isEnabled == false)
     }
 
     /// L Arm (Back) is seeded at sortOrder 10. The keeper (lowest id) either
@@ -291,25 +258,5 @@ struct DeduplicationTests {
         let survivors = try fetchLocations(fresh)
         #expect(survivors.map(\.id) == [ids[0], ids[1]])
         #expect(survivors.map(\.fullDisplayName) == ["L Abdomen (Front)", "L Abdomen (Side)"])
-    }
-
-    /// The fallback pass runs before anything is imported, so it must never
-    /// delete: the duplicate's entries may not have arrived yet.
-    @Test func seedStoreMigratesButNeverDeletes() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-        let ids = try fixedIDs()
-
-        context.insert(legacyLocation(id: ids[2], zone: "Front Abdomen", sortOrder: 0))
-        context.insert(legacyLocation(id: ids[0], zone: "Front Abdomen", sortOrder: 0))
-        try context.save()
-
-        seedStore(context: context)
-
-        let fresh = ModelContext(container)
-        let survivors = try fresh.fetch(FetchDescriptor<Location>())
-        #expect(Set(survivors.map(\.id)) == [ids[0], ids[2]])
-        #expect(survivors.map(\.fullDisplayName) == ["L Abdomen (Front)", "L Abdomen (Front)"])
-        #expect(try fresh.fetchCount(FetchDescriptor<SiteProblem>()) == DefaultProblems.all.count)
     }
 }
