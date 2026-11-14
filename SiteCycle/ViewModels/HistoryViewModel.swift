@@ -93,6 +93,8 @@ final class HistoryViewModel {
         if let note = note {
             entry.note = note
         }
+        // A new start time can put an open entry behind another one.
+        SiteChangeEntry.closeSupersededActiveEntries(in: modelContext)
         try? modelContext.save()
     }
 
@@ -104,8 +106,22 @@ final class HistoryViewModel {
         try? modelContext.save()
     }
 
+    /// Only the newest entry can be made active again: reopening an older one
+    /// would leave two active sites (review §2.7).
+    func canClearEndTime(_ entry: SiteChangeEntry) -> Bool {
+        let start = entry.startTime
+        let descriptor = FetchDescriptor<SiteChangeEntry>(
+            predicate: #Predicate<SiteChangeEntry> { $0.startTime > start }
+        )
+        return ((try? modelContext.fetchCount(descriptor)) ?? 0) == 0
+    }
+
+    /// Makes the newest entry active again, and closes any older open entry.
+    /// Does nothing for an entry that isn't the newest.
     func clearEndTime(_ entry: SiteChangeEntry) {
+        guard canClearEndTime(entry) else { return }
         entry.endTime = nil
+        SiteChangeEntry.closeSupersededActiveEntries(in: modelContext)
         try? modelContext.save()
     }
 }

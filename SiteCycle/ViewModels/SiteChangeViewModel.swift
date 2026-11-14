@@ -320,9 +320,12 @@ final class SiteChangeViewModel {
         // A past time backdates a change the user forgot to log.
         let changeTime = changeTime ?? Date()
 
-        // Close the previous active entry
+        // Close the previous active entry, unless it started after the change
+        // (a watch command logged a newer site while the sheet was open).
         let activeEntry = SiteChangeEntry.fetchActive(in: modelContext)
-        activeEntry?.endTime = changeTime
+        if let activeEntry, activeEntry.startTime <= changeTime {
+            activeEntry.endTime = changeTime
+        }
 
         // The note and problems belong to the entry the user saw on the
         // confirmation sheet (`previousEntry`). It can differ from the active
@@ -338,6 +341,10 @@ final class SiteChangeViewModel {
             location: location
         )
         modelContext.insert(newEntry)
+
+        // Any other open entries (from History, CSV or another device) are
+        // closed too, so only the newest site is active.
+        SiteChangeEntry.closeSupersededActiveEntries(in: modelContext)
 
         try? modelContext.save()
     }

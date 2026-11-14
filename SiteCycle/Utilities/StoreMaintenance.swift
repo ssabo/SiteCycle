@@ -11,12 +11,26 @@ import SwiftData
 /// - Location dedup runs before entry dedup, which matches entries by
 ///   location. Two copies of an entry match only once both point at the
 ///   location keeper.
+/// - Entry dedup runs before closing superseded entries, so two copies of the
+///   active entry are merged rather than one closing the other.
 @MainActor
 func prepareStore(context: ModelContext) {
     migrateLocationBodyParts(context: context)
     deduplicateLocations(context: context)
     deduplicateSiteChangeEntries(context: context)
+    closeSupersededActiveEntries(context: context)
     deduplicateProblems(context: context)
+}
+
+/// Closes every open entry but the newest, and saves if that changed anything.
+/// It never deletes, so unlike dedup it is safe to run while screens hold
+/// records. Returns whether it changed anything.
+@MainActor
+@discardableResult
+func closeSupersededActiveEntries(context: ModelContext) -> Bool {
+    guard SiteChangeEntry.closeSupersededActiveEntries(in: context) else { return false }
+    try? context.save()
+    return true
 }
 
 /// Seeds the default locations and problems the store doesn't have yet. It
@@ -28,9 +42,10 @@ func seedStore(context: ModelContext) {
 }
 
 extension Notification.Name {
-    /// Posted when an iCloud store's defaults are seeded after launch. Home
-    /// refreshes on it, and the app pushes the new sites to the watch.
-    static let storeDidSeedDefaults = Notification.Name("StoreDidSeedDefaults")
+    /// Posted when maintenance changes an iCloud store after launch: it seeded
+    /// the defaults, or closed superseded entries after a CloudKit download.
+    /// Home refreshes on it, and the app pushes the new state to the watch.
+    static let storeMaintenanceDidChangeData = Notification.Name("StoreMaintenanceDidChangeData")
 }
 
 /// Runs the store's launch maintenance, and decides when to seed the defaults.
@@ -43,6 +58,9 @@ extension Notification.Name {
 /// If no download succeeds, for example offline or without an iCloud account,
 /// it seeds after `fallbackDelay` anyway. Any duplicates that creates are
 /// merged at the next launch.
+///
+/// After every successful CloudKit download it also closes superseded active
+/// entries, since another device may have logged a change offline.
 @MainActor
 final class StoreMaintenanceCoordinator {
     private let fallbackDelay: Duration?
@@ -62,7 +80,7 @@ final class StoreMaintenanceCoordinator {
     ///     starts listening here, before its store exists, so it can't miss
     ///     the first one. Tests turn it off and call `importDidSucceed()`.
     ///   - sleep: waits for a duration; tests pass one that returns at once.
-    ///   - notificationCenter: where `.storeDidSeedDefaults` is posted. Tests
+    ///   - notificationCenter: where `.storeMaintenanceDidChangeData` is posted. Tests
     ///     pass their own, so the host app doesn't react to a test's seeding.
     init(
         fallbackDelay: Duration? = .seconds(10),
@@ -97,30 +115,41 @@ final class StoreMaintenanceCoordinator {
 
         prepareStore(context: context)
         if importHasSucceeded {
-            seedOnce()
+            if seedOnce() { postDidChangeData() }
         } else if let fallbackDelay {
             let sleep = self.sleep
             fallbackTask = Task { [weak self] in
                 try? await sleep(fallbackDelay)
-                guard !Task.isCancelled else { return }
-                self?.seedOnce()
+                guard !Task.isCancelled, let self else { return }
+                if self.seedOnce() { self.postDidChangeData() }
             }
         }
     }
 
     /// A CloudKit download succeeded, so the user's existing data is on this
-    /// device: seed whichever defaults they don't have.
+    /// device: seed whichever defaults they don't have. The download may also
+    /// have brought a change another device logged offline, leaving two
+    /// active entries, so close the superseded one.
     func importDidSucceed() {
         importHasSucceeded = true
-        seedOnce()
+        guard let context else { return }
+        let closedEntries = closeSupersededActiveEntries(context: context)
+        let seeded = seedOnce()
+        if closedEntries || seeded { postDidChangeData() }
     }
 
-    private func seedOnce() {
-        guard let context, !hasSeeded else { return }
+    /// Seeds the first time it's called once there is a context. Returns
+    /// whether it seeded.
+    private func seedOnce() -> Bool {
+        guard let context, !hasSeeded else { return false }
         hasSeeded = true
         fallbackTask?.cancel()
         seedStore(context: context)
-        notificationCenter.post(name: .storeDidSeedDefaults, object: self)
+        return true
+    }
+
+    private func postDidChangeData() {
+        notificationCenter.post(name: .storeMaintenanceDidChangeData, object: self)
     }
 
     /// Calls `handler` each time a CloudKit import succeeds, on the queue that

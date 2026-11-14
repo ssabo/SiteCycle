@@ -16,6 +16,8 @@ struct HistoryEditView: View {
     @State private var hasEndTime: Bool
     @State private var note: String
     @State private var problems: [SiteProblem]
+    /// Only the newest entry can be made active again (review §2.7).
+    private let canClearEndTime: Bool
 
     init(
         entry: SiteChangeEntry,
@@ -33,6 +35,7 @@ struct HistoryEditView: View {
         _hasEndTime = State(initialValue: entry.endTime != nil)
         _note = State(initialValue: entry.note ?? "")
         _problems = State(initialValue: entry.safeProblems)
+        canClearEndTime = entry.endTime == nil || viewModel.canClearEndTime(entry)
     }
 
     var body: some View {
@@ -47,7 +50,7 @@ struct HistoryEditView: View {
                 .accessibilityIdentifier("historyEdit.locationPicker")
             }
 
-            Section("Timing") {
+            Section {
                 DatePicker(
                     "Start Time",
                     selection: $startTime
@@ -55,6 +58,7 @@ struct HistoryEditView: View {
                 .accessibilityIdentifier("historyEdit.startTime")
 
                 Toggle("Has End Time", isOn: $hasEndTime)
+                    .disabled(!canClearEndTime)
                     .accessibilityIdentifier("historyEdit.hasEndTime")
 
                 if hasEndTime {
@@ -64,6 +68,12 @@ struct HistoryEditView: View {
                         in: startTime...
                     )
                     .accessibilityIdentifier("historyEdit.endTime")
+                }
+            } header: {
+                Text("Timing")
+            } footer: {
+                if !canClearEndTime {
+                    Text("Only the most recent site can be active.")
                 }
             }
 

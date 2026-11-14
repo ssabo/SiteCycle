@@ -57,7 +57,11 @@ One site's wear period.
   - `durationHours`: nil while the entry is active.
   - `safeProblems`: the problems sorted by `sortOrder`.
 - `SiteChangeEntry.fetchActive(in:)` returns the newest entry whose `endTime` is nil.
-- **Known issue:** nothing enforces a single active entry.
+- **One active site.** Only the newest entry may be open. `SiteChangeEntry.closeSupersededActiveEntries(in:)` closes every other open entry at the start of the next entry that started after it.
+  - **Why it's needed:** open entries can still pile up from two devices logging a change offline, or from a CSV backup with several rows that have no duration.
+  - **Where it runs:** after logging a change, after a History edit, during CSV import, in launch maintenance, and after every successful CloudKit download.
+  - **Deterministic:** it reads only synced fields, so every device closes the same entries at the same times. Entries that share a start time close at the same later start, so identical copies stay identical and entry dedup can still merge them. Open entries that share the newest start time are all left open.
+  - **History:** only the newest entry can be made active again. For an older closed entry, the "Has End Time" toggle is disabled (`HistoryViewModel.canClearEndTime`).
 
 ### `SiteProblem`
 
@@ -91,7 +95,8 @@ The first time `ContentView` appears, `SiteCycleApp` calls `StoreMaintenanceCoor
      - `isEnabled`: a disabled copy wins, because defaults are always seeded enabled.
      - `sortOrder`: the keeper's if it differs from its seeded index (the user moved it, or a CSV restore renumbered it), otherwise the first such duplicate's. The seeded index is the position in `DefaultLocations.all`, so that list is append-only.
 3. `deduplicateSiteChangeEntries`: merges entries with the same start, end, location and note. The keeper is the lowest `id`, and the duplicates' problems are merged into it. It runs after location dedup, because two copies of an entry match only once both point at the location keeper.
-4. `deduplicateProblems`:
+4. `closeSupersededActiveEntries`: closes every open entry but the newest (see "One active site" above). It runs after entry dedup, so two copies of the active entry are merged rather than one closing the other. It never deletes, so it also runs after every successful CloudKit download, which then posts `.storeMaintenanceDidChangeData` if it changed anything.
+5. `deduplicateProblems`:
    - **Groups:** defaults are grouped by `defaultKey`, and custom problems by `SiteProblem.nameKey` (trimmed and lowercased).
    - **Keeper:** a customized default comes first, meaning one that is renamed, has a new emoji, is disabled, or has moved from its seeded index. Next comes an enabled custom problem, then the lowest `id`.
    - **Merge:** entries on the duplicates are moved onto the keeper.
@@ -150,12 +155,12 @@ Every enabled location in `sortOrder`, with left before right within a zone. The
 `SiteChangeViewModel.logSiteChange(location:note:previousNote:previousProblems:previousEntry:changeTime:)`:
 
 1. **Closes the active entry.** It sets the active entry's `endTime` to `changeTime`, which defaults to now.
-   - Only the newest open entry is closed.
    - The confirmation sheet's time picker lets the user backdate the change, but not to before the previous site started.
+   - If the active entry started after `changeTime` (a watch command logged a newer site while the sheet was open), it stays active, and the new entry is closed when that site started.
 2. **Updates the closing site.** It applies the note and problem edits to `previousEntry`, the entry the sheet showed. If that is nil, it uses the active entry.
    - This matters because a watch command may have logged a change while the sheet was open.
    - It writes only values that differ, and it skips an entry that was deleted while the sheet was open.
-3. **Records the new site.** It inserts the new entry and saves.
+3. **Records the new site.** It inserts the new entry, closes any other open entries (`closeSupersededActiveEntries`), and saves.
 
 ### The confirmation sheet
 

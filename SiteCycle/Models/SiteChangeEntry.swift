@@ -54,4 +54,41 @@ final class SiteChangeEntry {
         descriptor.fetchLimit = 1
         return try? modelContext.fetch(descriptor).first
     }
+
+    /// Enforces "one active site": closes every open entry that isn't the
+    /// newest, at the start of the next entry that started after it. Open
+    /// entries can pile up from History edits, CSV import and two devices
+    /// logging changes offline (review §2.7).
+    ///
+    /// The result depends only on synced fields, so every device repairs the
+    /// same way. Entries that share a start time close at the same later
+    /// start, so identical copies stay identical and entry dedup can still
+    /// merge them. Several open entries that share the newest start time are
+    /// all left open.
+    ///
+    /// Doesn't save. Returns whether it changed anything.
+    @MainActor
+    @discardableResult
+    static func closeSupersededActiveEntries(in modelContext: ModelContext) -> Bool {
+        let descriptor = FetchDescriptor<SiteChangeEntry>(
+            sortBy: [SortDescriptor(\SiteChangeEntry.startTime, order: .reverse)]
+        )
+        guard let entries = try? modelContext.fetch(descriptor) else { return false }
+
+        var didChange = false
+        // The start of the nearest entry that started strictly later.
+        var laterStart: Date?
+        var currentStart: Date?
+        for entry in entries where !entry.isDeleted {
+            if entry.startTime != currentStart {
+                laterStart = currentStart
+                currentStart = entry.startTime
+            }
+            if entry.endTime == nil, let laterStart {
+                entry.endTime = laterStart
+                didChange = true
+            }
+        }
+        return didChange
+    }
 }

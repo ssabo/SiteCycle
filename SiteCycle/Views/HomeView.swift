@@ -48,8 +48,9 @@ struct HomeView: View {
         .onChange(of: connectivityManager.lastWatchCommandDate) {
             refreshViewModels()
         }
-        // On an iCloud store the default sites can be seeded after launch.
-        .onReceive(NotificationCenter.default.publisher(for: .storeDidSeedDefaults)) { _ in
+        // On an iCloud store the default sites can be seeded, and superseded
+        // active entries closed, after launch.
+        .onReceive(NotificationCenter.default.publisher(for: .storeMaintenanceDidChangeData)) { _ in
             refreshViewModels()
         }
         .sheet(isPresented: $showingSiteSheet, onDismiss: {
