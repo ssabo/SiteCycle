@@ -50,6 +50,17 @@ struct ActiveEntryRepairTests {
         #expect(newest.endTime == nil)
     }
 
+    @Test func closesALoneOpenEntryWithANewerClosedOne() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let stray = SiteChangeEntry(startTime: hour(0))
+        context.insert(stray)
+        context.insert(SiteChangeEntry(startTime: hour(24), endTime: hour(48)))
+
+        #expect(SiteChangeEntry.closeSupersededActiveEntries(in: context))
+        #expect(stray.endTime == hour(24))
+    }
+
     @Test func reportsNoChangeWhenOnlyTheNewestIsOpen() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -101,9 +112,9 @@ struct ActiveEntryRepairTests {
         #expect(try openEntryIDs(container) == [newEntry.id])
     }
 
-    /// A watch command logged a newer site while the sheet's backdated change
-    /// was being confirmed. The newer site stays active; the backdated one
-    /// runs until it started.
+    /// Without a shown entry (no confirmation sheet), a change backdated to
+    /// before the active site started doesn't close it; the backdated entry
+    /// runs until the active one began.
     @Test func aBackdatedChangeBeforeTheActiveEntryDoesNotCloseIt() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -126,7 +137,117 @@ struct ActiveEntryRepairTests {
         #expect(backdated.endTime == hour(48))
     }
 
+    /// The sheet showed `shown`; while it was open a watch command logged a
+    /// change at hour 48, and the user backdated the change to hour 40. The
+    /// phone's change wins, with no overlap: the watch's entry is the same
+    /// change logged twice, so it goes, and `shown` closes at hour 40.
+    @Test func aBackdatedChangeFromTheSheetReplacesOneTheWatchLoggedMeanwhile() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let location = Location(bodyPart: "Abdomen", sortOrder: 0)
+        context.insert(location)
+        let shown = SiteChangeEntry(startTime: hour(0), location: location)
+        context.insert(shown)
+        try context.save()
+
+        let viewModel = SiteChangeViewModel(modelContext: context)
+        viewModel.logSiteChange(location: location, note: nil, changeTime: hour(48))  // The watch.
+        let fromWatch = try #require(SiteChangeEntry.fetchActive(in: context))
+
+        viewModel.logSiteChange(location: location, note: "phone", previousEntry: shown, changeTime: hour(40))
+
+        let fresh = ModelContext(container)
+        let entries = try fresh.fetch(FetchDescriptor<SiteChangeEntry>(sortBy: [SortDescriptor(\.startTime)]))
+        #expect(!entries.contains { $0.id == fromWatch.id })
+        #expect(entries.map(\.startTime) == [hour(0), hour(40)])
+        #expect(entries.map(\.endTime) == [hour(40), nil])
+        #expect(entries.last?.note == "phone")
+    }
+
     // MARK: - History
+
+    /// Correcting the active site's start to before the previous one began
+    /// would make it older than that entry, and the repair would close it.
+    /// The edit is refused instead, changing nothing.
+    @Test func movingTheActiveSiteBeforeAnotherEntryIsRefused() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let previous = SiteChangeEntry(startTime: hour(24), endTime: hour(72))
+        let active = SiteChangeEntry(startTime: hour(72))
+        context.insert(previous)
+        context.insert(active)
+        try context.save()
+        let viewModel = HistoryViewModel(modelContext: context)
+
+        #expect(!viewModel.keepsActiveSiteNewest(active, startTime: hour(10), isActive: true))
+        #expect(viewModel.keepsActiveSiteNewest(active, startTime: hour(60), isActive: true))
+        let saved = viewModel.updateEntry(active, location: nil, startTime: hour(10), endTime: nil, note: "x")
+
+        #expect(!saved)
+        #expect(active.startTime == hour(72))
+        #expect(active.note == nil)
+        #expect(!context.hasChanges)
+        #expect(try openEntryIDs(container) == [active.id])
+    }
+
+    /// A typo that moves an old entry's start past the active site's start is
+    /// refused, so the active site isn't closed by the repair.
+    @Test func movingAClosedEntryAfterTheActiveSiteIsRefused() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let old = SiteChangeEntry(startTime: hour(0), endTime: hour(72))
+        let active = SiteChangeEntry(startTime: hour(72))
+        context.insert(old)
+        context.insert(active)
+        try context.save()
+        let viewModel = HistoryViewModel(modelContext: context)
+
+        let saved = viewModel.updateEntry(old, location: nil, startTime: hour(9000), endTime: nil, note: nil)
+
+        #expect(!saved)
+        #expect(old.startTime == hour(0))
+        #expect(try openEntryIDs(container) == [active.id])
+    }
+
+    /// The check uses the edited start time, so an older entry moved past
+    /// every other one can be made active in the same edit, in one save.
+    @Test func reopenWithANewStartChecksTheNewStart() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let older = SiteChangeEntry(startTime: hour(0), endTime: hour(10))
+        let newest = SiteChangeEntry(startTime: hour(72), endTime: hour(100))
+        context.insert(older)
+        context.insert(newest)
+        try context.save()
+        let viewModel = HistoryViewModel(modelContext: context)
+
+        #expect(!viewModel.canClearEndTime(older))
+        #expect(viewModel.reopen(older, startTime: hour(120), note: "moved"))
+
+        #expect(!context.hasChanges)
+        #expect(older.startTime == hour(120))
+        #expect(older.note == "moved")
+        #expect(try openEntryIDs(container) == [older.id])
+    }
+
+    /// Reopening the newest entry while moving its start before another entry
+    /// would leave it closed by the repair; it is refused instead.
+    @Test func reopenWithAStartBeforeAnotherEntryIsRefused() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let older = SiteChangeEntry(startTime: hour(24), endTime: hour(72))
+        let newest = SiteChangeEntry(startTime: hour(72), endTime: hour(100))
+        context.insert(older)
+        context.insert(newest)
+        try context.save()
+
+        let reopened = HistoryViewModel(modelContext: context).reopen(newest, startTime: hour(0))
+
+        #expect(!reopened)
+        #expect(newest.startTime == hour(72))
+        #expect(newest.endTime == hour(100))
+        #expect(try openEntryIDs(container).isEmpty)
+    }
 
     @Test func onlyTheNewestEntryCanBeMadeActiveAgain() throws {
         let container = try makeContainer()
