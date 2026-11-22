@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A00000000000000000001AA /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000AA /* BuildInfo.swift */; };
+		8A00000000000000000001AB /* BuildInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000AB /* BuildInfoTests.swift */; };
 		8A00000000000000000001A9 /* DurationTrendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A9 /* DurationTrendTests.swift */; };
 		8A00000000000000000001A8 /* DurationTrendChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A8 /* DurationTrendChart.swift */; };
 		8A00000000000000000001A7 /* DurationTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A7 /* DurationTrend.swift */; };
@@ -276,6 +278,9 @@
 		8A0000000000000000000091 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8A0000000000000000000092 /* SiteCycleWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiteCycleWidgets.entitlements; sourceTree = "<group>"; };
 		8A0000000000000000000093 /* SiteCycleWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiteCycleWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A00000000000000000000AA /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
+		8A00000000000000000000AB /* BuildInfoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfoTests.swift; sourceTree = "<group>"; };
+		8A00000000000000000000AC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -352,6 +357,7 @@
 				8A0000000000000000000206 /* Utilities */,
 				8A0000000000000000000006 /* Assets.xcassets */,
 				8A0000000000000000000008 /* SiteCycle.entitlements */,
+				8A00000000000000000000AC /* Info.plist */,
 				8A0000000000000000000207 /* Preview Content */,
 			);
 			path = SiteCycle;
@@ -407,6 +413,7 @@
 		8A0000000000000000000206 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				8A00000000000000000000AA /* BuildInfo.swift */,
 				8A000000000000000000002C /* CSVExporter.swift */,
 				8A000000000000000000002D /* CSVImporter.swift */,
 				8A0000000000000000000005 /* DefaultLocations.swift */,
@@ -479,6 +486,7 @@
 				8A000000000000000000001A /* StatisticsViewModelAggregateTests.swift */,
 				8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */,
 				8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */,
+				8A00000000000000000000AB /* BuildInfoTests.swift */,
 				8A00000000000000000000A9 /* DurationTrendTests.swift */,
 				8A0000000000000000000085 /* StatisticsTimeWindowTests.swift */,
 				8A0000000000000000000099 /* StatisticsViewModelProblemTests.swift */,
@@ -773,6 +781,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A00000000000000000001AA /* BuildInfo.swift in Sources */,
 				8A00000000000000000001A8 /* DurationTrendChart.swift in Sources */,
 				8A00000000000000000001A7 /* DurationTrend.swift in Sources */,
 				8A0000000000000000000101 /* SiteCycleApp.swift in Sources */,
@@ -815,6 +824,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A00000000000000000001AB /* BuildInfoTests.swift in Sources */,
 				8A00000000000000000001A9 /* DurationTrendTests.swift in Sources */,
 				8A0000000000000000000110 /* LocationTests.swift in Sources */,
 				8A0000000000000000000198 /* SiteProblemTests.swift in Sources */,
@@ -1059,6 +1069,7 @@
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycle/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1090,6 +1101,7 @@
 				DEVELOPMENT_TEAM = G58SM6WLX7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiteCycle/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

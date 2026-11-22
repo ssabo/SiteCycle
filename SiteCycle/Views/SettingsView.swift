@@ -159,11 +159,21 @@ struct SettingsView: View {
         }
 
         Section("About") {
-            HStack {
-                Text("Version")
-                Spacer()
-                Text(appVersion)
-                    .foregroundStyle(.secondary)
+            LabeledContent("Version", value: buildInfo.versionText)
+            LabeledContent("Built", value: buildInfo.buildDateText())
+            LabeledContent("Branch", value: buildInfo.branchText)
+            LabeledContent("Commit") {
+                Text(buildInfo.shortCommitText)
+                    .monospaced()
+            }
+            .contextMenu {
+                if let commit = buildInfo.commit {
+                    Button {
+                        UIPasteboard.general.string = commit
+                    } label: {
+                        Label("Copy Full Commit SHA", systemImage: "doc.on.doc")
+                    }
+                }
             }
         }
     }
@@ -228,11 +238,7 @@ struct SettingsView: View {
         showingShareSheet = true
     }
 
-    private var appVersion: String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(version) (\(build))"
-    }
+    private var buildInfo: BuildInfo { .main }
 }
 
 // MARK: - Activity Presenter

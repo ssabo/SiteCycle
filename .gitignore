@@ -2,6 +2,9 @@
 # to this filename and set your own SITECYCLE_BUNDLE_PREFIX.
 SiteCycleConfigOverride.xcconfig
 
+# Branch and commit stamped by ci_scripts/ci_post_clone.sh.
+SiteCycleBuildInfo.xcconfig
+
 # Xcode
 build/
 DerivedData/
