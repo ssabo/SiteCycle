@@ -217,12 +217,12 @@ The Statistics tab has a time-window picker: All / 9mo / 3mo / 1mo / 14d (`Stats
 
 The "Duration Trend" chart sits between Overall and Problems and answers "am I changing sites more or less often?". `DurationTrend.weeklyPoints` computes it.
 
-- **Weekly dots:** the mean duration of the completed sites that **ended** in each calendar week. A site is never split across weeks: it belongs to the week its change happened, so every dot averages whole sites, and problems (recorded at the change) land in the same week as the short sites they caused.
-- **Line:** a 4-week moving average (`DurationTrend.rollingWeeks`). It pools the sites (total hours ÷ site count) instead of averaging the weekly means, so busy weeks weigh more and empty weeks don't break it. It also reads sites from before the time window, so the line starts warmed up.
+- **Weekly dots:** the mean duration of the completed sites that **ended** in each calendar week. A site is never split across weeks: it belongs to the week its change happened, so every dot averages whole sites, and problems (recorded at the change) land in the same week as the short sites they caused. A site whose end time is after now (clock skew, a History edit) counts in the current week.
+- **Line:** a 4-week moving average (`DurationTrend.rollingWeeks`). It pools the sites (total hours ÷ site count) instead of averaging the weekly means, so busy weeks weigh more. The line breaks where 4 or more weeks in a row have no sites, rather than drawing through the gap.
 - **Problem badge:** the number of that week's sites with any problem; all problems count equally.
 - **No anomaly filtering:** short sites are what this chart is meant to show. The active site is skipped.
-- **Summary row:** the latest 4-week average against the 4 weeks before it (`recentChange`).
-- The time window trims which weeks are shown. Longer histories scroll horizontally, 26 weeks at a time, starting at the latest.
+- **Time window:** dots and badges count sites that started in the window, like the rest of Statistics. The line also pools sites from before the window, so it starts warmed up. Longer histories scroll horizontally, 26 weeks at a time, starting at the latest.
+- **Weeks follow the calendar's own week boundaries,** stepping from one week's end to the next. Adding 7 days instead breaks in time zones where DST starts at midnight.
 
 ### Problems
 

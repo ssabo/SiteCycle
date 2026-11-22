@@ -109,12 +109,16 @@ struct DurationTrendTests {
         #expect(approx(points[3].rollingAverage, 50))
         #expect(points[4].rollingAverage == nil)
         #expect(approx(points[5].rollingAverage, 70))
+        // The line breaks across the gap instead of joining week 3 to week 5.
+        #expect(points.map(\.trendSegment) == [0, 0, 0, 0, nil, 1])
     }
 
-    @Test func windowTrimsWeeksButTheRollingAverageSeesEarlierSites() throws {
+    @Test func windowTrimsWeeksAndDotsButTheRollingAverageSeesEarlierSites() throws {
         let entries = [
             site(from: try date(1, 5), hours: 40),
-            site(from: try date(1, 12), hours: 60),
+            // Ends in the window's week but started before the window: line only.
+            site(from: try date(1, 12), hours: 35),
+            site(from: try date(1, 14), hours: 30),
         ]
 
         let points = DurationTrend.weeklyPoints(
@@ -122,8 +126,44 @@ struct DurationTrendTests {
         )
 
         #expect(points.map(\.weekStart) == [try date(1, 12, 0)])
-        #expect(approx(points[0].averageDuration, 60))
-        #expect(approx(points[0].rollingAverage, 50))
+        #expect(points[0].siteCount == 1)
+        #expect(approx(points[0].averageDuration, 30))
+        #expect(approx(points[0].rollingAverage, 35))
+    }
+
+    @Test func siteEndingAfterNowCountsInTheCurrentWeek() throws {
+        // Sat 17 Jan → Mon 19 Jan, but "now" is Sun 18 Jan (e.g. another device's fast clock).
+        let entries = [site(from: try date(1, 17), hours: 48)]
+
+        let points = DurationTrend.weeklyPoints(
+            entries: entries, since: nil, now: try date(1, 18), calendar: calendar
+        )
+
+        #expect(points.map(\.weekStart) == [try date(1, 12, 0)])
+        #expect(points.map(\.siteCount) == [1])
+        #expect(approx(points[0].averageDuration, 48))
+    }
+
+    @Test func weeksLineUpAfterAMidnightDSTStart() throws {
+        // Chile starts DST at midnight on Sun 6 Sep 2026, so that week starts at 01:00
+        // while the following weeks start at 00:00 again.
+        var santiago = Calendar(identifier: .gregorian)
+        santiago.timeZone = try #require(TimeZone(identifier: "America/Santiago"))
+        santiago.firstWeekday = 1
+        func day(_ day: Int) throws -> Date {
+            try #require(santiago.date(from: DateComponents(year: 2026, month: 9, day: day, hour: 12)))
+        }
+        let entries = [
+            site(from: try day(7), hours: 48),
+            site(from: try day(13), hours: 60),
+            site(from: try day(20), hours: 72),
+        ]
+
+        let points = DurationTrend.weeklyPoints(entries: entries, since: nil, now: try day(23), calendar: santiago)
+
+        #expect(points.map(\.siteCount) == [1, 1, 1])
+        #expect(approx(points[2].averageDuration, 72))
+        #expect(approx(points[2].rollingAverage, 60))
     }
 
     @Test func noCompletedSitesGivesNoPoints() throws {
@@ -132,43 +172,5 @@ struct DurationTrendTests {
             since: nil, now: try date(1, 6), calendar: calendar
         )
         #expect(points.isEmpty)
-    }
-
-    // MARK: - Recent change
-
-    private func point(_ weekIndex: Int, rolling: Double?) throws -> WeeklyDurationPoint {
-        WeeklyDurationPoint(
-            weekStart: try date(1, 5 + 7 * weekIndex, 0),
-            siteCount: 0,
-            averageDuration: nil,
-            rollingAverage: rolling,
-            problemSiteCount: 0
-        )
-    }
-
-    @Test func recentChangeComparesWithFourWeeksEarlier() throws {
-        let points = [
-            try point(0, rolling: 70), try point(1, rolling: 66), try point(2, rolling: 64),
-            try point(3, rolling: 61), try point(4, rolling: 58), try point(5, rolling: 55),
-        ]
-
-        let change = try #require(DurationTrend.recentChange(in: points))
-
-        #expect(approx(change.current, 55))
-        #expect(approx(change.previous, 66))
-        #expect(approx(change.delta, -11))
-    }
-
-    @Test func recentChangeNeedsBothEnds() throws {
-        let tooShort = [
-            try point(0, rolling: 70), try point(1, rolling: 66), try point(2, rolling: 64), try point(3, rolling: 61),
-        ]
-        #expect(DurationTrend.recentChange(in: tooShort) == nil)
-
-        let missingPrevious = [
-            try point(0, rolling: nil), try point(1, rolling: 66), try point(2, rolling: 64),
-            try point(3, rolling: 61), try point(4, rolling: 58),
-        ]
-        #expect(DurationTrend.recentChange(in: missingPrevious) == nil)
     }
 }

@@ -16,9 +16,6 @@ struct DurationTrendSection: View {
             chart
                 .frame(height: 220)
                 .padding(.top, 8)
-            if let change = DurationTrend.recentChange(in: points) {
-                changeRow(change)
-            }
         } header: {
             Text("Duration Trend")
         } footer: {
@@ -31,10 +28,11 @@ struct DurationTrendSection: View {
     private var chart: some View {
         Chart {
             ForEach(points) { point in
-                if let rolling = point.rollingAverage {
+                if let rolling = point.rollingAverage, let segment = point.trendSegment {
                     LineMark(
                         x: .value("Week", point.weekStart, unit: .weekOfYear),
-                        y: .value("Moving Average", rolling)
+                        y: .value("Moving Average", rolling),
+                        series: .value("Segment", segment)
                     )
                     .interpolationMethod(.monotone)
                     .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
@@ -85,38 +83,6 @@ struct DurationTrendSection: View {
             .padding(.horizontal, 4)
             .frame(minWidth: 16, minHeight: 16)
             .background(Capsule().fill(Color.orange))
-    }
-
-    private func changeRow(_ change: DurationTrendChange) -> some View {
-        let delta = change.delta
-        let symbol: String
-        let meaning: String
-        if delta >= 0.05 {
-            symbol = "arrow.up.right"
-            meaning = "changing sites less often"
-        } else if delta <= -0.05 {
-            symbol = "arrow.down.right"
-            meaning = "changing sites more often"
-        } else {
-            symbol = "arrow.right"
-            meaning = "about the same"
-        }
-        return VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("Last \(DurationTrend.rollingWeeks) Weeks")
-                Spacer()
-                Text(formatHours(change.current))
-                    .foregroundStyle(.secondary)
-            }
-            Label(
-                "\(delta >= 0 ? "+" : "−")\(formatHours(abs(delta))) vs the "
-                    + "\(DurationTrend.rollingWeeks) weeks before (\(meaning))",
-                systemImage: symbol
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
     }
 
     private func accessibilityValue(_ point: WeeklyDurationPoint, average: Double) -> String {

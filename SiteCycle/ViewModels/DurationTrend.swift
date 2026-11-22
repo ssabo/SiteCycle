@@ -13,17 +13,12 @@ struct WeeklyDurationPoint: Identifiable, Equatable {
     let rollingAverage: Double?
     /// Sites that ended this week with at least one problem recorded.
     let problemSiteCount: Int
+    /// Which unbroken run of rolling averages this week belongs to, so the
+    /// line breaks across gaps instead of joining the weeks either side of
+    /// them; nil when `rollingAverage` is nil.
+    let trendSegment: Int?
 
     var id: Date { weekStart }
-}
-
-/// Change in the rolling average between the latest week and
-/// `DurationTrend.rollingWeeks` weeks earlier (non-overlapping spans).
-struct DurationTrendChange: Equatable {
-    let current: Double
-    let previous: Double
-
-    var delta: Double { current - previous }
 }
 
 /// Weekly average site duration, with a trailing moving average, so the user
@@ -47,59 +42,72 @@ enum DurationTrend {
 
     /// Points from the week containing `windowStart` (or the first completed
     /// site, if later) through the week containing `now`, one per week,
-    /// including weeks without sites. The rolling average also looks at
-    /// sites before `windowStart`, so the line starts warmed up.
+    /// including weeks without sites.
+    ///
+    /// - Dots and problem counts use only sites that started in the window,
+    ///   like the rest of Statistics. The rolling average also pools earlier
+    ///   sites, so the line starts warmed up.
+    /// - A site whose `endTime` is after `now` (a fast clock on another
+    ///   device, or a History edit) counts in the current week.
     static func weeklyPoints(
         entries: [SiteChangeEntry],
         since windowStart: Date?,
         now: Date,
         calendar: Calendar = .current
     ) -> [WeeklyDurationPoint] {
-        var buckets: [Date: WeekBucket] = [:]
+        var allSites: [Date: WeekBucket] = [:]
+        var windowSites: [Date: WeekBucket] = [:]
         for entry in entries {
             guard let endTime = entry.endTime,
                   let hours = entry.durationHours, hours >= 0,
-                  let week = calendar.dateInterval(of: .weekOfYear, for: endTime)?.start else { continue }
-            buckets[week, default: WeekBucket()].add(hours: hours, hasProblem: entry.hasProblems)
+                  let week = weekStart(of: min(endTime, now), calendar: calendar) else { continue }
+            allSites[week, default: WeekBucket()].add(hours: hours, hasProblem: entry.hasProblems)
+            if windowStart.map({ entry.startTime >= $0 }) ?? true {
+                windowSites[week, default: WeekBucket()].add(hours: hours, hasProblem: entry.hasProblems)
+            }
         }
 
-        guard let firstWeek = buckets.keys.min(),
-              let lastWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start,
-              firstWeek <= lastWeek else { return [] }
-        let windowWeek = windowStart.flatMap { calendar.dateInterval(of: .weekOfYear, for: $0)?.start }
-
-        var weeks: [Date] = []
-        var cursor = firstWeek
-        while cursor <= lastWeek {
-            weeks.append(cursor)
-            guard let next = calendar.date(byAdding: .weekOfYear, value: 1, to: cursor) else { break }
-            cursor = next
-        }
+        let weeks = consecutiveWeeks(from: allSites.keys.min(), to: now, calendar: calendar)
+        let windowWeek = windowStart.flatMap { weekStart(of: $0, calendar: calendar) }
 
         var points: [WeeklyDurationPoint] = []
+        var segment = 0
         for (index, week) in weeks.enumerated() {
-            if let windowWeek, week < windowWeek { continue }
-            let bucket = buckets[week] ?? WeekBucket()
             let trailing = weeks[max(0, index - rollingWeeks + 1)...index]
-                .reduce(into: WeekBucket()) { $0.merge(buckets[$1]) }
+                .reduce(into: WeekBucket()) { $0.merge(allSites[$1]) }
+            if trailing.mean == nil { segment += 1 }
+            if let windowWeek, week < windowWeek { continue }
+            let bucket = windowSites[week] ?? WeekBucket()
             points.append(WeeklyDurationPoint(
                 weekStart: week,
                 siteCount: bucket.sites,
                 averageDuration: bucket.mean,
                 rollingAverage: trailing.mean,
-                problemSiteCount: bucket.problemCount
+                problemSiteCount: bucket.problemCount,
+                trendSegment: trailing.mean == nil ? nil : segment
             ))
         }
         return points
     }
 
-    /// The latest rolling average against the one `rollingWeeks` weeks
-    /// earlier, or nil if either is missing.
-    static func recentChange(in points: [WeeklyDurationPoint]) -> DurationTrendChange? {
-        guard points.count > rollingWeeks,
-              let current = points[points.count - 1].rollingAverage,
-              let previous = points[points.count - 1 - rollingWeeks].rollingAverage else { return nil }
-        return DurationTrendChange(current: current, previous: previous)
+    private static func weekStart(of date: Date, calendar: Calendar) -> Date? {
+        calendar.dateInterval(of: .weekOfYear, for: date)?.start
+    }
+
+    /// Week starts from the week containing `first` through the week
+    /// containing `now`. Each step is the previous week's interval end, not
+    /// "add one week": where DST starts at midnight that week starts at 01:00,
+    /// and adding weeks would keep 01:00 while later weeks start at 00:00.
+    private static func consecutiveWeeks(from first: Date?, to now: Date, calendar: Calendar) -> [Date] {
+        guard let first, let last = weekStart(of: now, calendar: calendar) else { return [] }
+        var weeks: [Date] = []
+        var cursor = first
+        while cursor <= last {
+            weeks.append(cursor)
+            guard let next = calendar.dateInterval(of: .weekOfYear, for: cursor)?.end, next > cursor else { break }
+            cursor = next
+        }
+        return weeks
     }
 
     private struct WeekBucket {
