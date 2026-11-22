@@ -213,6 +213,17 @@ The Statistics tab has a time-window picker: All / 9mo / 3mo / 1mo / 14d (`Stats
   - It is omitted below 4 samples.
 - **Home badge:** Home shows a `QuickStatBadge` with the median or P25 (`"homeStatMetric"`) over a window (`"homeStatTimeWindow"`, default 1mo). `HomeViewModel.refreshQuickStat()` computes it with the same helpers, so it matches the Statistics tab.
 
+### Duration trend
+
+The "Duration Trend" chart sits between Overall and Problems and answers "am I changing sites more or less often?". `DurationTrend.weeklyPoints` computes it.
+
+- **Weekly dots:** the mean duration of the completed sites that **ended** in each calendar week. A site is never split across weeks: it belongs to the week its change happened, so every dot averages whole sites, and problems (recorded at the change) land in the same week as the short sites they caused. A site whose end time is after now (clock skew, a History edit) counts in the current week.
+- **Line:** a 4-week moving average (`DurationTrend.rollingWeeks`). It pools the sites (total hours ÷ site count) instead of averaging the weekly means, so busy weeks weigh more. The line breaks where 4 or more weeks in a row have no sites, rather than drawing through the gap.
+- **Problem badge:** the number of that week's sites with any problem; all problems count equally.
+- **No anomaly filtering:** short sites are what this chart is meant to show. The active site is skipped.
+- **Time window:** dots and badges count sites that started in the window, like the rest of Statistics. The line also pools sites from before the window, so it starts warmed up. Longer histories scroll horizontally, 26 weeks at a time, starting at the latest.
+- **Weeks follow the calendar's own week boundaries,** stepping from one week's end to the next. Adding 7 days instead breaks in time zones where DST starts at midnight.
+
 ### Problems
 
 - **Where it's computed:** `StatisticsViewModel.summarizeProblems` produces the any-problem rate and per-problem counts for the window.

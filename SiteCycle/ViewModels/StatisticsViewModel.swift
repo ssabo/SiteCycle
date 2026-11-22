@@ -121,6 +121,7 @@ final class StatisticsViewModel {
     private(set) var overallPercentileDuration: Double?
     private(set) var usageDistribution: [UsageDistributionItem] = []
     private(set) var problemSummary = ProblemSummary(siteCount: 0, problemSiteCount: 0, items: [])
+    private(set) var durationTrend: [WeeklyDurationPoint] = []
 
     init(
         modelContext: ModelContext,
@@ -141,6 +142,7 @@ final class StatisticsViewModel {
         overallMedianDuration = overall.median
         overallPercentileDuration = overall.percentile
         problemSummary = Self.summarizeProblems(Self.entries(allEntries, since: windowStart))
+        durationTrend = DurationTrend.weeklyPoints(entries: allEntries, since: windowStart, now: now)
 
         locationStats = locations.map { location in
             buildStats(
