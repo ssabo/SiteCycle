@@ -160,6 +160,7 @@ struct SettingsView: View {
 
         Section("About") {
             LabeledContent("Version", value: buildInfo.versionText)
+            LabeledContent("Built", value: buildInfo.buildDateText())
             LabeledContent("Branch", value: buildInfo.branchText)
             LabeledContent("Commit") {
                 Text(buildInfo.shortCommitText)

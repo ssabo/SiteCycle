@@ -95,11 +95,11 @@ After that, every future Xcode Cloud archive (from either the CI workflow's Arch
 
 ## Build provenance (branch and commit)
 
-Settings → About shows the branch and short commit SHA a build came from. Xcode Cloud runs `ci_scripts/ci_post_clone.sh` after cloning, before every action. The script writes the gitignored `SiteCycleBuildInfo.xcconfig` at the repo root, and `SiteCycleConfig.xcconfig` includes it with `#include?`.
+Settings → About shows when a build was made, and the branch and short commit SHA it came from. Xcode Cloud runs `ci_scripts/ci_post_clone.sh` after cloning, before every action. The script writes the gitignored `SiteCycleBuildInfo.xcconfig` at the repo root, and `SiteCycleConfig.xcconfig` includes it with `#include?`.
 
-- **Where the values come from:** the branch is `CI_BRANCH` for branch builds, `CI_PULL_REQUEST_SOURCE_BRANCH` for PR builds, or `CI_TAG` for tag builds. The commit is `CI_COMMIT`. Xcode Cloud checks out a detached HEAD, so git can't name the branch there. Outside Xcode Cloud, the script falls back to `git`.
-- **How they reach the app:** the settings `SITECYCLE_GIT_BRANCH` and `SITECYCLE_GIT_COMMIT` are expanded into the `SiteCycleGitBranch` / `SiteCycleGitCommit` keys of `SiteCycle/Info.plist`, which Xcode merges with the generated Info.plist. `BuildInfo` reads them.
-- **Local builds** show "Unknown" unless you run `sh ci_scripts/ci_post_clone.sh` first. Re-run it when you switch branches, because the file isn't refreshed automatically.
+- **Where the values come from:** the branch is `CI_BRANCH` for branch builds, `CI_PULL_REQUEST_SOURCE_BRANCH` for PR builds, or `CI_TAG` for tag builds. The commit is `CI_COMMIT`. The build time is when the script ran, as an ISO 8601 UTC timestamp, and the app shows it in the device's time zone. Xcode Cloud checks out a detached HEAD, so git can't name the branch there. Outside Xcode Cloud, the script falls back to `git`.
+- **How they reach the app:** the settings `SITECYCLE_GIT_BRANCH`, `SITECYCLE_GIT_COMMIT` and `SITECYCLE_BUILD_DATE` are expanded into the `SiteCycleGitBranch`, `SiteCycleGitCommit` and `SiteCycleBuildDate` keys of `SiteCycle/Info.plist`, which Xcode merges with the generated Info.plist. `BuildInfo` reads them.
+- **Local builds** show "Unknown" unless you run `sh ci_scripts/ci_post_clone.sh` first. Re-run it when you switch branches, because the file isn't refreshed automatically, so its branch and build time go stale.
 - **Sanitising:** in an xcconfig, `//` starts a comment and `$(` expands a setting, so the script replaces characters outside `A-Za-z0-9._/ -` with `_` and collapses repeated slashes.
 - The script must stay executable (`git update-index --chmod=+x`), or Xcode Cloud can't run it.
 

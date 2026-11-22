@@ -6,5 +6,7 @@
     <string>$(SITECYCLE_GIT_BRANCH)</string>
     <key>SiteCycleGitCommit</key>
     <string>$(SITECYCLE_GIT_COMMIT)</string>
+    <key>SiteCycleBuildDate</key>
+    <string>$(SITECYCLE_BUILD_DATE)</string>
 </dict>
 </plist>

@@ -24,4 +24,5 @@ SITECYCLE_BUNDLE_PREFIX = com.sitecycle
 // (run by Xcode Cloud, or by hand) has written the gitignored SiteCycleBuildInfo.xcconfig.
 SITECYCLE_GIT_BRANCH =
 SITECYCLE_GIT_COMMIT =
+SITECYCLE_BUILD_DATE =
 #include? "SiteCycleBuildInfo.xcconfig"
