@@ -93,6 +93,16 @@ After that, every future Xcode Cloud archive (from either the CI workflow's Arch
 
 **Heads up**: the CI workflow's Archive Check action still delivers to App Store Connect's TestFlight → Builds list on every PR (even with no distribution post-action) and consumes a number from the same shared counter as real TestFlight releases. PR archive checks and release builds interleave in one non-contiguous sequence, and the Builds list accumulates a never-distributed entry per PR. Harmless — Apple only requires monotonically increasing numbers — and TestFlight builds auto-expire after 90 days, but worth knowing.
 
+## Build provenance (branch and commit)
+
+Settings → About shows the branch and short commit SHA a build came from. Xcode Cloud runs `ci_scripts/ci_post_clone.sh` after cloning, before every action. The script writes the gitignored `SiteCycleBuildInfo.xcconfig` at the repo root, and `SiteCycleConfig.xcconfig` includes it with `#include?`.
+
+- **Where the values come from:** the branch is `CI_BRANCH` for branch builds, `CI_PULL_REQUEST_SOURCE_BRANCH` for PR builds, or `CI_TAG` for tag builds. The commit is `CI_COMMIT`. Xcode Cloud checks out a detached HEAD, so git can't name the branch there. Outside Xcode Cloud, the script falls back to `git`.
+- **How they reach the app:** the settings `SITECYCLE_GIT_BRANCH` and `SITECYCLE_GIT_COMMIT` are expanded into the `SiteCycleGitBranch` / `SiteCycleGitCommit` keys of `SiteCycle/Info.plist`, which Xcode merges with the generated Info.plist. `BuildInfo` reads them.
+- **Local builds** show "Unknown" unless you run `sh ci_scripts/ci_post_clone.sh` first. Re-run it when you switch branches, because the file isn't refreshed automatically.
+- **Sanitising:** in an xcconfig, `//` starts a comment and `$(` expands a setting, so the script replaces characters outside `A-Za-z0-9._/ -` with `_` and collapses repeated slashes.
+- The script must stay executable (`git update-index --chmod=+x`), or Xcode Cloud can't run it.
+
 ## Validating parity
 
 Run the same tests locally against each test plan to confirm scope, e.g.:

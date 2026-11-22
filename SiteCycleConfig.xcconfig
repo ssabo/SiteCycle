@@ -19,3 +19,9 @@ SITECYCLE_BUNDLE_PREFIX = com.sitecycle
 // Optional override — copy the template to this filename and edit it.
 // The file is gitignored so your personal prefix stays out of version control.
 #include? "SiteCycleConfigOverride.xcconfig"
+
+// Build provenance shown in Settings > About. Empty unless ci_scripts/ci_post_clone.sh
+// (run by Xcode Cloud, or by hand) has written the gitignored SiteCycleBuildInfo.xcconfig.
+SITECYCLE_GIT_BRANCH =
+SITECYCLE_GIT_COMMIT =
+#include? "SiteCycleBuildInfo.xcconfig"
