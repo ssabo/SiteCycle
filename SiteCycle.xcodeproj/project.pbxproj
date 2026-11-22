@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A00000000000000000001A9 /* DurationTrendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A9 /* DurationTrendTests.swift */; };
+		8A00000000000000000001A8 /* DurationTrendChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A8 /* DurationTrendChart.swift */; };
+		8A00000000000000000001A7 /* DurationTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00000000000000000000A7 /* DurationTrend.swift */; };
 		8A0000000000000000000101 /* SiteCycleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000001 /* SiteCycleApp.swift */; };
 		8A0000000000000000000102 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000002 /* Location.swift */; };
 		8A0000000000000000000194 /* SiteProblem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0000000000000000000094 /* SiteProblem.swift */; };
@@ -172,6 +175,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8A00000000000000000000A9 /* DurationTrendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationTrendTests.swift; sourceTree = "<group>"; };
+		8A00000000000000000000A8 /* DurationTrendChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationTrendChart.swift; sourceTree = "<group>"; };
+		8A00000000000000000000A7 /* DurationTrend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationTrend.swift; sourceTree = "<group>"; };
 		8A0000000000000000000001 /* SiteCycleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteCycleApp.swift; sourceTree = "<group>"; };
 		8A0000000000000000000002 /* Location.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Location.swift; sourceTree = "<group>"; };
 		8A0000000000000000000094 /* SiteProblem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteProblem.swift; sourceTree = "<group>"; };
@@ -378,6 +384,7 @@
 				8A0000000000000000000021 /* SettingsView.swift */,
 				8A0000000000000000000048 /* SiteChangeConfirmationSheet.swift */,
 				8A0000000000000000000026 /* SiteSelectionSheet.swift */,
+				8A00000000000000000000A8 /* DurationTrendChart.swift */,
 				8A000000000000000000002B /* StatisticsView.swift */,
 			);
 			path = Views;
@@ -391,6 +398,7 @@
 				8A0000000000000000000027 /* HistoryViewModel.swift */,
 				8A0000000000000000000023 /* HomeViewModel.swift */,
 				8A0000000000000000000024 /* SiteChangeViewModel.swift */,
+				8A00000000000000000000A7 /* DurationTrend.swift */,
 				8A000000000000000000002A /* StatisticsViewModel.swift */,
 			);
 			path = ViewModels;
@@ -471,6 +479,7 @@
 				8A000000000000000000001A /* StatisticsViewModelAggregateTests.swift */,
 				8A000000000000000000001B /* StatisticsViewModelDurationTests.swift */,
 				8A000000000000000000001C /* StatisticsViewModelDistributionTests.swift */,
+				8A00000000000000000000A9 /* DurationTrendTests.swift */,
 				8A0000000000000000000085 /* StatisticsTimeWindowTests.swift */,
 				8A0000000000000000000099 /* StatisticsViewModelProblemTests.swift */,
 				8A0000000000000000000043 /* WatchAppStateTests.swift */,
@@ -764,6 +773,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A00000000000000000001A8 /* DurationTrendChart.swift in Sources */,
+				8A00000000000000000001A7 /* DurationTrend.swift in Sources */,
 				8A0000000000000000000101 /* SiteCycleApp.swift in Sources */,
 				8A0000000000000000000102 /* Location.swift in Sources */,
 				8A0000000000000000000194 /* SiteProblem.swift in Sources */,
@@ -804,6 +815,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A00000000000000000001A9 /* DurationTrendTests.swift in Sources */,
 				8A0000000000000000000110 /* LocationTests.swift in Sources */,
 				8A0000000000000000000198 /* SiteProblemTests.swift in Sources */,
 				8A000000000000000000019A /* SiteProblemWorkflowTests.swift in Sources */,

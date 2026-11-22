@@ -74,6 +74,9 @@ struct StatisticsView: View {
                 Text("Durations exclude the active site.")
             }
             overallSection(vm)
+            if vm.durationTrend.contains(where: { $0.averageDuration != nil }) {
+                DurationTrendSection(points: vm.durationTrend)
+            }
             if vm.problemSummary.siteCount > 0 {
                 problemsSection(vm.problemSummary)
             }
